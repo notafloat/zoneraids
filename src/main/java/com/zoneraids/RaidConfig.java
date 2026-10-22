@@ -22,6 +22,11 @@ public final class RaidConfig {
     public static final ForgeConfigSpec.BooleanValue RETURN_GEAR_AFTER_RESTART;
     public static final ForgeConfigSpec.BooleanValue SHOW_EXTRACT_DISTANCE;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> BLOCKED_COMMANDS_IN_RAID;
+    public static final ForgeConfigSpec.BooleanValue AUTO_SETUP;
+    public static final ForgeConfigSpec.IntValue BUILD_MILLIS_PER_TICK;
+    public static final ForgeConfigSpec.BooleanValue FORCE_HUB_ON_LOGIN;
+    public static final ForgeConfigSpec.BooleanValue PROTECT_HUB_BLOCKS;
+    public static final ForgeConfigSpec.ConfigValue<List<? extends String>> ANOMALY_BLOCKS;
 
     static {
         ForgeConfigSpec.Builder b = new ForgeConfigSpec.Builder();
@@ -59,6 +64,21 @@ public final class RaidConfig {
         b.push("hub");
         HUB_PVP = b.comment("Allow PvP between players that are not in a raid.").define("hubPvp", false);
         REMOTE_STASH = b.comment("Allow opening the stash from the terminal menu (outside of raids).").define("remoteStash", true);
+        b.pop();
+
+        b.push("world");
+        AUTO_SETUP = b.comment("On the first start, build the hub (dimension zoneraids:hub) and the Cordon map (zoneraids:cordon),",
+                        "register the map with its spawns, extracts and loot crates, and set the hub. Each is built only once per world;",
+                        "use /raidadmin build to rebuild.")
+                .define("autoSetup", true);
+        BUILD_MILLIS_PER_TICK = b.comment("Time budget per server tick for building maps, in milliseconds.")
+                .defineInRange("buildMillisPerTick", 25, 1, 1000);
+        FORCE_HUB_ON_LOGIN = b.comment("Send players who are not in a raid to the hub when they log in or respawn (creative/spectator players are left alone).")
+                .define("forceHubOnLogin", true);
+        PROTECT_HUB_BLOCKS = b.comment("Players not in creative mode cannot break or place blocks in the hub dimension.")
+                .define("protectHubBlocks", true);
+        ANOMALY_BLOCKS = b.comment("Optional block ids (e.g. from an anomaly mod) placed in the Cordon's anomaly field. Ids that are not installed are skipped.")
+                .defineListAllowEmpty(List.of("anomalyBlocks"), List.<String>of(), o -> o instanceof String);
         b.pop();
 
         SPEC = b.build();
