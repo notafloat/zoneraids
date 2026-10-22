@@ -47,6 +47,19 @@ if [ "$status" = up ]; then
     echo "give @a $id" >&3
   done
   sleep 3
+  # Item models alone do not prove an id is registered (some jars ship unused models): probe every id.
+  IDS_FILE="$(dirname "$REPORT")/item-ids.txt"
+  if [ -f "$IDS_FILE" ]; then
+    echo "say PROBE_START" >&3
+    for id in $(grep -oE '\b[a-z0-9_]+:[a-z0-9_/]+\b' "$IDS_FILE" | grep -vE '^(minecraft|tacz):' | sort -u); do
+      echo "give @a $id" >&3
+    done
+    for id in $(grep -oE '\banomalyzone:anomaly_[a-z0-9_]+\b' "$IDS_FILE" | sort -u); do
+      echo "setblock 0 -58 40 $id replace" >&3
+    done
+    echo "say PROBE_END" >&3
+    sleep 8
+  fi
   say "raidadmin map list" 3
   say "forceload add 0 0" 5
   i=0
@@ -96,8 +109,18 @@ fail=0
 grep -q 'tacz:' "$REPORT/console.log" || { echo "No TaCZ items rolled from crates"; fail=1; }
 grep -q 'firstaid:' "$REPORT/console.log" || { echo "No First Aid items rolled from crates"; fail=1; }
 grep -qE "Couldn't parse element.*zoneraids|zoneraids:crates.*(error|invalid)" "$REPORT/console.log" && { echo "Crate loot table failed to load"; fail=1; }
-if grep -q 'Unknown item' "$REPORT/console.log"; then
-  echo "Unknown items in crate loot:"; grep -o "Unknown item '[^']*'" "$REPORT/console.log" | sort -u; fail=1
+LOOT_IDS="$(grep -rhoE '"name": "[a-z0-9_]+:[a-z0-9_/]+"' "$PACK_GLUE/data" | cut -d'"' -f4 | sort -u)"
+UNKNOWN="$(grep -oE "Unknown item '[^']*'" "$REPORT/console.log" | cut -d"'" -f2 | sort -u)"
+BAD="$(comm -12 <(echo "$LOOT_IDS") <(echo "$UNKNOWN"))"
+if [ -n "$BAD" ]; then echo "Unknown items in crate loot:"; echo "$BAD"; fail=1; fi
+if [ -f "$IDS_FILE" ]; then
+  grep -oE '\b[a-z0-9_]+:[a-z0-9_/]+\b' "$IDS_FILE" | grep -vE '^(minecraft|tacz):' | sort -u \
+    | comm -23 - <(echo "$UNKNOWN") > "$REPORT/registered-items.txt"
+  echo "===== Item models without a registered item (do not use these ids) ====="
+  echo "$UNKNOWN" | tr '\n' ' '; echo
+  echo "===== Anomaly blocks that are real blocks ====="
+  grep -oE "Unknown block type '[^']*'" "$REPORT/console.log" | cut -d"'" -f2 | sort -u > "$REPORT/unknown-blocks.txt"
+  grep -oE '\banomalyzone:anomaly_[a-z0-9_]+\b' "$IDS_FILE" | sort -u | comm -23 - "$REPORT/unknown-blocks.txt" | tr '\n' ' '; echo
 fi
 echo "===== Memory ====="
 grep -A12 -iE 'Memory usage|Memory Usage' "$REPORT/console.log" | head -30
