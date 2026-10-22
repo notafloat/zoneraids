@@ -33,6 +33,15 @@ done
 
 if [ "$status" = up ]; then
   say() { echo "$1" >&3; sleep "${2:-2}"; }
+  # Zone Raids builds the hub and the Cordon map on the first start of a world; wait for it if it runs.
+  if grep -qi 'Zone Raids: .*build' "$REPORT/console.log"; then
+    for _ in $(seq 1 900); do
+      grep -qi 'Zone Raids: finished building cordon' "$REPORT/console.log" && break
+      kill -0 "$PID" 2>/dev/null || break
+      sleep 1
+    done
+  fi
+  say "raidadmin map list" 3
   say "forceload add 0 0" 5
   i=0
   for table in common military medical; do
@@ -71,6 +80,9 @@ if [ "$status" != up ]; then
   tail -120 "$REPORT/console.log"
   exit 1
 fi
+
+echo "===== Zone Raids ====="
+grep -iE 'Zone Raids|zoneraids.*(map|cordon|hub)|Кордон' "$REPORT/console.log" | grep -v 'Found mod' | head -40
 
 echo "===== Loot rolls ====="
 grep -E 'has the following block data' "$REPORT/console.log" | sed 's/.*has the following block data: //' | cut -c1-400
