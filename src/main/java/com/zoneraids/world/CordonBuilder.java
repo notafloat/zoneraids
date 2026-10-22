@@ -1,5 +1,6 @@
 package com.zoneraids.world;
 
+import com.mojang.logging.LogUtils;
 import com.zoneraids.RaidConfig;
 import com.zoneraids.registry.ModRegistry;
 import com.zoneraids.world.CordonLayout.Site;
@@ -18,6 +19,7 @@ import net.minecraft.world.level.block.state.properties.RailShape;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraftforge.registries.ForgeRegistries;
+import org.slf4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,6 +35,7 @@ import java.util.function.Consumer;
  * campfires, there are no entities and no vanilla containers (loot cannot be hidden between raids).
  */
 final class CordonBuilder {
+    private static final Logger LOGGER = LogUtils.getLogger();
     private static final int CLEAR_TOP = 150;
 
     private static final Palette STONE = Palette.of(Blocks.STONE, 8, Blocks.ANDESITE, 1, Blocks.TUFF, 1);
@@ -62,6 +65,8 @@ final class CordonBuilder {
             ResourceLocation key = ResourceLocation.tryParse(id);
             if (key != null && ForgeRegistries.BLOCKS.containsKey(key)) {
                 anomalyBlocks.add(ForgeRegistries.BLOCKS.getValue(key));
+            } else {
+                LOGGER.warn("Zone Raids: anomaly block {} is not installed, skipping", id);
             }
         }
     }
