@@ -4,6 +4,7 @@
 set -uo pipefail
 SERVER="$(cd "$1" && pwd)"
 REPORT="$(mkdir -p "$2" && cd "$2" && pwd)"
+PACK_GLUE="$(cd "$(dirname "$0")/../glue" && pwd)"
 cd "$SERVER"
 
 FORGE="$(tr -d '[:space:]' < forge-version.txt)"
@@ -41,6 +42,11 @@ if [ "$status" = up ]; then
       sleep 1
     done
   fi
+  # Every modded item in the crate loot must exist: "give" rejects unknown ids with "Unknown item".
+  for id in $(grep -rhoE '"name": "[a-z0-9_]+:[a-z0-9_/]+"' "$PACK_GLUE/data" | cut -d'"' -f4 | grep -v '^minecraft:' | sort -u); do
+    echo "give @a $id" >&3
+  done
+  sleep 3
   say "raidadmin map list" 3
   say "forceload add 0 0" 5
   i=0
@@ -90,6 +96,9 @@ fail=0
 grep -q 'tacz:' "$REPORT/console.log" || { echo "No TaCZ items rolled from crates"; fail=1; }
 grep -q 'firstaid:' "$REPORT/console.log" || { echo "No First Aid items rolled from crates"; fail=1; }
 grep -qE "Couldn't parse element.*zoneraids|zoneraids:crates.*(error|invalid)" "$REPORT/console.log" && { echo "Crate loot table failed to load"; fail=1; }
+if grep -q 'Unknown item' "$REPORT/console.log"; then
+  echo "Unknown items in crate loot:"; grep -o "Unknown item '[^']*'" "$REPORT/console.log" | sort -u; fail=1
+fi
 echo "===== Memory ====="
 grep -A12 -iE 'Memory usage|Memory Usage' "$REPORT/console.log" | head -30
 exit $fail

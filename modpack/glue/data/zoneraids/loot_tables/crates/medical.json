@@ -145,11 +145,6 @@
           "type": "minecraft:item",
           "name": "anomalyzone:injection_run_heal",
           "weight": 3
-        },
-        {
-          "type": "minecraft:item",
-          "name": "anomalyzone:cognac_anomalous",
-          "weight": 2
         }
       ]
     },
