@@ -1,0 +1,43 @@
+{
+  "name": "Zone Raids",
+  "version": "0.1.0",
+  "summary": "Extraction shooter in the style of Escape from Tarkov and S.T.A.L.K.E.R.: raids with extraction, limb damage, loot, artifacts and anomalies.",
+  "minecraft": "1.20.1",
+  "forge": "recommended",
+  "_comment": "side: both | client | server. If omitted, it is taken from Modrinth (server_side=unsupported -> client). version: exact Modrinth version_number to pin; omitted = newest release for Forge 1.20.1 at build time (the resolved list is saved to mods.lock.json in the build output).",
+  "mods": [
+    { "slug": "timeless-and-classics-zero", "version": "1.1.8-hotfix2", "side": "both", "why": "TaCZ: guns, attachments, ammo" },
+    { "slug": "firstaid", "side": "both", "why": "Limb damage, bandages, morphine. Original First Aid, because TaCZ FirstAid Compat depends on it" },
+    { "slug": "tacz-firstaid-compat", "version": "1.0.0", "side": "both", "why": "Bullets hit the limb they land on, armor per body part" },
+    { "slug": "tacz-npcs", "version": "2.1.0", "side": "both", "why": "Armed bandits and soldiers using TaCZ guns" },
+    { "slug": "fracturepoint", "version": "3.0.0-PT2", "side": "both", "why": "Military gear: armor sets, plates, backpacks, rigs, NVG" },
+    { "slug": "geckolib", "side": "both", "why": "Required by Fracture Point models" },
+    { "slug": "curios", "side": "both", "why": "Accessory slots: artifacts, gear" },
+    { "slug": "anomaly-zone", "version": "1.2", "side": "both", "why": "Anomalies, emissions, detectors, artifacts. Version 1.2 = file 2.0.0-pre-release; 2.0 (file 3.0.0) crashes dedicated servers in QuestNetwork" },
+    { "slug": "terrablender", "side": "both", "why": "Required by Anomaly Zone" },
+    { "slug": "yori3os-grappling-hooks", "version": "5.1.1", "side": "both", "why": "Grappling hook" },
+
+    { "slug": "simple-voice-chat", "side": "both", "why": "Proximity voice chat, key for extraction shooters" },
+    { "slug": "sound-physics-remastered", "side": "client", "why": "Reverb and muffling, atmosphere" },
+    { "slug": "fancymenu", "version": "3.9.14-1.20.1-forge", "side": "client", "why": "Custom main menu" },
+    { "slug": "jei", "side": "client", "why": "Item lookup for admins building loot tables" },
+
+    { "slug": "modernfix", "side": "both", "why": "Less RAM, faster startup, fixes world leaks" },
+    { "slug": "ferrite-core", "side": "both", "why": "Less RAM" },
+    { "slug": "embeddium", "side": "client", "why": "Fast renderer (Sodium port)" },
+    { "slug": "entityculling", "side": "client", "why": "Skips rendering of hidden entities and block entities" },
+    { "slug": "immediatelyfast", "side": "client", "why": "Faster HUD, text and entity rendering" },
+    { "slug": "spark", "side": "both", "why": "TPS/FPS profiler and heap summaries" },
+
+    {
+      "name": "AllTheLeaks",
+      "url": "https://mediafilez.forgecdn.net/files/8779/54/alltheleaks-1.1.3%2B1.20.1-forge.jar",
+      "file": "alltheleaks-1.1.3+1.20.1-forge.jar",
+      "side": "both",
+      "why": "Fixes known memory leaks in Forge, Minecraft and popular mods (CurseForge only, file 8779054)"
+    }
+  ],
+  "server_extras": [
+    { "slug": "worldedit", "side": "server", "optional": true, "why": "Map editing for admins" }
+  ]
+}
