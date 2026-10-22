@@ -77,9 +77,8 @@ public final class RaidConfig {
                 .define("forceHubOnLogin", true);
         PROTECT_HUB_BLOCKS = b.comment("Players not in creative mode cannot break or place blocks in the hub dimension.")
                 .define("protectHubBlocks", true);
-        ANOMALY_BLOCKS = b.comment("Block ids (Anomaly Zone by default) placed in the Cordon's anomaly field. Ids that are not installed are skipped.")
-                .defineListAllowEmpty(List.of("anomalyBlocks"), List.of("anomalyzone:anomaly_psi_electro", "anomalyzone:anomaly_psi_vortex",
-                                "anomalyzone:anomaly_thermo_flare", "anomalyzone:anomaly_acid_green", "anomalyzone:anomaly_rad_haze"), o -> o instanceof String);
+        ANOMALY_BLOCKS = b.comment("Optional block ids (e.g. from an anomaly mod) placed in the Cordon's anomaly field. Ids that are not installed are skipped.")
+                .defineListAllowEmpty(List.of("anomalyBlocks"), List.<String>of(), o -> o instanceof String);
         b.pop();
 
         SPEC = b.build();
