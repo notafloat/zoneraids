@@ -6,6 +6,9 @@ import com.zoneraids.command.RaidCommands;
 import com.zoneraids.raid.RaidManager;
 import com.zoneraids.registry.ModRegistry;
 import com.zoneraids.util.Teleports;
+import com.zoneraids.world.WorldBuilder;
+import com.zoneraids.world.WorldSetup;
+import com.zoneraids.world.ZoneDimensions;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -26,6 +29,7 @@ import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.server.ServerLifecycleHooks;
 
 @Mod.EventBusSubscriber(modid = ZoneRaids.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class RaidEvents {
@@ -35,11 +39,13 @@ public final class RaidEvents {
     @SubscribeEvent
     public static void onServerStarted(ServerStartedEvent event) {
         RaidManager.start(event.getServer());
+        WorldSetup.onServerStarted(event.getServer());
     }
 
     @SubscribeEvent
     public static void onServerStopped(ServerStoppedEvent event) {
         RaidManager.stop();
+        WorldBuilder.clear();
     }
 
     @SubscribeEvent
@@ -56,6 +62,7 @@ public final class RaidEvents {
         if (manager != null) {
             manager.tick();
         }
+        WorldBuilder.tick(ServerLifecycleHooks.getCurrentServer());
     }
 
     @SubscribeEvent
@@ -129,7 +136,13 @@ public final class RaidEvents {
     }
 
     private static boolean isProtected(Player player, BlockState state) {
-        if (!RaidConfig.PROTECT_RAID_BLOCKS.get() || player == null || player.isCreative() || state.is(ModRegistry.RAID_BREAKABLE)) {
+        if (player == null || player.isCreative()) {
+            return false;
+        }
+        if (RaidConfig.PROTECT_HUB_BLOCKS.get() && player.level().dimension().equals(ZoneDimensions.HUB)) {
+            return true;
+        }
+        if (!RaidConfig.PROTECT_RAID_BLOCKS.get() || state.is(ModRegistry.RAID_BREAKABLE)) {
             return false;
         }
         RaidManager manager = RaidManager.get();

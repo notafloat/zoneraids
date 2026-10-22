@@ -23,6 +23,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -175,6 +176,14 @@ public final class RaidManager {
                 part.extracting = null;
                 part.extractTicks = 0;
                 continue;
+            }
+            RaidMap map = session.map;
+            if (!map.inBounds(player.getX(), player.getZ())) {
+                // Walls stop walkers; this also catches grappling hooks, elytra and other ways over them.
+                double x = Mth.clamp(player.getX(), map.minX + 1.5, map.maxX - 0.5);
+                double z = Mth.clamp(player.getZ(), map.minZ + 1.5, map.maxZ - 0.5);
+                player.connection.teleport(x, player.getY(), z, player.getYRot(), player.getXRot());
+                player.displayClientMessage(Component.translatable("zoneraids.raid.out_of_bounds").withStyle(ChatFormatting.RED), true);
             }
             ExtractPoint zone = null;
             for (ExtractPoint point : part.extracts) {
@@ -557,6 +566,7 @@ public final class RaidManager {
         }
         boolean pendingMia = data().consumePendingMia(id);
         if (tag == null) {
+            sendToHubIfOutside(player);
             return;
         }
         PlayerRaidData.setSession(player, null);
@@ -620,6 +630,8 @@ public final class RaidManager {
     public void onRespawn(ServerPlayer player) {
         if (PlayerRaidData.consumeReturnToHub(player)) {
             sendToHub(player);
+        } else {
+            sendToHubIfOutside(player);
         }
     }
 
@@ -628,6 +640,18 @@ public final class RaidManager {
     public ResourceKey<Level> hubDimension() {
         HubPoint hub = data().getHub();
         return hub != null && server.getLevel(hub.dimension()) != null ? hub.dimension() : Level.OVERWORLD;
+    }
+
+    /** With {@code forceHubOnLogin}, moves a player who is not in a raid into the hub dimension. */
+    public void sendToHubIfOutside(ServerPlayer player) {
+        if (!RaidConfig.FORCE_HUB_ON_LOGIN.get() || isInRaid(player.getUUID()) || player.isCreative() || player.isSpectator()) {
+            return;
+        }
+        HubPoint hub = data().getHub();
+        if (hub == null || server.getLevel(hub.dimension()) == null || player.level().dimension().equals(hub.dimension())) {
+            return;
+        }
+        sendToHub(player);
     }
 
     public void sendToHub(ServerPlayer player) {
