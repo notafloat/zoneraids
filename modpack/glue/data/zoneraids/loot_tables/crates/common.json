@@ -368,6 +368,71 @@
           "type": "minecraft:item",
           "name": "minecraft:compass",
           "weight": 2
+        },
+        {
+          "type": "minecraft:item",
+          "name": "fracturepoint:balaclava_open_face",
+          "weight": 4
+        },
+        {
+          "type": "minecraft:item",
+          "name": "fracturepoint:balaclava_eye_slit",
+          "weight": 3
+        },
+        {
+          "type": "minecraft:item",
+          "name": "fracturepoint:fsb_vkpo_cap",
+          "weight": 3
+        },
+        {
+          "type": "minecraft:item",
+          "name": "fracturepoint:soviet_uniform",
+          "weight": 3
+        },
+        {
+          "type": "minecraft:item",
+          "name": "fracturepoint:soviet_leggings",
+          "weight": 3
+        },
+        {
+          "type": "minecraft:item",
+          "name": "fracturepoint:soviet_boots",
+          "weight": 3
+        },
+        {
+          "type": "minecraft:item",
+          "name": "fracturepoint:ru_helmet",
+          "weight": 2,
+          "functions": [
+            {
+              "function": "minecraft:set_damage",
+              "damage": {
+                "type": "minecraft:uniform",
+                "min": 0.3,
+                "max": 0.9
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "fracturepoint:soviet_soldier_backpack",
+          "weight": 2
+        },
+        {
+          "type": "minecraft:item",
+          "name": "yo_hooks:iron_grappling_hook",
+          "weight": 2,
+          "functions": [
+            {
+              "function": "minecraft:set_damage",
+              "damage": {
+                "type": "minecraft:uniform",
+                "min": 0.3,
+                "max": 0.9
+              }
+            }
+          ]
         }
       ]
     }
