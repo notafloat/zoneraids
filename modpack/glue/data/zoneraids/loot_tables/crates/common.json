@@ -245,6 +245,21 @@
               }
             }
           ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "anomalyzone:solyanka",
+          "weight": 5
+        },
+        {
+          "type": "minecraft:item",
+          "name": "anomalyzone:energy_drink",
+          "weight": 5
+        },
+        {
+          "type": "minecraft:item",
+          "name": "anomalyzone:vodka_hryuchevo",
+          "weight": 4
         }
       ]
     },

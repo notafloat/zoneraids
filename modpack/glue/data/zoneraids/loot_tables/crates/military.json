@@ -656,6 +656,90 @@
           ]
         }
       ]
+    },
+    {
+      "rolls": {
+        "type": "minecraft:uniform",
+        "min": 0,
+        "max": 1
+      },
+      "bonus_rolls": 0,
+      "entries": [
+        {
+          "type": "minecraft:empty",
+          "weight": 85
+        },
+        {
+          "type": "minecraft:item",
+          "name": "anomalyzone:bubble",
+          "weight": 6
+        },
+        {
+          "type": "minecraft:item",
+          "name": "anomalyzone:flash",
+          "weight": 6
+        },
+        {
+          "type": "minecraft:item",
+          "name": "anomalyzone:hedgehog",
+          "weight": 5
+        },
+        {
+          "type": "minecraft:item",
+          "name": "anomalyzone:spiral",
+          "weight": 5
+        },
+        {
+          "type": "minecraft:item",
+          "name": "anomalyzone:prism",
+          "weight": 4
+        },
+        {
+          "type": "minecraft:item",
+          "name": "anomalyzone:snake_eye",
+          "weight": 4
+        },
+        {
+          "type": "minecraft:item",
+          "name": "anomalyzone:sun",
+          "weight": 3
+        },
+        {
+          "type": "minecraft:item",
+          "name": "anomalyzone:thunder",
+          "weight": 3
+        },
+        {
+          "type": "minecraft:item",
+          "name": "anomalyzone:polyhedron",
+          "weight": 3
+        },
+        {
+          "type": "minecraft:item",
+          "name": "anomalyzone:hoop",
+          "weight": 4
+        },
+        {
+          "type": "minecraft:item",
+          "name": "anomalyzone:magma_pearl",
+          "weight": 4
+        },
+        {
+          "type": "minecraft:item",
+          "name": "anomalyzone:heat_stone",
+          "weight": 4
+        },
+        {
+          "type": "minecraft:item",
+          "name": "anomalyzone:crust",
+          "weight": 5
+        },
+        {
+          "type": "minecraft:item",
+          "name": "anomalyzone:atom",
+          "weight": 1
+        }
+      ]
     }
   ]
 }
