@@ -4,6 +4,7 @@ import com.zoneraids.ZoneRaids;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtUtils;
+import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
@@ -28,6 +29,8 @@ public final class RaidWorldData extends SavedData {
     private final Map<String, Long> generations = new HashMap<>();
     /** Players whose raid ended while they were offline: they lose their gear on next login. */
     private final Set<UUID> pendingMia = new HashSet<>();
+    /** Generated layouts (e.g. "cordon@1") that have been fully built in this world. */
+    private final Set<String> builtLayouts = new HashSet<>();
     @Nullable
     private HubPoint hub;
 
@@ -78,6 +81,16 @@ public final class RaidWorldData extends SavedData {
         return next;
     }
 
+    public boolean isBuilt(String layout) {
+        return builtLayouts.contains(layout);
+    }
+
+    public void markBuilt(String layout) {
+        if (builtLayouts.add(layout)) {
+            setDirty();
+        }
+    }
+
     public void addPendingMia(UUID player) {
         if (pendingMia.add(player)) {
             setDirty();
@@ -103,6 +116,9 @@ public final class RaidWorldData extends SavedData {
         ListTag mia = new ListTag();
         pendingMia.forEach(id -> mia.add(NbtUtils.createUUID(id)));
         tag.put("PendingMia", mia);
+        ListTag built = new ListTag();
+        builtLayouts.forEach(id -> built.add(StringTag.valueOf(id)));
+        tag.put("Built", built);
         if (hub != null) {
             tag.put("Hub", hub.save());
         }
@@ -123,6 +139,10 @@ public final class RaidWorldData extends SavedData {
         ListTag mia = tag.getList("PendingMia", Tag.TAG_INT_ARRAY);
         for (Tag t : mia) {
             data.pendingMia.add(NbtUtils.loadUUID(t));
+        }
+        ListTag built = tag.getList("Built", Tag.TAG_STRING);
+        for (int i = 0; i < built.size(); i++) {
+            data.builtLayouts.add(built.getString(i));
         }
         if (tag.contains("Hub", Tag.TAG_COMPOUND)) {
             data.hub = HubPoint.load(tag.getCompound("Hub"));

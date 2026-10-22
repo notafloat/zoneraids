@@ -1,0 +1,13 @@
+{
+  "type": "zoneraids:zone",
+  "generator": {
+    "type": "minecraft:flat",
+    "settings": {
+      "biome": "zoneraids:zone",
+      "layers": [ { "block": "minecraft:air", "height": 1 } ],
+      "lakes": false,
+      "features": false,
+      "structure_overrides": []
+    }
+  }
+}

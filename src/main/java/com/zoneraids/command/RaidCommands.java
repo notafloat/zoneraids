@@ -16,6 +16,8 @@ import com.zoneraids.data.RaidWorldData;
 import com.zoneraids.data.SpawnPoint;
 import com.zoneraids.raid.RaidManager;
 import com.zoneraids.raid.RaidSession;
+import com.zoneraids.world.WorldBuilder;
+import com.zoneraids.world.WorldSetup;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -80,6 +82,15 @@ public final class RaidCommands {
                             ctx.getSource().sendSuccess(() -> Component.translatable(ok ? "zoneraids.admin.stopped" : "zoneraids.admin.no_session", id), true);
                             return ok ? 1 : 0;
                         })))
+                .then(Commands.literal("build")
+                        .then(Commands.literal("status").executes(ctx -> {
+                            String status = WorldBuilder.status();
+                            ctx.getSource().sendSuccess(() -> status == null ? Component.translatable("zoneraids.build.idle")
+                                    : Component.translatable("zoneraids.build.status", status), false);
+                            return 1;
+                        }))
+                        .then(Commands.literal("hub").executes(ctx -> build(ctx, WorldSetup.buildHub(), WorldSetup.HUB)))
+                        .then(Commands.literal("cordon").executes(ctx -> build(ctx, WorldSetup.buildCordon(ctx.getSource().getServer()), WorldSetup.CORDON))))
                 .then(Commands.literal("crate").then(Commands.argument("pos", BlockPosArgument.blockPos())
                         .then(Commands.argument("lootTable", ResourceLocationArgument.id()).executes(RaidCommands::setCrate))))
                 .then(Commands.literal("map")
@@ -138,7 +149,14 @@ public final class RaidCommands {
                                         throw new IllegalArgumentException(name);
                                     }
                                 })))))
-                        .then(Commands.literal("clearextracts").then(mapArg().executes(ctx -> editMap(ctx, map -> map.extracts.clear())))))
+                        .then(Commands.literal("clearextracts").then(mapArg().executes(ctx -> editMap(ctx, map -> map.extracts.clear()))))
+                        .then(Commands.literal("bounds").then(mapArg()
+                                .then(Commands.argument("x1", IntegerArgumentType.integer()).then(Commands.argument("z1", IntegerArgumentType.integer())
+                                        .then(Commands.argument("x2", IntegerArgumentType.integer()).then(Commands.argument("z2", IntegerArgumentType.integer())
+                                                .executes(ctx -> editMap(ctx, map -> map.setBounds(IntegerArgumentType.getInteger(ctx, "x1"),
+                                                        IntegerArgumentType.getInteger(ctx, "z1"), IntegerArgumentType.getInteger(ctx, "x2"),
+                                                        IntegerArgumentType.getInteger(ctx, "z2"))))))))))
+                        .then(Commands.literal("clearbounds").then(mapArg().executes(ctx -> editMap(ctx, map -> map.bounded = false)))))
         );
     }
 
@@ -239,6 +257,9 @@ public final class RaidCommands {
         src.sendSuccess(() -> Component.literal(String.format("%s \"%s\" dim=%s enabled=%s duration=%s players=%d-%d extractsPerPlayer=%d",
                 map.id, map.displayName, map.dimension.location(), map.enabled, RaidManager.formatTime(map.durationSeconds),
                 map.minPlayers, map.maxPlayers, map.extractsPerPlayer)).withStyle(ChatFormatting.GOLD), false);
+        if (map.bounded) {
+            src.sendSuccess(() -> Component.literal(String.format("  bounds %d %d .. %d %d", map.minX, map.minZ, map.maxX, map.maxZ)), false);
+        }
         for (SpawnPoint spawn : map.spawns) {
             src.sendSuccess(() -> Component.literal("  spawn " + spawn.pos().toShortString()), false);
         }
@@ -247,6 +268,15 @@ public final class RaidCommands {
                     point.name(), point.pos().toShortString(), point.radius(), point.chance())), false);
         }
         return 1;
+    }
+
+    private static int build(CommandContext<CommandSourceStack> ctx, boolean queued, String name) {
+        if (queued) {
+            ctx.getSource().sendSuccess(() -> Component.translatable("zoneraids.build.queued", name), true);
+            return 1;
+        }
+        ctx.getSource().sendFailure(Component.translatable("zoneraids.build.busy", name));
+        return 0;
     }
 
     private static int setHub(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {

@@ -25,6 +25,12 @@ public final class RaidMap {
     public boolean enabled = true;
     public final List<SpawnPoint> spawns = new ArrayList<>();
     public final List<ExtractPoint> extracts = new ArrayList<>();
+    /** Optional play area (inclusive block coordinates); players in a raid are kept inside it. */
+    public boolean bounded;
+    public int minX;
+    public int minZ;
+    public int maxX;
+    public int maxZ;
 
     public RaidMap(String id, ResourceKey<Level> dimension) {
         this.id = id;
@@ -34,6 +40,18 @@ public final class RaidMap {
 
     public boolean isPlayable() {
         return enabled && !spawns.isEmpty() && !extracts.isEmpty();
+    }
+
+    public void setBounds(int x1, int z1, int x2, int z2) {
+        bounded = true;
+        minX = Math.min(x1, x2);
+        minZ = Math.min(z1, z2);
+        maxX = Math.max(x1, x2);
+        maxZ = Math.max(z1, z2);
+    }
+
+    public boolean inBounds(double x, double z) {
+        return !bounded || (x >= minX && x < maxX + 1 && z >= minZ && z < maxZ + 1);
     }
 
     public CompoundTag save() {
@@ -52,6 +70,9 @@ public final class RaidMap {
         ListTag extractList = new ListTag();
         extracts.forEach(e -> extractList.add(e.save()));
         tag.put("Extracts", extractList);
+        if (bounded) {
+            tag.putIntArray("Bounds", new int[]{minX, minZ, maxX, maxZ});
+        }
         return tag;
     }
 
@@ -71,6 +92,10 @@ public final class RaidMap {
         ListTag extractList = tag.getList("Extracts", Tag.TAG_COMPOUND);
         for (int i = 0; i < extractList.size(); i++) {
             map.extracts.add(ExtractPoint.load(extractList.getCompound(i)));
+        }
+        int[] bounds = tag.getIntArray("Bounds");
+        if (bounds.length == 4) {
+            map.setBounds(bounds[0], bounds[1], bounds[2], bounds[3]);
         }
         return map;
     }
