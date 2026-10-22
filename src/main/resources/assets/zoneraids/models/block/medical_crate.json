@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "side": "zoneraids:block/medical_crate_side",
+    "top": "zoneraids:block/medical_crate_top",
+    "bottom": "zoneraids:block/medical_crate_top"
+  }
+}

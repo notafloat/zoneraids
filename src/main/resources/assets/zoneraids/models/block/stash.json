@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "side": "zoneraids:block/stash_side",
+    "top": "zoneraids:block/stash_top",
+    "bottom": "zoneraids:block/stash_top"
+  }
+}

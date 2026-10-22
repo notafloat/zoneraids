@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "side": "zoneraids:block/raid_terminal_side",
+    "top": "zoneraids:block/raid_terminal_top",
+    "bottom": "zoneraids:block/raid_terminal_top"
+  }
+}
