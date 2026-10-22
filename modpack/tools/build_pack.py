@@ -54,10 +54,14 @@ def modrinth_versions(project, mc):
 
 def pick_version(versions, wanted):
     if wanted:
-        for v in versions:
-            if v["version_number"] == wanted:
-                return v
-        raise SystemExit(f"pinned version {wanted} not found; available: {[v['version_number'] for v in versions[:10]]}")
+        # Authors format version numbers freely ("2.0" vs file "Anomaly_Zone-2.0.0-..."), so also match file names.
+        for match in (lambda v: v["version_number"] == wanted,
+                      lambda v: any(wanted in f["filename"] for f in v["files"])):
+            hits = [v for v in versions if match(v)]
+            if hits:
+                return max(hits, key=lambda v: v["date_published"])
+        print(f"WARNING: pinned version {wanted} not found, using newest; available: "
+              f"{[v['version_number'] for v in versions[:10]]}", flush=True)
     releases = [v for v in versions if v["version_type"] == "release"] or versions
     if not releases:
         return None

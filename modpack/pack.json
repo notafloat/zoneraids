@@ -13,7 +13,7 @@
     { "slug": "fracturepoint", "version": "3.0.0-PT2", "side": "both", "why": "Military gear: armor sets, plates, backpacks, rigs, NVG" },
     { "slug": "geckolib", "side": "both", "why": "Required by Fracture Point models" },
     { "slug": "curios", "side": "both", "why": "Accessory slots: artifacts, gear" },
-    { "slug": "anomaly-zone", "version": "2.0.0", "side": "both", "why": "Anomalies, emissions, detectors, artifacts" },
+    { "slug": "anomaly-zone", "version": "2.0", "side": "both", "why": "Anomalies, emissions, detectors, artifacts" },
     { "slug": "terrablender", "side": "both", "why": "Required by Anomaly Zone" },
     { "slug": "yori3os-grappling-hooks", "version": "5.1.1", "side": "both", "why": "Grappling hook" },
 

@@ -57,7 +57,7 @@ jobs:
 
       - name: TaCZ gun packs extracted at runtime
         if: always()
-        run: python modpack/tools/list_ids.py build/modpack/server/tacz | tee build/modpack/report/tacz-runtime-ids.txt || true
+        run: mkdir -p build/modpack/report && python modpack/tools/list_ids.py build/modpack/server/tacz | tee build/modpack/report/tacz-runtime-ids.txt || true
 
       - uses: actions/upload-artifact@v4
         if: always()
