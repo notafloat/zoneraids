@@ -26,6 +26,8 @@ status=fail
 for _ in $(seq 1 900); do
   if grep -q 'Done (' "$REPORT/console.log"; then status=up; break; fi
   if ! kill -0 "$PID" 2>/dev/null; then break; fi
+  # After a mod loading crash the JVM can hang instead of exiting.
+  if grep -qE 'Failed to start the minecraft server|This crash report has been saved to' "$REPORT/console.log"; then break; fi
   sleep 1
 done
 

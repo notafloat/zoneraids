@@ -131,14 +131,6 @@ def resolve(pack):
             pending.append((dep["project_id"], None, side, extra, project["slug"]))
         print(f"  {project['slug']:32} {version['version_number']:30} {side}", flush=True)
 
-    # Two jars of one mod (e.g. First Aid and First Aid New) crash Forge, catch it early by file name stem.
-    stems = {}
-    for e in resolved.values():
-        stem = e["file"].split("-")[0].lower()
-        stems.setdefault(stem, []).append(e["file"])
-    dupes = {k: v for k, v in stems.items() if len(v) > 1}
-    if dupes:
-        print(f"WARNING: possible duplicate mods: {dupes}", flush=True)
     return list(resolved.values())
 
 
