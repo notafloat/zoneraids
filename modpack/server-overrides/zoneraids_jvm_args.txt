@@ -1,14 +1,11 @@
-# Память сервера. 6 ГБ хватает на 10-20 игроков; на машине должно оставаться ещё 1-2 ГБ свободно.
-# -Xms и -Xmx одинаковые: куча не "дышит", меньше пауз GC.
--Xms6G
--Xmx6G
+# Размер кучи (-Xms/-Xmx) задают start-windows.bat и start-linux.sh по объёму ОЗУ:
+# до 12 ГБ -> 3G, от 12 ГБ -> 4G, от 16 ГБ -> 6G. Свой размер: HEAP=5G перед запуском.
 # G1 с флагами Aikar: короткие паузы, стабильная память на модовых серверах.
 -XX:+UseG1GC
 -XX:+ParallelRefProcEnabled
 -XX:MaxGCPauseMillis=200
 -XX:+UnlockExperimentalVMOptions
 -XX:+DisableExplicitGC
--XX:+AlwaysPreTouch
 -XX:G1NewSizePercent=30
 -XX:G1MaxNewSizePercent=40
 -XX:G1HeapRegionSize=8M
