@@ -1,0 +1,31 @@
+modLoader="lowcodefml"
+loaderVersion="[47,)"
+license="MIT"
+
+[[mods]]
+modId="zoneraids_pack"
+version="${pack_version}"
+displayName="Zone Raids Pack Data"
+authors="notafloat"
+description='''Pack glue for the Zone Raids modpack: crate loot tables with TaCZ weapons and First Aid medicine.'''
+
+[[dependencies.zoneraids_pack]]
+    modId="zoneraids"
+    mandatory=true
+    versionRange="[0,)"
+    ordering="AFTER"
+    side="BOTH"
+
+[[dependencies.zoneraids_pack]]
+    modId="tacz"
+    mandatory=true
+    versionRange="[1.1,)"
+    ordering="AFTER"
+    side="BOTH"
+
+[[dependencies.zoneraids_pack]]
+    modId="firstaid"
+    mandatory=true
+    versionRange="[0,)"
+    ordering="AFTER"
+    side="BOTH"

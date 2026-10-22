@@ -1,0 +1,23 @@
+# Zone Raids: настройки сборки. Копируется в world/serverconfig/ при создании нового мира.
+# Ключи, которых здесь нет (например [world] из встроенного билдера карты), Forge допишет со значениями по умолчанию.
+
+[matchmaking]
+	lobbyCountdownSeconds = 30
+	fullLobbyCountdownSeconds = 5
+	maxPartySize = 4
+	partyInviteSeconds = 60
+
+[raid]
+	extractSeconds = 10
+	spawnProtectionSeconds = 8
+	protectRaidBlocks = true
+	blockEnderChestInRaid = true
+	forceDropOnRaidDeath = true
+	clearDroppedItemsOnEnd = true
+	returnGearAfterRestart = true
+	showExtractDistance = true
+	blockedCommandsInRaid = ["home", "homes", "spawn", "tpa", "tpahere", "tpaccept", "back", "warp", "rtp", "enderchest", "ec", "kit"]
+
+[hub]
+	hubPvp = false
+	remoteStash = true

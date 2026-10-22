@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+# Boots the built server once, checks that every mod loads, rolls the crate loot tables,
+# prints a memory report and stops. Usage: smoke_test.sh <server-dir> <report-dir>
+set -uo pipefail
+SERVER="$(cd "$1" && pwd)"
+REPORT="$(mkdir -p "$2" && cd "$2" && pwd)"
+cd "$SERVER"
+
+FORGE="$(tr -d '[:space:]' < forge-version.txt)"
+curl -fsSL --retry 4 -o installer.jar \
+  "https://maven.minecraftforge.net/net/minecraftforge/forge/${FORGE}/forge-${FORGE}-installer.jar"
+java -jar installer.jar --installServer > "$REPORT/forge-install.log" 2>&1 || { tail -50 "$REPORT/forge-install.log"; exit 1; }
+rm -f installer.jar installer.jar.log
+
+echo "eula=true" > eula.txt
+# CI runners have less RAM than a real host.
+sed -i -e 's/^-Xms.*/-Xms1G/' -e 's/^-Xmx.*/-Xmx4G/' -e '/AlwaysPreTouch/d' zoneraids_jvm_args.txt
+
+rm -f console.in && mkfifo console.in
+exec 3<>console.in
+java @zoneraids_jvm_args.txt @"libraries/net/minecraftforge/forge/${FORGE}/unix_args.txt" nogui \
+  < console.in > "$REPORT/console.log" 2>&1 &
+PID=$!
+
+status=fail
+for _ in $(seq 1 900); do
+  if grep -q 'Done (' "$REPORT/console.log"; then status=up; break; fi
+  if ! kill -0 "$PID" 2>/dev/null; then break; fi
+  sleep 1
+done
+
+if [ "$status" = up ]; then
+  say() { echo "$1" >&3; sleep "${2:-2}"; }
+  say "forceload add 0 0" 5
+  i=0
+  for table in common military medical; do
+    for roll in 1 2 3; do
+      z=$((i * 2)); i=$((i + 1))
+      say "setblock 0 -60 $z minecraft:chest replace" 1
+      say "loot insert 0 -60 $z loot zoneraids:crates/$table" 1
+      say "data get block 0 -60 $z Items" 1
+    done
+  done
+  say "spark health --memory" 10
+  say "stop" 1
+  wait "$PID"
+  echo "exit code $?"
+else
+  kill "$PID" 2>/dev/null
+  wait "$PID" 2>/dev/null
+fi
+exec 3>&-
+
+cp -f logs/latest.log "$REPORT/latest.log" 2>/dev/null
+cp -f logs/debug.log "$REPORT/debug.log" 2>/dev/null
+cp -rf crash-reports "$REPORT/" 2>/dev/null
+mkdir -p "$REPORT/generated-config"
+cp -rf config "$REPORT/generated-config/config" 2>/dev/null
+cp -rf world/serverconfig "$REPORT/generated-config/serverconfig" 2>/dev/null
+
+echo "===== Mod list ====="
+grep -E 'Found mod file|Loading [0-9]+ mods' "$REPORT/debug.log" 2>/dev/null | tail -5
+echo "===== Errors and warnings worth reading ====="
+grep -nE 'ERROR|Exception|Missing or unsupported mandatory dependencies|Couldn.t parse|Failed to load|Mixin apply failed' \
+  "$REPORT/console.log" | grep -v 'Unable to find spawn biome' | head -150
+
+if [ "$status" != up ]; then
+  echo "SERVER DID NOT START"
+  tail -120 "$REPORT/console.log"
+  exit 1
+fi
+
+echo "===== Loot rolls ====="
+grep -E 'has the following block data' "$REPORT/console.log" | sed 's/.*has the following block data: //' | cut -c1-400
+fail=0
+grep -q 'tacz:' "$REPORT/console.log" || { echo "No TaCZ items rolled from crates"; fail=1; }
+grep -q 'firstaid:' "$REPORT/console.log" || { echo "No First Aid items rolled from crates"; fail=1; }
+grep -qE "Couldn't parse element.*zoneraids|zoneraids:crates.*(error|invalid)" "$REPORT/console.log" && { echo "Crate loot table failed to load"; fail=1; }
+echo "===== Memory ====="
+grep -A12 -iE 'Memory usage|Memory Usage' "$REPORT/console.log" | head -30
+exit $fail

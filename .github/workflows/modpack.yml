@@ -1,0 +1,79 @@
+name: Modpack
+
+on:
+  push:
+    paths:
+      - 'modpack/**'
+      - 'src/**'
+      - 'build.gradle'
+      - 'gradle.properties'
+      - '.github/workflows/modpack.yml'
+  workflow_dispatch:
+    inputs:
+      mod_ref:
+        description: 'Branch or commit to build the Zone Raids mod from (empty = this commit)'
+        required: false
+        default: ''
+
+jobs:
+  modpack:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: gradle/actions/setup-gradle@v3
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/zoneraids-pack
+          key: modpack-jars-${{ hashFiles('modpack/pack.json') }}
+          restore-keys: modpack-jars-
+
+      - name: Use Zone Raids sources from another ref
+        if: ${{ github.event.inputs.mod_ref != '' }}
+        run: |
+          git fetch --depth=1 origin "${{ github.event.inputs.mod_ref }}"
+          git checkout FETCH_HEAD -- src build.gradle gradle.properties settings.gradle
+
+      - name: Build Zone Raids mod
+        run: ./gradlew build --stacktrace
+
+      - name: Build client and server packs
+        run: |
+          JAR="$(ls build/libs/*.jar | grep -v -e sources -e slim | head -1)"
+          python modpack/tools/build_pack.py --zoneraids-jar "$JAR" --out build/modpack
+
+      - name: List item ids (for loot tables)
+        run: python modpack/tools/list_ids.py build/modpack/server/mods | tee build/modpack/item-ids.txt
+
+      - name: Smoke test server
+        run: bash modpack/tools/smoke_test.sh build/modpack/server build/modpack/report
+
+      - name: TaCZ gun packs extracted at runtime
+        if: always()
+        run: python modpack/tools/list_ids.py build/modpack/server/tacz | tee build/modpack/report/tacz-runtime-ids.txt || true
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ZoneRaids-client-mrpack
+          path: build/modpack/*.mrpack
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ZoneRaids-server
+          path: build/modpack/*-server.zip
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: modpack-report
+          path: |
+            build/modpack/mods.lock.json
+            build/modpack/item-ids.txt
+            build/modpack/report/
