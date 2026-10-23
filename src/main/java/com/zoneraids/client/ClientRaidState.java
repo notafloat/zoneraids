@@ -1,6 +1,7 @@
 package com.zoneraids.client;
 
 import com.zoneraids.network.RaidHudPacket;
+import com.zoneraids.network.ShopDataPacket;
 import com.zoneraids.network.TerminalDataPacket;
 import org.jetbrains.annotations.Nullable;
 
@@ -10,6 +11,8 @@ public final class ClientRaidState {
     public static TerminalDataPacket terminal;
     @Nullable
     public static RaidHudPacket hud;
+    @Nullable
+    public static ShopDataPacket shop;
     public static long hudReceivedAt;
 
     private ClientRaidState() {
@@ -18,6 +21,7 @@ public final class ClientRaidState {
     public static void reset() {
         terminal = null;
         hud = null;
+        shop = null;
         hudReceivedAt = 0;
     }
 }

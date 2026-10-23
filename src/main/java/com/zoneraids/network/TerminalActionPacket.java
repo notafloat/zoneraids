@@ -10,7 +10,8 @@ import java.util.function.Supplier;
 /** Client -> server: a button press in the raid terminal. */
 public record TerminalActionPacket(Action action, String arg) {
     public enum Action {
-        OPEN, REFRESH, JOIN, LEAVE_QUEUE, STASH, LEAVE_PARTY, ACCEPT_INVITE, BUY_PERK, WATCH, STOP_WATCH
+        OPEN, REFRESH, JOIN, LEAVE_QUEUE, STASH, LEAVE_PARTY, ACCEPT_INVITE, BUY_PERK, WATCH, STOP_WATCH,
+        SHOP, SHOP_BUY, SHOP_SELL, SHOP_SELL_ALL
     }
 
     private static final int MAX_ARG = 64;

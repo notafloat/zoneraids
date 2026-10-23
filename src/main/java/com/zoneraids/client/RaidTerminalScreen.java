@@ -12,8 +12,8 @@ import net.minecraft.network.chat.Component;
 import java.util.List;
 
 /**
- * Raid terminal: map list with matchmaking state, join/leave, stash shortcut, party and stats, and the
- * way to watching players in raids.
+ * Raid terminal: map list with matchmaking state, join/leave, stash shortcut, party and stats, the
+ * way to watching players in raids and to the trader.
  * Widgets are rebuilt whenever new data arrives; while open it asks for a refresh every 2 seconds.
  * The terminal key closes it again, the mouse wheel turns map pages.
  */
@@ -85,6 +85,9 @@ public final class RaidTerminalScreen extends Screen {
                 Component.translatable("zoneraids.terminal.watch", data.watchable().size()), b -> minecraft.setScreen(new WatchScreen(this)));
         watch.active = !data.inRaid() && (!data.watchable().isEmpty() || !data.watching().isEmpty());
         addRenderableWidget(watch);
+        ZoneButton shop = new ZoneButton(left + 134, py, 90, 13, Component.translatable("zoneraids.terminal.shop"), b -> send(Action.SHOP, ""));
+        shop.active = data.canShop();
+        addRenderableWidget(shop);
         if (pages > 1) {
             ZoneButton prev = new ZoneButton(left + PANEL_W - 84, py, 20, 13, Component.literal("<"), b -> turn(-1));
             prev.active = page > 0;

@@ -26,6 +26,7 @@ public final class PlayerRaidData {
     private static final String MATCH = "Match";
     private static final String PERKS = "Perks";
     private static final String PERK_POINTS = "PerkPoints";
+    private static final String MONEY = "Money";
     public static final String STASH = "Stash";
 
     private PlayerRaidData() {
@@ -126,5 +127,14 @@ public final class PlayerRaidData {
 
     public static void addPerkPoints(Player player, int points) {
         setPerkPoints(player, getPerkPoints(player) + points);
+    }
+
+    /** Trader money. Not an item, so it cannot be dropped, looted or lost in a raid. */
+    public static long getMoney(Player player) {
+        return root(player).getLong(MONEY);
+    }
+
+    public static void setMoney(Player player, long money) {
+        root(player).putLong(MONEY, Math.max(0, money));
     }
 }

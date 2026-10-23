@@ -24,6 +24,8 @@ public final class WorldSetup {
     private static final String CORDON_LAYOUT = "cordon@2";
     /** Enemy points are added to an already built Cordon without rebuilding it. Bump to reset them. */
     private static final String CORDON_ENEMIES = "cordon-enemies@1";
+    /** The trader's counter is added to an already built hub without rebuilding it. */
+    private static final String HUB_TRADER = "hub-trader@1";
     /** Weapon crates are added to an already built Cordon without rebuilding it. */
     private static final String CORDON_WEAPONS = "cordon-weapons@1";
 
@@ -37,6 +39,9 @@ public final class WorldSetup {
         RaidWorldData data = RaidWorldData.get(server);
         if (!data.isBuilt(HUB_LAYOUT)) {
             buildHub();
+        } else if (!data.isBuilt(HUB_TRADER)) {
+            WorldBuilder.enqueue(new WorldBuilder.Job(HUB, ZoneDimensions.HUB, HubBuilder.traderSteps(),
+                    s -> RaidWorldData.get(s).markBuilt(HUB_TRADER)));
         }
         if (!data.isBuilt(CORDON_LAYOUT)) {
             buildCordon(server);
@@ -64,6 +69,7 @@ public final class WorldSetup {
             RaidWorldData data = RaidWorldData.get(server);
             data.setHub(new HubPoint(ZoneDimensions.HUB, HubBuilder.SPAWN_X, HubBuilder.SPAWN_Y, HubBuilder.SPAWN_Z, HubBuilder.SPAWN_YAW, 0.0F));
             data.markBuilt(HUB_LAYOUT);
+            data.markBuilt(HUB_TRADER);
             RaidManager manager = RaidManager.get();
             if (manager != null && RaidConfig.FORCE_HUB_ON_LOGIN.get()) {
                 server.getPlayerList().getPlayers().forEach(manager::sendToHubIfOutside);
