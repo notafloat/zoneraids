@@ -1,6 +1,7 @@
 package com.zoneraids.util;
 
 import com.mojang.logging.LogUtils;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -11,11 +12,14 @@ import org.slf4j.Logger;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
 /**
  * Reads Anomaly Zone's player state for the PDA without a compile-time dependency: the bonuses and
  * contamination of the worn artifact container (computed the way Anomaly Zone does it, from the
- * container's NBT), stamina and food buffs (client-side copies Anomaly Zone keeps synced).
+ * container's NBT) and food buffs (a client-side copy Anomaly Zone keeps synced), and drives its stamina.
  */
 public final class AnomalyZoneCompat {
     private static final Logger LOGGER = LogUtils.getLogger();
@@ -35,6 +39,9 @@ public final class AnomalyZoneCompat {
     }
 
     private static boolean failed;
+    private static boolean staminaFailed;
+    private static Map<UUID, Float> staminaMap;
+    private static Set<UUID> staminaLocks;
     private static Field[] statFields;
 
     private AnomalyZoneCompat() {
@@ -83,25 +90,31 @@ public final class AnomalyZoneCompat {
         }
     }
 
-    /** Stamina from 0 to 1, or -1 without Anomaly Zone. Client side. */
-    public static float stamina() {
-        if (!loaded()) {
-            return -1.0F;
+    /**
+     * Makes Anomaly Zone's server-side stamina follow ours: its value set to ours and its sprint lock lifted,
+     * so its own drain, lock and client sprint block never act on their own. Its handler keeps the values in
+     * private static maps ({@code StaminaHandler.stamina}, {@code sprintLocked}).
+     */
+    @SuppressWarnings("unchecked")
+    public static void driveStamina(ServerPlayer player, float stamina) {
+        if (staminaFailed || !loaded()) {
+            return;
         }
         try {
-            float value = (Float) Class.forName("com.anomalyzone.ClientStaminaData").getMethod("get").invoke(null);
-            return Math.max(0.0F, Math.min(1.0F, value / 100.0F));
-        } catch (ReflectiveOperationException | ClassCastException | LinkageError e) {
-            return -1.0F;
-        }
-    }
-
-    /** True while sprinting is locked after running out of stamina. Client side. */
-    public static boolean staminaLocked() {
-        try {
-            return loaded() && (Boolean) Class.forName("com.anomalyzone.ClientStaminaData").getMethod("isLocked").invoke(null);
-        } catch (ReflectiveOperationException | ClassCastException | LinkageError e) {
-            return false;
+            if (staminaMap == null) {
+                Class<?> handler = Class.forName("com.anomalyzone.StaminaHandler");
+                Field map = handler.getDeclaredField("stamina");
+                Field locked = handler.getDeclaredField("sprintLocked");
+                map.setAccessible(true);
+                locked.setAccessible(true);
+                staminaLocks = (Set<UUID>) locked.get(null);
+                staminaMap = (Map<UUID, Float>) map.get(null);
+            }
+            staminaMap.put(player.getUUID(), stamina);
+            staminaLocks.remove(player.getUUID());
+        } catch (ReflectiveOperationException | ClassCastException | LinkageError | RuntimeException e) {
+            staminaFailed = true;
+            LOGGER.warn("Zone Raids: could not reach Anomaly Zone's stamina, it runs on its own", e);
         }
     }
 

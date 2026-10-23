@@ -114,19 +114,12 @@ public final class StatusScreen extends Screen {
             y += 13;
         }
 
-        // Our own stamina (sprinting, jumping, load) and Anomaly Zone's, which also locks sprinting.
+        // Stamina (sprinting, jumping, load). Anomaly Zone's own stamina follows it (see Fatigue).
         boolean exhausted = MovementClient.exhausted();
         g.drawString(font, Component.translatable("zoneraids.pda.status.stamina", Math.round(MovementClient.stamina() * 100)), x, y,
                 exhausted ? ZoneUi.RED : ZoneUi.TEXT);
         ZoneUi.bar(g, x + 96, y + 2, w - 96, 4, MovementClient.stamina(), exhausted ? ZoneUi.RED : ZoneUi.AMBER);
         y += 11;
-        float azStamina = AnomalyZoneCompat.stamina();
-        if (azStamina >= 0) {
-            boolean locked = AnomalyZoneCompat.staminaLocked();
-            g.drawString(font, Component.translatable("zoneraids.pda.status.az_stamina", Math.round(azStamina * 100)), x, y, locked ? ZoneUi.RED : ZoneUi.TEXT);
-            ZoneUi.bar(g, x + 96, y + 2, w - 96, 4, azStamina, locked ? ZoneUi.RED : ZoneUi.GREEN);
-            y += 11;
-        }
         y += 2;
 
         y = section(g, x, y, w, "zoneraids.pda.status.body");

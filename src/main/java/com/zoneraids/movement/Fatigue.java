@@ -3,6 +3,7 @@ package com.zoneraids.movement;
 import com.zoneraids.ZoneRaids;
 import com.zoneraids.network.RaidNetwork;
 import com.zoneraids.network.StaminaPacket;
+import com.zoneraids.util.AnomalyZoneCompat;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
@@ -11,6 +12,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
@@ -23,6 +25,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * the load; standing still restores it fastest. At zero the player is exhausted: no sprinting (the client
  * holds it back, see MovementClient) and slower until a quarter is back. The load slows the player through a
  * movement speed modifier, so the speed is the server's and the same for every client.
+ *
+ * Anomaly Zone has a stamina of its own that also locks sprinting and cannot be turned off in its config.
+ * This handler runs after it (LOWEST) and sets it to ours every tick, so there is one stamina.
  */
 @Mod.EventBusSubscriber(modid = ZoneRaids.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class Fatigue {
@@ -57,7 +62,7 @@ public final class Fatigue {
         return 1.0F + s.load / 30.0F;
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
         if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer player)) {
             return;
@@ -68,6 +73,7 @@ public final class Fatigue {
             s.exhausted = false;
             s.load = 0.0F;
             applySpeed(player, 0.0F, false);
+            AnomalyZoneCompat.driveStamina(player, s.stamina);
             sync(player, s);
             return;
         }
@@ -90,6 +96,7 @@ public final class Fatigue {
         if (exhausted && player.isSprinting()) {
             player.setSprinting(false);
         }
+        AnomalyZoneCompat.driveStamina(player, s.stamina);
         sync(player, s);
     }
 
