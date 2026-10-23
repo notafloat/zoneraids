@@ -19,6 +19,10 @@ public final class ClientPacketHandlers {
         }
     }
 
+    public static void openCordonMap() {
+        Minecraft.getInstance().setScreen(new CordonMapScreen());
+    }
+
     public static void handleHud(RaidHudPacket packet) {
         ClientRaidState.hud = packet.active() ? packet : null;
         ClientRaidState.hudReceivedAt = Util.getMillis();
