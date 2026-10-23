@@ -8,6 +8,7 @@ import com.zoneraids.data.PlayerRaidData.Stat;
 import com.zoneraids.data.RaidMap;
 import com.zoneraids.data.RaidWorldData;
 import com.zoneraids.data.SpawnPoint;
+import com.zoneraids.menu.ArtifactContainerMenu;
 import com.zoneraids.network.RaidHudPacket;
 import com.zoneraids.network.RaidNetwork;
 import com.zoneraids.network.TerminalActionPacket;
@@ -17,6 +18,7 @@ import com.zoneraids.perk.PerkService;
 import com.zoneraids.registry.ModRegistry;
 import com.zoneraids.shop.ShopService;
 import com.zoneraids.util.CuriosCompat;
+import com.zoneraids.util.FirstAidCompat;
 import com.zoneraids.util.Teleports;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -1272,6 +1274,21 @@ public final class RaidManager {
             }
             case SHOP_SELL_ALL -> {
                 ShopService.sell(player, arg, true);
+                return;
+            }
+            case CONTAINER -> {
+                ArtifactContainerMenu.open(player);
+                return;
+            }
+            case HEAL -> {
+                String[] parts = arg.split(" ");
+                if (parts.length == 2) {
+                    try {
+                        FirstAidCompat.heal(player, Integer.parseInt(parts[0]), FirstAidCompat.Part.valueOf(parts[1]));
+                    } catch (IllegalArgumentException ignored) {
+                        // Malformed request: nothing to do.
+                    }
+                }
                 return;
             }
         }

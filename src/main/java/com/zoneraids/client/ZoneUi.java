@@ -140,4 +140,16 @@ public final class ZoneUi {
         g.fill(x - 1, y - 1, x + 17, y + 17, 0xE00C0D09);
         outline(g, x - 1, y - 1, x + 17, y + 17, EDGE);
     }
+
+    /** Badge for a contamination type: a dark square with the hazard's sign, edged and coloured by its level. */
+    public static void hazard(GuiGraphics g, Font font, int x, int y, int size, String glyph, int color) {
+        g.fill(x, y, x + size, y + size, 0xC0000000);
+        outline(g, x, y, x + size, y + size, color);
+        g.drawCenteredString(font, glyph, x + size / 2, y + (size - 8) / 2, color);
+    }
+
+    /** Green when there is none, amber while harmless, red once it hurts. */
+    public static int hazardColor(double value, double harmful) {
+        return value <= 0 ? GREEN : value > harmful ? RED : AMBER;
+    }
 }

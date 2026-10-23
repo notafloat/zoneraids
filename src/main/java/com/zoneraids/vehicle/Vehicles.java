@@ -29,7 +29,7 @@ public final class Vehicles {
             () -> EntityType.Builder.<PitBike>of(PitBike::new, MobCategory.MISC)
                     .sized(1.1F, 1.0F)
                     .clientTrackingRange(8)
-                    .updateInterval(3)
+                    .updateInterval(1)
                     // The driver's client owns the motion; server velocity packets would only reset its fall speed.
                     .setShouldReceiveVelocityUpdates(false)
                     .build(ZoneRaids.MODID + ":pit_bike"));
