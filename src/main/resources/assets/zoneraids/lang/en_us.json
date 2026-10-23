@@ -10,9 +10,11 @@
   "entity.zoneraids.flesh": "Flesh",
   "entity.zoneraids.snork": "Snork",
   "item.zoneraids.cordon_map": "Cordon map",
+  "item.zoneraids.pit_bike": "Pit Bike",
   "itemGroup.zoneraids": "Zone Raids",
   "key.categories.zoneraids": "Zone Raids",
   "key.zoneraids.terminal": "Raid terminal",
+  "subtitles.zoneraids.pit_bike_engine": "Bike engine runs",
   "zoneraids.admin.crate_set": "Crate loot table: %s",
   "zoneraids.admin.enemy_no_room": "No room to place %s here.",
   "zoneraids.admin.enemy_spawned": "Spawned %s enemies (%s).",
@@ -104,5 +106,9 @@
   "zoneraids.terminal.status_hub": "Hub",
   "zoneraids.terminal.status_queue": "Queue: %s",
   "zoneraids.terminal.status_raid": "In raid",
-  "zoneraids.terminal.title": "RAID TERMINAL"
+  "zoneraids.terminal.title": "RAID TERMINAL",
+  "zoneraids.vehicle.admin.added": "Vehicle point added to %s (%s in total).",
+  "zoneraids.vehicle.admin.cleared": "Removed %2$s vehicle points from %1$s.",
+  "zoneraids.vehicle.admin.list": "Vehicle points on %s: %s",
+  "zoneraids.vehicle.admin.reset": "Cordon vehicle points reset to the defaults."
 }
