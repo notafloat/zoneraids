@@ -14,6 +14,8 @@ public final class ClientPacketHandlers {
         Minecraft mc = Minecraft.getInstance();
         if (mc.screen instanceof RaidTerminalScreen screen) {
             screen.onDataUpdated();
+        } else if (mc.screen instanceof PerksScreen screen) {
+            screen.onDataUpdated();
         } else if (packet.open()) {
             mc.setScreen(new RaidTerminalScreen());
         }
