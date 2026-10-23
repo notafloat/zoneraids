@@ -8,6 +8,7 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraftforge.client.gui.overlay.ForgeGui;
 import net.minecraftforge.client.gui.overlay.IGuiOverlay;
@@ -37,6 +38,8 @@ public final class RaidHudOverlay implements IGuiOverlay {
         if (hud == null || player == null || mc.options.hideGui) {
             return;
         }
+        // Watching a raider: arrows point from the raider, not from the spectator.
+        Entity view = mc.getCameraEntity() != null ? mc.getCameraEntity() : player;
         Font font = mc.font;
         long elapsed = (Util.getMillis() - ClientRaidState.hudReceivedAt) / 1000L;
         int seconds = (int) Math.max(0, hud.secondsLeft() - elapsed);
@@ -60,7 +63,7 @@ public final class RaidHudOverlay implements IGuiOverlay {
         } else {
             if (round.hasTarget()) {
                 rows.add(new Row(Component.literal("◆ ").append(round.targetLabel()),
-                        direction(player, round.tx(), round.tz()), ZoneUi.AMBER));
+                        direction(view, round.tx(), round.tz()), ZoneUi.AMBER));
             }
             if (!round.status().getString().isEmpty()) {
                 rows.add(new Row(round.status(), null, ZoneUi.TEXT));
@@ -72,7 +75,7 @@ public final class RaidHudOverlay implements IGuiOverlay {
             for (RaidHudPacket.ExtractEntry extract : hud.extracts()) {
                 boolean here = extract.name().equals(hud.extracting());
                 rows.add(new Row(Component.literal((here ? "● " : "○ ") + extract.name()),
-                        extract.hasPos() ? direction(player, extract.x(), extract.z()) : null,
+                        extract.hasPos() ? direction(view, extract.x(), extract.z()) : null,
                         here ? ZoneUi.GREEN : ZoneUi.TEXT));
             }
         }
@@ -117,7 +120,7 @@ public final class RaidHudOverlay implements IGuiOverlay {
         }
     }
 
-    private static Component direction(LocalPlayer player, double x, double z) {
+    private static Component direction(Entity player, double x, double z) {
         int dist = (int) Math.sqrt(sq(player.getX() - x) + sq(player.getZ() - z));
         String arrow = ZoneUi.arrow(player.getX(), player.getZ(), player.getYRot(), x, z);
         return Component.literal(arrow + " ").append(Component.translatable("zoneraids.hud.meters", dist));

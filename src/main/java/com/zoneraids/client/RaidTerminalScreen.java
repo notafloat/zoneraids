@@ -12,7 +12,8 @@ import net.minecraft.network.chat.Component;
 import java.util.List;
 
 /**
- * Raid terminal: map list with matchmaking state, join/leave, stash shortcut, party and stats.
+ * Raid terminal: map list with matchmaking state, join/leave, stash shortcut, party and stats, and the
+ * way to watching players in raids.
  * Widgets are rebuilt whenever new data arrives; while open it asks for a refresh every 2 seconds.
  * The terminal key closes it again, the mouse wheel turns map pages.
  */
@@ -79,8 +80,12 @@ public final class RaidTerminalScreen extends Screen {
             addRenderableWidget(button);
         }
 
+        int py = top + LIST_Y + ROWS_PER_PAGE * ROW_H + 1;
+        ZoneButton watch = new ZoneButton(left + 10, py, 120, 13,
+                Component.translatable("zoneraids.terminal.watch", data.watchable().size()), b -> minecraft.setScreen(new WatchScreen(this)));
+        watch.active = !data.inRaid() && (!data.watchable().isEmpty() || !data.watching().isEmpty());
+        addRenderableWidget(watch);
         if (pages > 1) {
-            int py = top + LIST_Y + ROWS_PER_PAGE * ROW_H + 1;
             ZoneButton prev = new ZoneButton(left + PANEL_W - 84, py, 20, 13, Component.literal("<"), b -> turn(-1));
             prev.active = page > 0;
             addRenderableWidget(prev);
@@ -159,9 +164,11 @@ public final class RaidTerminalScreen extends Screen {
             return;
         }
         Component status = data.inRaid() ? Component.translatable("zoneraids.terminal.status_raid")
+                : !data.watching().isEmpty() ? Component.translatable("zoneraids.watch.current", data.watching())
                 : data.queuedMap().isEmpty() ? Component.translatable("zoneraids.terminal.status_hub")
                 : Component.translatable("zoneraids.terminal.status_queue", data.queuedMap());
-        int statusColor = data.inRaid() ? ZoneUi.RED : data.queuedMap().isEmpty() ? ZoneUi.DIM : ZoneUi.AMBER;
+        int statusColor = data.inRaid() ? ZoneUi.RED : !data.watching().isEmpty() ? ZoneUi.GREEN
+                : data.queuedMap().isEmpty() ? ZoneUi.DIM : ZoneUi.AMBER;
         ZoneUi.header(g, font, left, top, right, title, ZoneUi.AMBER, status, statusColor);
 
         List<TerminalDataPacket.MapEntry> maps = data.maps();

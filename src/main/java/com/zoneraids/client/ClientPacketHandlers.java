@@ -16,6 +16,8 @@ public final class ClientPacketHandlers {
             screen.onDataUpdated();
         } else if (mc.screen instanceof PerksScreen screen) {
             screen.onDataUpdated();
+        } else if (mc.screen instanceof WatchScreen screen) {
+            screen.onDataUpdated();
         } else if (packet.open()) {
             mc.setScreen(new RaidTerminalScreen());
         }
