@@ -142,7 +142,7 @@ echo "===== Trader ====="
 grep -E 'Zone Raids shop|Trader: ' "$REPORT/console.log" | cut -c1-400
 grep -qE 'Zone Raids shop: (unknown item|cannot read)' "$REPORT/console.log" && { echo "Trader price lists name items that are not installed"; fail=1; }
 echo "===== Raid enemies ====="
-grep -E 'MISSING|= .* OK|test spawn|Spawned|No room|Unknown or missing enemy|ENEMY_CHECK|has the following entity data|Zone Raids: (bad )?enemy' "$REPORT/console.log" | cut -c1-2500
+grep -E 'MISSING|= .* OK|test spawn|Spawned|No room|Unknown or missing enemy|ENEMY_CHECK|has the following entity data|Zone Raids: (bad )?enemy|fire from the hip' "$REPORT/console.log" | cut -c1-2500
 for f in config/tacznpc*.json config/tacznpcs*.json config/tacznpcs/*.json; do
   [ -f "$f" ] && { echo "--- $f"; head -c 4000 "$f"; echo; }
 done
@@ -152,6 +152,7 @@ done
 # No "sed | grep -q": with pipefail the early exit of grep fails the pipeline.
 ENEMY_LOG="$(sed -n '/ENEMY_CHECK_START/,/ENEMY_CHECK_END/p' "$REPORT/console.log")"
 grep -q 'tacz:modern_kinetic_gun' <<< "$ENEMY_LOG" || { echo "Armed NPC holds no TaCZ gun"; fail=1; }
+grep -q 'enemies fire from the hip' "$REPORT/console.log" || { echo "Armed NPCs can still aim down sights"; fail=1; }
 grep -qE 'has the following entity data: \{(Count|id):' <<< "$ENEMY_LOG" || { echo "Killed enemies dropped no loot"; fail=1; }
 echo "===== Memory ====="
 grep -A12 -iE 'Memory usage|Memory Usage' "$REPORT/console.log" | head -30

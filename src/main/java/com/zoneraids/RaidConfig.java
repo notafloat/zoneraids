@@ -37,6 +37,9 @@ public final class RaidConfig {
     public static final ForgeConfigSpec.DoubleValue MUTANT_DAMAGE_MULTIPLIER;
     public static final ForgeConfigSpec.DoubleValue NPC_DAMAGE_MULTIPLIER;
     public static final ForgeConfigSpec.DoubleValue ENEMY_MAX_DAMAGE_PER_HIT;
+    public static final ForgeConfigSpec.DoubleValue NPC_MAX_DAMAGE_PER_HIT;
+    public static final ForgeConfigSpec.IntValue ENEMY_DAMAGE_WINDOW;
+    public static final ForgeConfigSpec.BooleanValue NPC_HIP_FIRE_ONLY;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> ENEMY_TYPES;
     public static final ForgeConfigSpec.BooleanValue ANOMALIES;
     public static final ForgeConfigSpec.DoubleValue ANOMALY_DAMAGE;
@@ -136,10 +139,19 @@ public final class RaidConfig {
                 .defineInRange("mutantDamageMultiplier", 1.0, 0.0, 10.0);
         NPC_DAMAGE_MULTIPLIER = b.comment("Multiplier for damage armed NPCs (their guns) deal to players. TaCZ guns are tuned for",
                         "players with 20 HP; with First Aid's 4 HP head an unscaled bullet often kills outright.")
-                .defineInRange("npcDamageMultiplier", 0.35, 0.0, 10.0);
-        ENEMY_MAX_DAMAGE_PER_HIT = b.comment("Most damage one hit or bullet from a raid enemy can deal to a player, after the multipliers",
-                        "and difficulty, before armor. 3.5 keeps every body part (First Aid: head 4 HP) alive after a single hit.")
+                .defineInRange("npcDamageMultiplier", 0.25, 0.0, 10.0);
+        ENEMY_MAX_DAMAGE_PER_HIT = b.comment("Most damage a mutant can deal to a player in one hit window (see damageWindowTicks), after the",
+                        "multipliers and difficulty, before armor. 3.5 keeps every body part (First Aid: head 4 HP) alive after a single bite.")
                 .defineInRange("maxDamagePerHit", 3.5, 0.5, 100.0);
+        NPC_MAX_DAMAGE_PER_HIT = b.comment("Most damage armed NPCs can deal to a player in one hit window. NPCs aim at the head, so with",
+                        "First Aid's 4 HP head 1.5 means at least three hits to kill.")
+                .defineInRange("npcMaxDamagePerHit", 1.5, 0.5, 100.0);
+        ENEMY_DAMAGE_WINDOW = b.comment("All raid-enemy damage a player takes within this many ticks after a hit counts as one hit for the",
+                        "caps above. A TaCZ bullet hurts twice (normal and armor-piercing part), and bursts land within a few ticks.")
+                .defineInRange("damageWindowTicks", 10, 1, 100);
+        NPC_HIP_FIRE_ONLY = b.comment("Keep armed NPCs from aiming down sights. Aimed, a TaCZ NPC hits the head almost every shot;",
+                        "from the hip its bullets spread like a player's.")
+                .define("npcHipFireOnly", true);
         ENEMY_TYPES = b.comment("Enemy kinds used by enemy points: kind=entity_id or kind=entity_id{nbt}.",
                         "Kinds whose entity is not installed are skipped. On death an enemy also drops loot from",
                         "zoneraids:enemies/<kind>; armed kinds get gear from zoneraids:enemies/<kind>_gear when that table has items.")

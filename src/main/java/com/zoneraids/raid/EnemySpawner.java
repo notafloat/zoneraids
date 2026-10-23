@@ -34,13 +34,16 @@ import net.minecraftforge.registries.ForgeRegistries;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -76,6 +79,17 @@ public final class EnemySpawner {
     private static List<? extends String> parsedFrom;
     private static Map<String, EnemyType> types = Map.of();
     private static final Set<String> warned = new HashSet<>();
+    private static final Map<UUID, DamageWindow> damageWindows = new HashMap<>();
+    private static final Map<Class<?>, Optional<Method>> aimMethods = new HashMap<>();
+
+    private static final class DamageWindow {
+        final long start;
+        float dealt;
+
+        DamageWindow(long start) {
+            this.start = start;
+        }
+    }
 
     private EnemySpawner() {
     }
@@ -190,6 +204,9 @@ public final class EnemySpawner {
                 // TaCZ NPCs re-enable it when their loadout is applied on the first tick.
                 mob.setCanPickUpLoot(false);
             }
+            if (RaidConfig.NPC_HIP_FIRE_ONLY.get()) {
+                stopAiming(mob);
+            }
             if (mob.getTarget() != null) {
                 continue;
             }
@@ -268,14 +285,57 @@ public final class EnemySpawner {
      * every single hit survivable at full health.
      */
     public static void scaleDamageToPlayer(LivingHurtEvent event) {
-        if (!(event.getEntity() instanceof ServerPlayer) || !(event.getSource().getEntity() instanceof LivingEntity attacker)
+        if (!(event.getEntity() instanceof ServerPlayer player) || !(event.getSource().getEntity() instanceof LivingEntity attacker)
                 || !attacker.getPersistentData().contains(TAG_KIND)) {
             return;
         }
         ResourceLocation id = ForgeRegistries.ENTITY_TYPES.getKey(attacker.getType());
         boolean mutant = id != null && id.getNamespace().equals(ZoneRaids.MODID);
         double multiplier = mutant ? RaidConfig.MUTANT_DAMAGE_MULTIPLIER.get() : RaidConfig.NPC_DAMAGE_MULTIPLIER.get();
-        event.setAmount((float) Math.min(event.getAmount() * multiplier, RaidConfig.ENEMY_MAX_DAMAGE_PER_HIT.get()));
+        double cap = mutant ? RaidConfig.ENEMY_MAX_DAMAGE_PER_HIT.get() : RaidConfig.NPC_MAX_DAMAGE_PER_HIT.get();
+        // Hits inside one window share the cap: a TaCZ bullet calls hurt() twice and resets invulnerability in between.
+        long now = player.serverLevel().getGameTime();
+        DamageWindow window = damageWindows.get(player.getUUID());
+        if (window == null || now - window.start >= RaidConfig.ENEMY_DAMAGE_WINDOW.get()) {
+            window = new DamageWindow(now);
+            damageWindows.put(player.getUUID(), window);
+        }
+        float amount = (float) Math.min(event.getAmount() * multiplier, cap - window.dealt);
+        if (amount <= 0) {
+            event.setCanceled(true);
+            return;
+        }
+        window.dealt += amount;
+        event.setAmount(amount);
+    }
+
+    /**
+     * TaCZ NPCs aim down sights beyond a few blocks, which cuts their spread from 5 to 0.15 and puts nearly every
+     * bullet into the head they look at. Resetting the aim every tick keeps them on hip-fire spread.
+     */
+    private static void stopAiming(Mob mob) {
+        Method aim = aimMethods.computeIfAbsent(mob.getClass(), c -> {
+            try {
+                Method method = c.getMethod("aim", boolean.class);
+                LOGGER.info("Zone Raids: {} enemies fire from the hip", c.getSimpleName());
+                return Optional.of(method);
+            } catch (NoSuchMethodException e) {
+                return Optional.empty();
+            }
+        }).orElse(null);
+        if (aim == null) {
+            return;
+        }
+        try {
+            aim.invoke(mob, false);
+        } catch (ReflectiveOperationException | RuntimeException e) {
+            aimMethods.put(mob.getClass(), Optional.empty());
+            LOGGER.warn("Cannot stop {} from aiming; it keeps its full accuracy", mob.getType(), e);
+        }
+    }
+
+    public static void forgetPlayer(UUID player) {
+        damageWindows.remove(player);
     }
 
     /** Adds the kind's loot table ({@code zoneraids:enemies/<kind>}) to an enemy's drops. */
@@ -322,6 +382,9 @@ public final class EnemySpawner {
             equip(level, mob, type.kind());
             // Enemies must not hoover up what raiders drop: loot comes only from their own tables.
             mob.setCanPickUpLoot(false);
+            if (RaidConfig.NPC_HIP_FIRE_ONLY.get()) {
+                stopAiming(mob);
+            }
             mob.setYHeadRot(mob.getYRot());
             if (raid != null) {
                 mob.setPersistenceRequired();

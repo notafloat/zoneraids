@@ -100,6 +100,7 @@ public final class RaidEvents {
 
     @SubscribeEvent
     public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
+        EnemySpawner.forgetPlayer(event.getEntity().getUUID());
         RaidManager manager = RaidManager.get();
         if (manager != null && event.getEntity() instanceof ServerPlayer player) {
             manager.onLogout(player);
