@@ -80,7 +80,7 @@ public final class LeanClient {
     }
 
     /** Whether a modifier is physically held; its key may be shared (Alt with tactical sprint, Ctrl with sprint). */
-    private static boolean held(KeyMapping key) {
+    static boolean held(KeyMapping key) {
         InputConstants.Key k = key.getKey();
         if (k.getType() == InputConstants.Type.KEYSYM && k.getValue() != InputConstants.UNKNOWN.getValue()) {
             return InputConstants.isKeyDown(Minecraft.getInstance().getWindow().getWindow(), k.getValue());
@@ -89,7 +89,7 @@ public final class LeanClient {
     }
 
     /**
-     * Escape from Tarkov's lean controls: Q/E lean fully (toggled or held, see LeanSettings), the lean modifier
+     * Escape from Tarkov's lean controls: Q/E lean fully (toggled or held, see ClientSettings), the lean modifier
      * (Alt) with the wheel leans by steps and the lean stays, the stance modifier (Ctrl) with the wheel lowers
      * or raises the stance. A press of Q/E clears a wheel lean; sprinting stands up straight.
      */
@@ -103,7 +103,7 @@ public final class LeanClient {
         if (player == null || mc.level == null) {
             return;
         }
-        boolean toggle = LeanSettings.toggle();
+        boolean toggle = ClientSettings.toggle();
         while (ClientSetup.LEAN_LEFT.consumeClick()) {
             lean = toggle && lean > -0.99F ? -1.0F : 0.0F;
         }
