@@ -29,6 +29,10 @@
 
 Очередь запускает не один рейд, а **сессию**: три раунда на одной карте с одними и теми же игроками.
 Между раундами минута в хабе (`intermissionSeconds`), схрон в это время доступен, встать в другую очередь нельзя.
+Следующий раунд начинается сам: за 10 секунд идёт обратный отсчёт, потом всех участников сессии переносит на карту
+(наблюдателей тоже). Кто в этот момент лежал мёртвым или был не в сети, попадает в раунд сам, как только возродится
+или зайдёт, если это случилось в первые `lateJoinSeconds` секунд раунда (по умолчанию 60). Один раз за раунд: погибший
+в раунде обратно не возвращается.
 
 | Раунд | Что происходит |
 |---|---|
@@ -195,7 +199,7 @@
 показ расстояния до выходов, список запрещённых в рейде команд, наблюдение за рейдами (`spectating`). Секция `[world]`: `autoSetup`,
 `buildMillisPerTick`, `forceHubOnLogin`, `protectHubBlocks`, `giveMapInHub`, `anomalyBlocks`. Секция
 `[anomalies]`: `enabled`, `damageMultiplier`, `artifactChance`, `artifactItems`. Секция `[enemies]`: враги рейда. Секция `[session]`:
-`rounds`, `intermissionSeconds`, `secondRoundMinutes`, `deathmatchMinutes`, `secondRoundModes`, `dropCaptureSeconds`,
+`rounds`, `intermissionSeconds`, `lateJoinSeconds`, `secondRoundMinutes`, `deathmatchMinutes`, `secondRoundModes`, `dropCaptureSeconds`,
 `dropRadius`, `dropLootTable`, `dropLootRolls`, `zoneDamage`, `starterKit`, `roundKitLootTable`.
 
 ## Лут и совместимость

@@ -75,6 +75,7 @@ public final class RaidEvents {
         RaidManager manager = RaidManager.get();
         if (manager != null && event.getEntity() instanceof ServerPlayer player) {
             manager.onLogin(player);
+            manager.tryLateJoin(player);
         }
     }
 
@@ -91,6 +92,7 @@ public final class RaidEvents {
         RaidManager manager = RaidManager.get();
         if (manager != null && !event.isEndConquered() && event.getEntity() instanceof ServerPlayer player) {
             manager.onRespawn(player);
+            manager.tryLateJoin(player);
         }
     }
 
