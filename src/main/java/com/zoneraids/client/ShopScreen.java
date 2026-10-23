@@ -8,7 +8,6 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,11 +15,11 @@ import java.util.List;
 /**
  * The hub trader: a "sell" tab with the artifacts the trader buys (and how many the player carries),
  * then one tab per category of goods. Same PDA look as the terminal; only fills, text and item icons.
- * Opened from the trader counter or the terminal; the terminal key closes it, the wheel turns pages.
+ * A PDA tab, also opened by the trader counter; the terminal key closes it, the wheel turns pages.
  */
 public final class ShopScreen extends Screen {
-    private static final int PANEL_W = 380;
-    private static final int PANEL_H = 236;
+    private static final int PANEL_W = PdaTabs.PANEL_W;
+    private static final int PANEL_H = PdaTabs.PANEL_H;
     private static final int TABS_Y = 20;
     private static final int LIST_Y = 40;
     private static final int ROW_H = 22;
@@ -29,15 +28,12 @@ public final class ShopScreen extends Screen {
     /** Tab id of the selling tab; the others are goods categories. */
     private static final String SELL = "";
 
-    @Nullable
-    private final Screen parent;
     private String tab = SELL;
     private int page;
     private int ticksOpen;
 
-    public ShopScreen(@Nullable Screen parent) {
+    public ShopScreen() {
         super(Component.translatable("zoneraids.shop.title"));
-        this.parent = parent;
     }
 
     void onDataUpdated() {
@@ -45,11 +41,11 @@ public final class ShopScreen extends Screen {
     }
 
     private int left() {
-        return (width - PANEL_W) / 2;
+        return PdaTabs.left(width);
     }
 
     private int top() {
-        return (height - PANEL_H) / 2;
+        return PdaTabs.top(height);
     }
 
     private static List<String> tabs(ShopDataPacket data) {
@@ -92,8 +88,8 @@ public final class ShopScreen extends Screen {
         int left = left();
         int top = top();
         int by = top + PANEL_H - 25;
-        addRenderableWidget(new ZoneButton(left + PANEL_W - 84, by, 74, 17,
-                Component.translatable(parent == null ? "gui.done" : "gui.back"), b -> onClose()));
+        PdaTabs.buttons(left, top, PdaTabs.Tab.SHOP).forEach(this::addRenderableWidget);
+        addRenderableWidget(new ZoneButton(left + PANEL_W - 84, by, 74, 17, Component.translatable("gui.done"), b -> onClose()));
         if (data == null) {
             return;
         }
@@ -311,14 +307,6 @@ public final class ShopScreen extends Screen {
             out.append(digits.charAt(i));
         }
         return out.toString();
-    }
-
-    @Override
-    public void onClose() {
-        minecraft.setScreen(parent);
-        if (parent instanceof RaidTerminalScreen) {
-            RaidNetwork.sendToServer(new TerminalActionPacket(Action.REFRESH, ""));
-        }
     }
 
     @Override

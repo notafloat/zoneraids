@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Prints what the given jars register for Curios: slot types, which entities get them, and which
-items each slot accepts (curios item tags), plus the artifact-related lang lines of Anomaly Zone.
+items each slot accepts (curios item tags), plus the artifact-related lang lines of Anomaly Zone and
+the screens its overlay and container classes refer to.
 Shows where an accessory goes without starting a client.
 
 Usage: curios_slots.py <jar> ...
@@ -22,6 +23,12 @@ def load(z, name):
         return json.loads(z.read(name))
     except ValueError:
         return z.read(name).decode("utf-8", "replace")
+
+
+def screen_refs(data):
+    """Screen and GUI event classes named in a class file's constant pool: which screens a mod draws on."""
+    names = set(re.findall(rb'net/minecraft[\w/$]*(?:Screen|Gui)[\w$]*|net/minecraftforge/client/event/[\w$]+', data))
+    return sorted(n.decode() for n in names)
 
 
 def main():
@@ -48,6 +55,11 @@ def main():
             print("\n".join(lines))
             if classes:
                 print("  classes:", " ".join(sorted(classes)[:80]))
+            for n in sorted(classes):
+                if re.search(r'(?i)overlay|container', n):
+                    refs = screen_refs(z.read(n))
+                    if refs:
+                        print(f"  {n} uses: {' '.join(refs)}")
             print("\n".join(lang[:300]))
             print()
 

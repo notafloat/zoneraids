@@ -134,4 +134,10 @@ public final class ZoneUi {
             outline(g, x0, y0, x1, y1, 0x60000000);
         }
     }
+
+    /** Dark inventory slot frame around an item at {@code x, y}. */
+    public static void slotFrame(GuiGraphics g, int x, int y) {
+        g.fill(x - 1, y - 1, x + 17, y + 17, 0xE00C0D09);
+        outline(g, x - 1, y - 1, x + 17, y + 17, EDGE);
+    }
 }

@@ -20,8 +20,9 @@ public final class ClientPacketHandlers {
         } else if (mc.screen instanceof WatchScreen screen) {
             screen.onDataUpdated();
         } else if (packet.open()) {
-            mc.setScreen(new RaidTerminalScreen());
+            mc.setScreen(PdaTabs.terminalScreen(PdaTabs.pending));
         }
+        PdaTabs.pending = PdaTabs.Tab.RAIDS;
     }
 
     public static void handleShop(ShopDataPacket packet) {
@@ -30,8 +31,7 @@ public final class ClientPacketHandlers {
         if (mc.screen instanceof ShopScreen screen) {
             screen.onDataUpdated();
         } else if (packet.open()) {
-            // From the terminal, "back" returns to it; from the trader counter the screen stands alone.
-            mc.setScreen(new ShopScreen(mc.screen instanceof RaidTerminalScreen ? mc.screen : null));
+            mc.setScreen(new ShopScreen());
         }
     }
 

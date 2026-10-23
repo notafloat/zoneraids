@@ -10,20 +10,17 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
 /**
- * Perk list opened from the raid terminal. Uses the terminal data, which carries perk levels and points.
+ * PDA perks tab. Uses the terminal data, which carries perk levels and points.
  * Levels are drawn as PDA pips; the terminal key closes the whole terminal.
  */
 public final class PerksScreen extends Screen {
-    private static final int PANEL_W = 380;
-    private static final int PANEL_H = 236;
+    private static final int PANEL_W = PdaTabs.PANEL_W;
+    private static final int PANEL_H = PdaTabs.PANEL_H;
     private static final int ROW_H = 34;
     private static final int LIST_Y = 22;
 
-    private final Screen parent;
-
-    public PerksScreen(Screen parent) {
+    public PerksScreen() {
         super(Component.translatable("zoneraids.perks.title"));
-        this.parent = parent;
     }
 
     void onDataUpdated() {
@@ -31,11 +28,11 @@ public final class PerksScreen extends Screen {
     }
 
     private int left() {
-        return (width - PANEL_W) / 2;
+        return PdaTabs.left(width);
     }
 
     private int top() {
-        return (height - PANEL_H) / 2;
+        return PdaTabs.top(height);
     }
 
     private static int level(TerminalDataPacket data, Perk perk) {
@@ -47,6 +44,7 @@ public final class PerksScreen extends Screen {
         TerminalDataPacket data = ClientRaidState.terminal;
         int left = left();
         int top = top();
+        PdaTabs.buttons(left, top, PdaTabs.Tab.PERKS).forEach(this::addRenderableWidget);
         if (data != null) {
             for (Perk perk : Perk.values()) {
                 int level = level(data, perk);
@@ -59,7 +57,6 @@ public final class PerksScreen extends Screen {
                 addRenderableWidget(button);
             }
         }
-        addRenderableWidget(new ZoneButton(left + PANEL_W - 84, top + PANEL_H - 25, 74, 17, Component.translatable("gui.back"), b -> onClose()));
     }
 
     @Override
@@ -104,11 +101,6 @@ public final class PerksScreen extends Screen {
         }
         g.drawString(font, Component.translatable("zoneraids.perks.hint"), left + 10, top + PANEL_H - 20, ZoneUi.DIM);
         super.render(g, mouseX, mouseY, partialTick);
-    }
-
-    @Override
-    public void onClose() {
-        minecraft.setScreen(parent);
     }
 
     @Override

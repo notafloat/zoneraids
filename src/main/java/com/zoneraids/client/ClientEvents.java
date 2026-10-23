@@ -1,12 +1,16 @@
 package com.zoneraids.client;
 
 import com.zoneraids.ZoneRaids;
-import com.zoneraids.network.RaidNetwork;
-import com.zoneraids.network.TerminalActionPacket;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.screens.inventory.ContainerScreen;
+import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.client.tutorial.TutorialSteps;
+import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.client.event.RenderGuiOverlayEvent;
+import net.minecraftforge.client.event.ScreenEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -22,7 +26,64 @@ public final class ClientEvents {
             return;
         }
         while (ClientSetup.OPEN_TERMINAL.consumeClick()) {
-            RaidNetwork.sendToServer(new TerminalActionPacket(TerminalActionPacket.Action.OPEN, ""));
+            PdaTabs.open(PdaTabs.Tab.RAIDS, null);
+        }
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.options.tutorialStep != TutorialSteps.NONE) {
+            // The vanilla tutorial ("punch a tree", "craft planks") makes no sense on a raid server.
+            mc.getTutorial().setStep(TutorialSteps.NONE);
+        }
+    }
+
+    /**
+     * No toasts in the corner: advancement, recipe and tutorial pop-ups cover the PDA HUD and mean
+     * nothing in raids. Cleared before every frame, so they never show.
+     */
+    @SubscribeEvent
+    public static void onRenderTick(TickEvent.RenderTickEvent event) {
+        if (event.phase == TickEvent.Phase.START) {
+            Minecraft.getInstance().getToasts().clear();
+        }
+    }
+
+    /** The vanilla inventory and the stash's chest screen open as PDA tabs instead. */
+    @SubscribeEvent
+    public static void onScreenOpening(ScreenEvent.Opening event) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null || event.getNewScreen() == null) {
+            return;
+        }
+        if (event.getNewScreen().getClass() == InventoryScreen.class && mc.gameMode != null && !mc.gameMode.hasInfiniteItems()) {
+            event.setNewScreen(new PdaInventoryScreen(mc.player));
+        } else if (event.getNewScreen() instanceof ContainerScreen chest
+                && chest.getTitle().getContents() instanceof TranslatableContents title
+                && title.getKey().equals("container.zoneraids.stash")) {
+            event.setNewScreen(new PdaStashScreen(chest.getMenu(), mc.player.getInventory(), chest.getTitle()));
+        }
+    }
+
+    /**
+     * Curios' screen (backpack, rig, artifact container slots) is the inventory tab's gear view: it gets the
+     * PDA tab row, centred over it, with the inventory tab lit.
+     */
+    @SubscribeEvent
+    public static void onScreenInit(ScreenEvent.Init.Post event) {
+        if (event.getScreen() instanceof AbstractContainerScreen<?> screen && PdaTabs.isCuriosScreen(screen)) {
+            int left = screen.getGuiLeft() + (screen.getXSize() - PdaTabs.PANEL_W) / 2;
+            for (ZoneButton button : PdaTabs.buttons(left, Math.max(PdaTabs.TAB_H + 1, screen.getGuiTop()), null)) {
+                button.selected = button.getMessage().getContents() instanceof TranslatableContents key
+                        && key.getKey().equals(PdaTabs.Tab.INVENTORY.key);
+                event.addListener(button);
+            }
+        }
+    }
+
+    /** The terminal key closes Curios' screen like any PDA tab. */
+    @SubscribeEvent
+    public static void onScreenKey(ScreenEvent.KeyPressed.Pre event) {
+        if (PdaTabs.isCuriosScreen(event.getScreen()) && ClientSetup.OPEN_TERMINAL.matches(event.getKeyCode(), event.getScanCode())) {
+            event.getScreen().onClose();
+            event.setCanceled(true);
         }
     }
 
