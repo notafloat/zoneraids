@@ -210,7 +210,8 @@ public final class EnemySpawner {
 
     /** Removes the raid's enemies that are loaded; unloaded ones are removed when they load (see {@link #shouldRejectOnLoad}). */
     static void cleanup(ServerLevel level, RaidSession session) {
-        for (UUID id : session.enemies) {
+        // discard() fires onRemoved, which edits session.enemies, so walk a copy.
+        for (UUID id : List.copyOf(session.enemies)) {
             Entity entity = level.getEntity(id);
             if (entity != null) {
                 entity.discard();
