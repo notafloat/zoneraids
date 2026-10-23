@@ -22,3 +22,6 @@
 	hubPvp = false
 	remoteStash = true
 	spectating = true
+
+[network]
+	entityUpdateIntervals = ["minecraft:player=1", "tacznpcs:npc=1", "tacz:bullet=1"]

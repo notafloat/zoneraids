@@ -64,6 +64,7 @@ public final class RaidConfig {
     public static final ForgeConfigSpec.BooleanValue KEEP_MONEY_AFTER_SESSION;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> SHOP_SELL;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> SHOP_BUY;
+    public static final ForgeConfigSpec.ConfigValue<List<? extends String>> ENTITY_UPDATE_INTERVALS;
 
     static {
         ForgeConfigSpec.Builder b = new ForgeConfigSpec.Builder();
@@ -279,6 +280,17 @@ public final class RaidConfig {
                         "medicine 1000 1 fracturepoint:cure",
                         "medicine 1500 1 fracturepoint:propital",
                         "medicine 1500 1 anomalyzone:injection_run_heal"), o -> o instanceof String);
+        b.pop();
+
+        b.push("network");
+        ENTITY_UPDATE_INTERVALS = b.comment("How often the server sends an entity's position to clients: entity_id=ticks (1 = every tick, 20 per second).",
+                        "Vanilla sends players every 2 ticks and most mobs every 3, so other players and enemies are drawn",
+                        "up to 150 ms behind where the server checks bullet hits. Only ever lowers an entity's interval;",
+                        "entities that are not installed are skipped. Applied when the server starts.")
+                .defineListAllowEmpty(List.of("entityUpdateIntervals"), List.of(
+                        "minecraft:player=1",
+                        "tacznpcs:npc=1",
+                        "tacz:bullet=1"), o -> o instanceof String s && s.contains("="));
         b.pop();
 
         SPEC = b.build();
