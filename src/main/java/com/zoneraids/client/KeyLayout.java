@@ -31,7 +31,7 @@ import java.util.Map;
 public final class KeyLayout {
     private static final Logger LOGGER = LogUtils.getLogger();
     /** Bump the number when the table changes, so clients apply the new entries once more. */
-    private static final String MARKER = "zoneraids-keys-3.done";
+    private static final String MARKER = "zoneraids-keys-4.done";
     private static final Map<String, InputConstants.Key> LAYOUT = new HashMap<>();
     private static boolean checked;
 
@@ -40,10 +40,12 @@ public final class KeyLayout {
         key("key.inventory", GLFW.GLFW_KEY_TAB);
         key("key.playerlist", GLFW.GLFW_KEY_GRAVE_ACCENT);
         key("key.drop", GLFW.GLFW_KEY_BACKSPACE);
-        // TaCZ: the scope zoom moves off V (melee stays there) to the wheel click; its crawl duplicates prone.
+        // TaCZ: the scope zoom moves off V (melee stays there) to the wheel click; its crawl is the prone key,
+        // on X in place of TACtical Movement's dolphin dive (C is the roll).
         mouse("key.tacz.zoom.desc", GLFW.GLFW_MOUSE_BUTTON_MIDDLE);
         unbind("key.pickItem");
-        unbind("key.tacz.crawl.desc");
+        key("key.tacz.crawl.desc", GLFW.GLFW_KEY_X);
+        unbind("key.tacmove.dolphin_dive");
         // TACtical Movement: the aim animation must share the aim button, or others never see it.
         mouse("key.tacmove.aim_animation", GLFW.GLFW_MOUSE_BUTTON_RIGHT);
         key("key.tacmove.tac_sprint", GLFW.GLFW_KEY_LEFT_ALT);
