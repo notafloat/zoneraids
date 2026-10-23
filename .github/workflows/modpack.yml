@@ -66,6 +66,31 @@ jobs:
           python modpack/tools/check_mod_links.py "${JARS[@]}" \
             --strict tacmove MovesLikeMafuyu CameraOverhaul --report build/modpack/report/mod-links.txt
 
+      - name: "TEMP: how TACtical Movement and TaCZ use PlayerAnimator (third-person lean)"
+        if: always()
+        run: |
+          mkdir -p build/modpack/report/anim build/anim
+          for pat in tacmove tacz-1 player-animation; do
+            jar="$(grep -m1 "$pat" build/modpack/jars.txt)"; [ -n "$jar" ] || continue
+            d="build/anim/$pat"; mkdir -p "$d"; (cd "$d" && unzip -q -o "$jar")
+            find "$d" -name '*.json' -path '*player_anim*' | head -50
+            grep -rlE 'playeranimator|PlayerAnimation|KeyframeAnimation' "$d" --include='*.class' | sort > "$d.classes"
+            echo "== $pat: $(wc -l < "$d.classes") classes use PlayerAnimator"; cat "$d.classes" | sed "s#$d/##"
+            xargs -a "$d.classes" javap -c -p -constants > "build/modpack/report/anim/$pat.txt" 2>&1 || true
+          done
+          echo "===== layer registration ====="
+          grep -nE -B12 -A3 'addAnimLayer|registerPlayerAnimation|setAnimation|replaceAnimationWithFade|ModifierLayer."<init>"' build/modpack/report/anim/*.txt | grep -E 'class |addAnimLayer|registerPlayerAnimation|bipush|sipush|iconst|ldc|invoke' | head -400
+          echo "===== tacmove animation names and parts ====="
+          grep -hoE 'String [a-z_]+(lean|prone|slide|mantle|sprint|ready|dive|reload|aim)[a-z_]*' build/modpack/report/anim/tacmove.txt | sort -u | head -80
+          grep -hoE 'String (body|torso|head|rightArm|leftArm|rightLeg|leftLeg)\b' build/modpack/report/anim/*.txt | sort | uniq -c
+          ls build/anim/tacmove/assets/*/player_animation* build/anim/tacmove/assets/*/* 2>/dev/null | head -60
+          echo "===== tacmove assets ====="
+          (cd build/anim/tacmove && find assets data -type f 2>/dev/null | grep -v '\.png$' | head -80)
+          for f in $(find build/anim/tacmove -iname '*lean*.json' | head -4); do echo "--- $f"; head -c 3000 "$f"; echo; done
+          echo "===== tacmove mixins ====="
+          for f in build/anim/tacmove/*.mixins.json; do echo "--- $f"; cat "$f"; done
+          grep -n "modId\|mandatory\|side" build/anim/tacmove/META-INF/mods.toml
+
       - name: Default keys of every mod and the keys they share
         if: always()
         run: |
