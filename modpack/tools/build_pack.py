@@ -4,7 +4,7 @@
 Outputs (in --out):
   ZoneRaids-<version>.mrpack        client pack for Prism Launcher / Modrinth App / ATLauncher
   ZoneRaids-<version>-server.zip    ready-to-run Forge server (mods, configs, start scripts)
-  mods.lock.json                    exact files that went into this build
+  mods.lock.json                    exact files that went into this build (mods and shader packs)
   server/                           unpacked server (used by the smoke test)
 
 Needs only the Python standard library and network access to Modrinth, Forge maven and forgecdn.
@@ -134,6 +134,49 @@ def resolve(pack):
     return list(resolved.values())
 
 
+def resolve_shaderpacks(pack):
+    """Shader packs are Modrinth projects for the "iris" loader; they go to shaderpacks/ on the client only."""
+    mc = pack["minecraft"]
+    out = []
+    for s in pack.get("shaderpacks", []):
+        project = get_json(f"{MODRINTH}/project/{s['slug']}")
+        q = urllib.parse.urlencode({"loaders": json.dumps(["iris"]), "game_versions": json.dumps([mc])})
+        versions = get_json(f"{MODRINTH}/project/{project['id']}/version?{q}")
+        if not versions:  # some packs do not tag every game version
+            q = urllib.parse.urlencode({"loaders": json.dumps(["iris"])})
+            versions = get_json(f"{MODRINTH}/project/{project['id']}/version?{q}")
+        version = pick_version(versions, s.get("version"))
+        if version is None:
+            raise SystemExit(f"shader pack {s['slug']} has no Iris version")
+        f = primary_file(version)
+        out.append({
+            "name": project["title"], "slug": project["slug"], "project_id": project["id"],
+            "version": version["version_number"], "version_id": version["id"],
+            "file": f["filename"], "url": f["url"], "sha1": f["hashes"]["sha1"], "sha512": f["hashes"]["sha512"],
+            "size": f["size"], "side": "client", "source": "modrinth", "license": project["license"]["id"],
+            "default": s.get("default", False), "settings": s.get("settings", {}),
+        })
+        print(f"  {project['slug']:32} {version['version_number']:30} shaderpack", flush=True)
+    return out
+
+
+def oculus_files(shaderpacks):
+    """Oculus config that turns the default pack on, plus each pack's settings file (shaderpacks/<zip>.txt)."""
+    files = {}
+    default = next((s for s in shaderpacks if s["default"]), None)
+    if default:
+        files["config/oculus.properties"] = (
+            "# Written by the Zone Raids pack build. Shaders: O (or F8 if O is taken), toggle F7.\n"
+            "enableShaders=true\n"
+            f"shaderPack={default['file']}\n"
+            "disableUpdateMessage=true\n"
+            "maxShadowRenderDistance=4\n")
+    for s in shaderpacks:
+        if s["settings"]:
+            files[f"shaderpacks/{s['file']}.txt"] = "".join(f"{k}={v}\n" for k, v in s["settings"].items())
+    return files
+
+
 def resolve_forge(pack):
     if pack["forge"] != "recommended":
         return pack["forge"]
@@ -203,10 +246,11 @@ def main():
 
     print("Resolving mods:", flush=True)
     mods = resolve(pack)
+    shaderpacks = resolve_shaderpacks(pack)
     forge = resolve_forge(pack)
     print(f"Forge {pack['minecraft']}-{forge}", flush=True)
 
-    for m in mods:
+    for m in mods + shaderpacks:
         download(m, args.cache)
 
     glue_name = f"zoneraids_pack-{version}.jar"
@@ -215,7 +259,7 @@ def main():
     zr_name = os.path.basename(args.zoneraids_jar)
 
     lock = {"pack": version, "minecraft": pack["minecraft"], "forge": forge, "mods": mods,
-            "local": [zr_name, glue_name]}
+            "shaderpacks": shaderpacks, "local": [zr_name, glue_name]}
     with open(os.path.join(out, "mods.lock.json"), "w", encoding="utf-8") as fh:
         json.dump(lock, fh, indent=2, ensure_ascii=False)
 
@@ -240,6 +284,11 @@ def main():
             })
         else:
             url_jars.append(m)
+    for s in shaderpacks:
+        index["files"].append({
+            "path": f"shaderpacks/{s['file']}", "hashes": {"sha1": s["sha1"], "sha512": s["sha512"]},
+            "env": side_env("client"), "downloads": [s["url"]], "fileSize": s["size"],
+        })
     mrpack = os.path.join(out, f"ZoneRaids-{version}.mrpack")
     with zipfile.ZipFile(mrpack, "w", zipfile.ZIP_DEFLATED) as z:
         z.writestr("modrinth.index.json", json.dumps(index, indent=2, ensure_ascii=False))
@@ -250,6 +299,8 @@ def main():
                 z.write(os.path.join(args.cache, m["file"]), f"overrides/mods/{m['file']}")
         add_dir_to_zip(z, common, "overrides/")
         add_dir_to_zip(z, client_only, "client-overrides/")
+        for path, text in oculus_files(shaderpacks).items():
+            z.writestr(f"client-overrides/{path}", text)
 
     # Server: unpacked folder plus zip of it.
     server = os.path.join(out, "server")

@@ -61,10 +61,14 @@ jobs:
           mkdir -p build/modpack/report
           python -c "import json,os; [print(os.path.expanduser('~/.cache/zoneraids-pack/' + m['file'])) for m in json.load(open('build/modpack/mods.lock.json'))['mods']]" > build/modpack/jars.txt
           mapfile -t JARS < build/modpack/jars.txt
-          mapfile -t MOVEMENT < <(grep -iE 'tacmove|moveslikemafuyu|player-animation|cameraoverhaul|tacz' build/modpack/jars.txt)
+          mapfile -t MOVEMENT < <(grep -iE 'tacmove|moveslikemafuyu|player-animation|cameraoverhaul|tacz|oculus' build/modpack/jars.txt)
           python modpack/tools/describe_mods.py "${MOVEMENT[@]}" | tee build/modpack/report/movement-mods.txt
           python modpack/tools/check_mod_links.py "${JARS[@]}" \
             --strict tacmove MovesLikeMafuyu CameraOverhaul --report build/modpack/report/mod-links.txt
+
+      - name: Shader pack options (for settings in pack.json)
+        if: always()
+        run: mkdir -p build/modpack/report && python modpack/tools/shader_options.py build/modpack/mods.lock.json | tee build/modpack/report/shader-options.txt
 
       - name: TaCZ gun packs extracted at runtime
         if: always()
