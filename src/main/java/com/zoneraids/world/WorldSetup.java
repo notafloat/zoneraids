@@ -1,6 +1,7 @@
 package com.zoneraids.world;
 
 import com.zoneraids.RaidConfig;
+import com.zoneraids.data.AnomalyPoint;
 import com.zoneraids.data.ExtractPoint;
 import com.zoneraids.data.HubPoint;
 import com.zoneraids.data.RaidMap;
@@ -19,7 +20,7 @@ public final class WorldSetup {
     public static final String CORDON = CordonLayout.MAP_ID;
     /** Bump a version to make existing worlds rebuild that layout on their next start. */
     private static final String HUB_LAYOUT = "hub@1";
-    private static final String CORDON_LAYOUT = "cordon@1";
+    private static final String CORDON_LAYOUT = "cordon@2";
 
     private WorldSetup() {
     }
@@ -90,6 +91,11 @@ public final class WorldSetup {
             map.extracts.clear();
             for (CordonLayout.Extract e : layout.extracts) {
                 map.extracts.add(new ExtractPoint(e.name(), new BlockPos(e.x(), e.y(), e.z()), e.radius(), e.chance()));
+            }
+            map.anomalies.clear();
+            for (CordonLayout.Anomaly a : layout.anomalies) {
+                AnomalyPoint.Type type = AnomalyPoint.Type.valueOf(a.kind().name());
+                map.anomalies.add(new AnomalyPoint(type, new BlockPos(a.x(), a.y(), a.z()), a.radius()));
             }
             map.setBounds(CordonLayout.minBound(), CordonLayout.minBound(), CordonLayout.maxBound(), CordonLayout.maxBound());
             data.putMap(map);

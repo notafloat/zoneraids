@@ -80,6 +80,8 @@ public final class RaidManager {
     private final Map<String, Integer> countdowns = new HashMap<>();
     private final Map<UUID, Long> lastAction = new HashMap<>();
     private final Random random = new Random();
+    private final Anomalies anomalies = new Anomalies();
+    private final List<ServerPlayer> sessionPlayers = new ArrayList<>();
     private long tickCounter;
 
     private RaidManager(MinecraftServer server) {
@@ -253,6 +255,14 @@ public final class RaidManager {
             }
         }
         if (level != null) {
+            for (RaidSession.Participant part : session.participants.values()) {
+                ServerPlayer player = server.getPlayerList().getPlayer(part.id);
+                if (player != null) {
+                    sessionPlayers.add(player);
+                }
+            }
+            anomalies.tick(session, level, sessionPlayers);
+            sessionPlayers.clear();
             RoundObjectives.tick(server, level, session, dt, tickCounter, random);
         }
         if (session.rounds > 1 && tickCounter % 20 == 0) {
@@ -512,6 +522,7 @@ public final class RaidManager {
         // Bumping the generation makes every loot crate in this dimension reroll on next open.
         data().nextGeneration(map.dimension);
         clearDroppedItems(level);
+        Anomalies.rollArtifacts(session, random);
 
         List<ExtractPoint> open = new ArrayList<>();
         if (session.type.extracts) {
@@ -617,6 +628,7 @@ public final class RaidManager {
         }
         ServerLevel level = server.getLevel(session.map.dimension);
         if (level != null) {
+            Anomalies.clearArtifacts(session, level);
             clearDroppedItems(level);
         }
         if (session.round >= session.rounds || !anyOnline(session.roster.keySet())) {
@@ -736,6 +748,7 @@ public final class RaidManager {
         session.groupOf.clear();
         ServerLevel level = server.getLevel(session.map.dimension);
         if (level != null) {
+            Anomalies.clearArtifacts(session, level);
             clearDroppedItems(level);
         }
     }

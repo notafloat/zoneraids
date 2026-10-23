@@ -3,6 +3,7 @@ package com.zoneraids.raid;
 import com.zoneraids.data.ExtractPoint;
 import com.zoneraids.data.RaidMap;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.item.Item;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -41,6 +42,10 @@ public final class RaidSession {
     int ticksLeft;
     /** Players on the map in the current round. */
     final Map<UUID, Participant> participants = new LinkedHashMap<>();
+    /** Per anomaly of the map: the artifact still waiting to appear in it, or null. */
+    final Item[] pendingArtifacts;
+    /** Per anomaly: the artifact item entity once it has appeared. */
+    final UUID[] artifactEntities;
 
     final int rounds;
     int round;
@@ -80,6 +85,8 @@ public final class RaidSession {
         this.rounds = rounds;
         this.totalTicks = map.durationSeconds * 20;
         this.ticksLeft = totalTicks;
+        this.pendingArtifacts = new Item[map.anomalies.size()];
+        this.artifactEntities = new UUID[map.anomalies.size()];
     }
 
     public int round() {
