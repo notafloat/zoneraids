@@ -74,6 +74,13 @@ jobs:
           mapfile -t JARS < build/modpack/jars.txt
           python modpack/tools/key_defaults.py "$JAR" "${JARS[@]}" | tee build/modpack/report/key-defaults.txt
 
+      - name: Curios slots and the items they accept (artifacts, backpacks, rigs)
+        if: always()
+        run: |
+          mkdir -p build/modpack/report
+          mapfile -t JARS < build/modpack/jars.txt
+          python modpack/tools/curios_slots.py "${JARS[@]}" | tee build/modpack/report/curios-slots.txt
+
       - name: Shader pack options (for settings in pack.json)
         if: always()
         run: mkdir -p build/modpack/report && python modpack/tools/shader_options.py build/modpack/mods.lock.json | tee build/modpack/report/shader-options.txt
