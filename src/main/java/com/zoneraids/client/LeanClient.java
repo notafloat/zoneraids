@@ -33,9 +33,9 @@ import java.util.Map;
  */
 @Mod.EventBusSubscriber(modid = ZoneRaids.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class LeanClient {
-    private static final float MAX_ANGLE = 16.0F;
+    private static final float MAX_ANGLE = 9.0F;
     /** Camera roll per degree of body tilt: the view tilts less than the body, enough to feel the lean. */
-    private static final float CAMERA_ROLL = 0.6F;
+    private static final float CAMERA_ROLL = 0.8F;
     private static final float SPEED = 0.3F;
 
     /** entity id -> {previous angle, current angle, target direction}. */
