@@ -71,6 +71,8 @@ public final class RaidManager {
     private final Map<String, Integer> countdowns = new HashMap<>();
     private final Map<UUID, Long> lastAction = new HashMap<>();
     private final Random random = new Random();
+    private final Anomalies anomalies = new Anomalies();
+    private final List<ServerPlayer> sessionPlayers = new ArrayList<>();
     private long tickCounter;
 
     private RaidManager(MinecraftServer server) {
@@ -225,6 +227,16 @@ public final class RaidManager {
                 part.hudTicks = 0;
                 sendHud(player, session, part);
             }
+        }
+        if (level != null) {
+            for (RaidSession.Participant part : session.participants.values()) {
+                ServerPlayer player = server.getPlayerList().getPlayer(part.id);
+                if (player != null) {
+                    sessionPlayers.add(player);
+                }
+            }
+            anomalies.tick(session, level, sessionPlayers);
+            sessionPlayers.clear();
         }
         if (level != null && tickCounter % 20 == 0) {
             List<ServerPlayer> raiders = new ArrayList<>();
@@ -437,6 +449,7 @@ public final class RaidManager {
         // Bumping the generation makes every loot crate in this dimension reroll on next open.
         data().nextGeneration(map.dimension);
         clearDroppedItems(level);
+        Anomalies.rollArtifacts(session, random);
         EnemySpawner.sweep(level);
 
         List<ExtractPoint> open = new ArrayList<>();
@@ -511,6 +524,7 @@ public final class RaidManager {
         session.participants.clear();
         ServerLevel level = server.getLevel(session.map.dimension);
         if (level != null) {
+            Anomalies.clearArtifacts(session, level);
             EnemySpawner.cleanup(level, session);
             clearDroppedItems(level);
         }

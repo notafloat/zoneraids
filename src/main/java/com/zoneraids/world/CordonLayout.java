@@ -30,11 +30,22 @@ final class CordonLayout {
     record Enemy(String kind, int x, int y, int z, int min, int max, double chance, int trigger) {
     }
 
+    enum AnomalyKind { ELECTRA, BURNER, VORTEX, ACID }
+
+    /** {@code y} is the block a player stands in at the anomaly's centre. */
+    record Anomaly(AnomalyKind kind, int x, int y, int z, double radius, boolean inField) {
+    }
+
+    /** Cluster offsets from the anomaly field's centre and what each cluster is. */
+    static final int[][] FIELD_CLUSTERS = {{-10, -6}, {9, -8}, {-6, 11}, {12, 7}, {-14, 4}, {3, -15}, {6, 14}};
+    static final AnomalyKind[] FIELD_KINDS = {AnomalyKind.BURNER, AnomalyKind.VORTEX, AnomalyKind.ACID, AnomalyKind.ELECTRA};
+
     final CordonTerrain terrain = new CordonTerrain();
     final List<Site> sites = new ArrayList<>();
     final List<Spawn> spawns = new ArrayList<>();
     final List<Extract> extracts = new ArrayList<>();
     final List<Enemy> enemies = new ArrayList<>();
+    final List<Anomaly> anomalies = new ArrayList<>();
     final int bridgeX;
     final int bridgeZ;
     final int railBridgeX;
@@ -136,6 +147,25 @@ final class CordonLayout {
         extracts.add(new Extract("Задний двор завода", 135, t.top(135, -149) + 1, -149, 3, 0.5, 135, -152));
         extracts.add(new Extract("Дыра в заборе", -151, t.top(-151, 96) + 1, 96, 3, 0.6, -153, 96));
 
+        for (int i = 0; i < FIELD_CLUSTERS.length; i++) {
+            int x = CordonTerrain.ANOMALY_X + FIELD_CLUSTERS[i][0];
+            int z = CordonTerrain.ANOMALY_Z + FIELD_CLUSTERS[i][1];
+            AnomalyKind kind = FIELD_KINDS[i % FIELD_KINDS.length];
+            anomalies.add(new Anomaly(kind, x, t.top(x, z) + 1, z, kind == AnomalyKind.VORTEX ? 3 : 2.5, true));
+        }
+        // Lone anomalies in open ground across the map, away from roads, buildings, spawns and exits.
+        int[][] lone = {
+                {-145, -7}, {38, 14}, {-58, 47}, {89, -13}, {-40, -4}, {-16, 68}, {-76, -82},
+                {38, -67}, {-100, 140}, {-103, -118}, {17, -124}, {92, 59}, {-118, -61}, {-136, 62}
+        };
+        AnomalyKind[] kinds = AnomalyKind.values();
+        for (int i = 0; i < lone.length; i++) {
+            int x = lone[i][0];
+            int z = lone[i][1];
+            AnomalyKind kind = kinds[i % kinds.length];
+            anomalies.add(new Anomaly(kind, x, t.top(x, z) + 1, z, kind == AnomalyKind.VORTEX ? 3 : 2.5, false));
+            t.reserve(x - 3, z - 3, x + 3, z + 3);
+        }
         addEnemies();
     }
 

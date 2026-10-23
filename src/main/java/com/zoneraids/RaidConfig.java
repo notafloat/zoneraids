@@ -34,6 +34,10 @@ public final class RaidConfig {
     public static final ForgeConfigSpec.IntValue ENEMY_MIN_SPAWN_DISTANCE;
     public static final ForgeConfigSpec.DoubleValue ENEMY_GEAR_DROP_CHANCE;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> ENEMY_TYPES;
+    public static final ForgeConfigSpec.BooleanValue ANOMALIES;
+    public static final ForgeConfigSpec.DoubleValue ANOMALY_DAMAGE;
+    public static final ForgeConfigSpec.DoubleValue ARTIFACT_CHANCE;
+    public static final ForgeConfigSpec.ConfigValue<List<? extends String>> ARTIFACT_ITEMS;
 
     static {
         ForgeConfigSpec.Builder b = new ForgeConfigSpec.Builder();
@@ -112,6 +116,20 @@ public final class RaidConfig {
                         "bloodsucker=zoneraids:bloodsucker",
                         "bandit=tacznpcs:npc{template:\"zr_bandit\"}",
                         "military=tacznpcs:npc{template:\"zr_military\"}"), o -> o instanceof String s && s.contains("="));
+        b.pop();
+
+        b.push("anomalies");
+        ANOMALIES = b.comment("Anomalies on raid maps (the Cordon has 21): they show themselves with particles and hurt players who walk in.")
+                .define("enabled", true);
+        ANOMALY_DAMAGE = b.comment("Multiplier for anomaly damage.")
+                .defineInRange("damageMultiplier", 1.0, 0.0, 10.0);
+        ARTIFACT_CHANCE = b.comment("Chance that an anomaly holds an artifact in a raid. Rolled for every anomaly at raid start.")
+                .defineInRange("artifactChance", 0.45, 0.0, 1.0);
+        ARTIFACT_ITEMS = b.comment("Items an anomaly can hold (one is picked at random). Ids that are not installed are skipped.")
+                .defineListAllowEmpty(List.of("artifactItems"), List.of(
+                        "anomalyzone:bubble", "anomalyzone:flash", "anomalyzone:hedgehog", "anomalyzone:spiral", "anomalyzone:prism",
+                        "anomalyzone:snake_eye", "anomalyzone:sun", "anomalyzone:thunder", "anomalyzone:polyhedron", "anomalyzone:hoop",
+                        "anomalyzone:magma_pearl", "anomalyzone:heat_stone", "anomalyzone:crust", "anomalyzone:atom"), o -> o instanceof String);
         b.pop();
 
         SPEC = b.build();

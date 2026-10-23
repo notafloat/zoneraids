@@ -3,6 +3,7 @@ package com.zoneraids.raid;
 import com.zoneraids.data.EnemyPoint;
 import com.zoneraids.data.ExtractPoint;
 import com.zoneraids.data.RaidMap;
+import net.minecraft.world.item.Item;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.BitSet;
@@ -45,12 +46,18 @@ public final class RaidSession {
     /** Live enemies of this raid (UUIDs only), and the subset that are armed NPCs. */
     final Set<UUID> enemies = new HashSet<>();
     final Set<UUID> npcs = new HashSet<>();
+    /** Per anomaly of the map: the artifact still waiting to appear in it, or null. */
+    final Item[] pendingArtifacts;
+    /** Per anomaly: the artifact item entity once it has appeared. */
+    final UUID[] artifactEntities;
 
     RaidSession(RaidMap map) {
         this.map = map;
         this.enemyPoints = List.copyOf(map.enemies);
         this.totalTicks = map.durationSeconds * 20;
         this.ticksLeft = totalTicks;
+        this.pendingArtifacts = new Item[map.anomalies.size()];
+        this.artifactEntities = new UUID[map.anomalies.size()];
     }
 
     public RaidMap map() {

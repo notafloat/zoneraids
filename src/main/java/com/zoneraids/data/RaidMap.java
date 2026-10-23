@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Admin-defined raid location: a dimension plus spawn, extraction and enemy points.
+ * Admin-defined raid location: a dimension plus spawn and extraction points, and optional enemies and anomalies.
  */
 public final class RaidMap {
     public final String id;
@@ -26,6 +26,7 @@ public final class RaidMap {
     public final List<SpawnPoint> spawns = new ArrayList<>();
     public final List<ExtractPoint> extracts = new ArrayList<>();
     public final List<EnemyPoint> enemies = new ArrayList<>();
+    public final List<AnomalyPoint> anomalies = new ArrayList<>();
     /** Optional play area (inclusive block coordinates); players in a raid are kept inside it. */
     public boolean bounded;
     public int minX;
@@ -74,6 +75,9 @@ public final class RaidMap {
         ListTag enemyList = new ListTag();
         enemies.forEach(e -> enemyList.add(e.save()));
         tag.put("Enemies", enemyList);
+        ListTag anomalyList = new ListTag();
+        anomalies.forEach(a -> anomalyList.add(a.save()));
+        tag.put("Anomalies", anomalyList);
         if (bounded) {
             tag.putIntArray("Bounds", new int[]{minX, minZ, maxX, maxZ});
         }
@@ -100,6 +104,10 @@ public final class RaidMap {
         ListTag enemyList = tag.getList("Enemies", Tag.TAG_COMPOUND);
         for (int i = 0; i < enemyList.size(); i++) {
             map.enemies.add(EnemyPoint.load(enemyList.getCompound(i)));
+        }
+        ListTag anomalyList = tag.getList("Anomalies", Tag.TAG_COMPOUND);
+        for (int i = 0; i < anomalyList.size(); i++) {
+            map.anomalies.add(AnomalyPoint.load(anomalyList.getCompound(i)));
         }
         int[] bounds = tag.getIntArray("Bounds");
         if (bounds.length == 4) {

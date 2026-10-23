@@ -15,11 +15,10 @@ rm -f installer.jar installer.jar.log
 
 echo "eula=true" > eula.txt
 # CI runners have less RAM than a real host.
-sed -i -e 's/^-Xms.*/-Xms1G/' -e 's/^-Xmx.*/-Xmx4G/' -e '/AlwaysPreTouch/d' zoneraids_jvm_args.txt
 
 rm -f console.in && mkfifo console.in
 exec 3<>console.in
-java @zoneraids_jvm_args.txt @"libraries/net/minecraftforge/forge/${FORGE}/unix_args.txt" nogui \
+java -Xms1G -Xmx4G @zoneraids_jvm_args.txt @"libraries/net/minecraftforge/forge/${FORGE}/unix_args.txt" nogui \
   < console.in > "$REPORT/console.log" 2>&1 &
 PID=$!
 
