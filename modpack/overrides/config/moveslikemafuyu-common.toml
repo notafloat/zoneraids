@@ -2,7 +2,7 @@
 # Forge fills in the rest on first start.
 
 [slide]
-	# TACtical Movement already slides on sprint + sneak; two slides on one key fight each other.
+	# Sliding comes from TACtical Movement (its "Prone And Slide" key while sprinting); one slide is enough.
 	enableSlide = false
 	enableDap = false
 	enableSlideKnock = false
