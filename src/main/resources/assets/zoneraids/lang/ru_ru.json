@@ -83,6 +83,7 @@
   "zoneraids.interact.dismount": "Слезть с байка",
   "zoneraids.interact.give": "Передать: %s",
   "zoneraids.interact.give_full": "У %s нет места в инвентаре.",
+  "zoneraids.interact.give_session": "Нельзя передать снаряжение игроку не из вашей сессии.",
   "zoneraids.interact.given": "Передано: %s ×%s → %s",
   "zoneraids.interact.hint": "[%s] выбрать, колесо: листать",
   "zoneraids.interact.inspect_bike": "Осмотреть байк",

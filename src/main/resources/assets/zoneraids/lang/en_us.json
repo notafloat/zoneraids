@@ -83,6 +83,7 @@
   "zoneraids.interact.dismount": "Get off the bike",
   "zoneraids.interact.give": "Give: %s",
   "zoneraids.interact.give_full": "%s has no room in their inventory.",
+  "zoneraids.interact.give_session": "You can't hand gear to a player outside your session.",
   "zoneraids.interact.given": "Given: %s ×%s → %s",
   "zoneraids.interact.hint": "[%s] select, wheel: scroll",
   "zoneraids.interact.inspect_bike": "Inspect bike",
