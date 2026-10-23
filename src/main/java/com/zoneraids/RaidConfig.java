@@ -42,6 +42,7 @@ public final class RaidConfig {
     public static final ForgeConfigSpec.DoubleValue ANOMALY_DAMAGE;
     public static final ForgeConfigSpec.DoubleValue ARTIFACT_CHANCE;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> ARTIFACT_ITEMS;
+    public static final ForgeConfigSpec.ConfigValue<String> STARTER_CONTAINER;
     public static final ForgeConfigSpec.BooleanValue ROUNDS;
     public static final ForgeConfigSpec.IntValue INTERMISSION_SECONDS;
     public static final ForgeConfigSpec.IntValue LATE_JOIN_SECONDS;
@@ -158,6 +159,9 @@ public final class RaidConfig {
                 .defineInRange("damageMultiplier", 1.0, 0.0, 10.0);
         ARTIFACT_CHANCE = b.comment("Chance that an anomaly holds an artifact in a raid. Rolled for every anomaly at raid start.")
                 .defineInRange("artifactChance", 0.45, 0.0, 1.0);
+        STARTER_CONTAINER = b.comment("Artifact container every player gets when a session starts (Anomaly Zone artifacts only work inside one,",
+                        "worn in the Curios container slot). Not given if the player already carries one. Empty string = none.")
+                .define("starterContainer", "anomalyzone:ksm");
         ARTIFACT_ITEMS = b.comment("Items an anomaly can hold (one is picked at random). Ids that are not installed are skipped.")
                 .defineListAllowEmpty(List.of("artifactItems"), List.of(
                         "anomalyzone:bubble", "anomalyzone:flash", "anomalyzone:hedgehog", "anomalyzone:spiral", "anomalyzone:prism",
@@ -188,7 +192,7 @@ public final class RaidConfig {
         ZONE_DAMAGE = b.comment("Damage per second outside the safe zone (emission, deathmatch); grows the longer a player stays outside.")
                 .defineInRange("zoneDamage", 1.0, 0.0, 100.0);
         STARTER_KIT = b.comment("Items every player gets when a session starts, as \"namespace:item count\". Unknown ids are skipped.")
-                .defineListAllowEmpty(List.of("starterKit"), List.of("minecraft:bread 4", "anomalyzone:ksm 1"), o -> o instanceof String);
+                .defineListAllowEmpty(List.of("starterKit"), List.of("minecraft:bread 4"), o -> o instanceof String);
         ROUND_KIT_LOOT_TABLE = b.comment("Loot table rolled for every player at the start of every round (also single-round raids): a basic gun and armor.",
                         "Armor goes only into empty armor slots, a single item (a gun) is skipped if the player already carries the same item,",
                         "stackable items (ammo, bandages) are always given. Empty string turns the kit off.")
