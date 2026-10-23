@@ -1262,15 +1262,20 @@ final class CordonBuilder {
 
     private void anomalyField(Painter p) {
         Random r = random(CordonTerrain.ANOMALY_X, CordonTerrain.ANOMALY_Z);
-        int[][] clusters = {{-10, -6}, {9, -8}, {-6, 11}, {12, 7}, {-14, 4}, {3, -15}, {6, 14}};
+        for (CordonLayout.Anomaly a : layout.anomalies) {
+            if (!a.inField()) {
+                loneAnomaly(new Canvas(p, r, a.x(), a.y() - 1, a.z(), Rotation.NONE), a.kind());
+            }
+        }
+        int[][] clusters = CordonLayout.FIELD_CLUSTERS;
         for (int i = 0; i < clusters.length; i++) {
             int x = CordonTerrain.ANOMALY_X + clusters[i][0];
             int z = CordonTerrain.ANOMALY_Z + clusters[i][1];
             int y = terrain.top(x, z);
             Canvas c = new Canvas(p, r, x, y, z, Rotation.NONE);
             clear(c, -3, -3, 3, 3, 4);
-            switch (i % 4) {
-                case 0 -> {
+            switch (CordonLayout.FIELD_KINDS[i % CordonLayout.FIELD_KINDS.length]) {
+                case BURNER -> {
                     // Burner: soul fire on soul soil, ringed by scorched stone.
                     for (int u = -2; u <= 2; u++) {
                         for (int w = -2; w <= 2; w++) {
@@ -1282,8 +1287,8 @@ final class CordonBuilder {
                     c.set(0, 1, 0, Blocks.SOUL_FIRE);
                     c.set(1, 1, 0, Blocks.SOUL_FIRE);
                 }
-                case 1 -> {
-                    // Hot spot: magma that burns whoever walks on it.
+                case VORTEX -> {
+                    // Vortex: a pit of magma that burns whoever gets pulled in.
                     for (int u = -3; u <= 3; u++) {
                         for (int w = -3; w <= 3; w++) {
                             if (u * u + w * w <= 6 && r.nextDouble() < 0.75) {
@@ -1292,8 +1297,8 @@ final class CordonBuilder {
                         }
                     }
                 }
-                case 2 -> {
-                    // Jelly: webs that trap.
+                case ACID -> {
+                    // Acid jelly: webs that trap.
                     for (int u = -2; u <= 2; u++) {
                         for (int w = -2; w <= 2; w++) {
                             if (r.nextDouble() < 0.6) {
@@ -1305,8 +1310,8 @@ final class CordonBuilder {
                         }
                     }
                 }
-                default -> {
-                    // Crystal growth: glowing "artifacts" around a lightning rod.
+                case ELECTRA -> {
+                    // Electra: crystal growth around a lightning rod.
                     c.set(0, 0, 0, Blocks.CALCITE);
                     c.set(0, 1, 0, Blocks.LIGHTNING_ROD);
                     for (int[] d : new int[][]{{1, 1}, {-1, 1}, {1, -1}, {-1, -1}, {2, 0}}) {
@@ -1336,6 +1341,32 @@ final class CordonBuilder {
         s.fill(0, 1, 0, 0, 2, 0, Blocks.SPRUCE_FENCE);
         s.set(0, 3, 0, Blocks.SPRUCE_PLANKS);
         s.wallSign(-1, 3, 0, Direction.WEST, "Аномалии!", "Не подходить", "без болтов");
+    }
+
+    /** Scorched ground that gives a lone anomaly away; trees and bushes on it are cleared. */
+    private static void loneAnomaly(Canvas c, CordonLayout.AnomalyKind kind) {
+        Random r = c.random;
+        clear(c, -3, -3, 3, 3, 5);
+        for (int u = -3; u <= 3; u++) {
+            for (int w = -3; w <= 3; w++) {
+                int d = u * u + w * w;
+                if (d > 9 || (d > 4 && r.nextDouble() < 0.5)) {
+                    continue;
+                }
+                Block block = switch (kind) {
+                    case ELECTRA -> d <= 1 ? Blocks.CALCITE : r.nextDouble() < 0.5 ? Blocks.TUFF : Blocks.GRAVEL;
+                    case BURNER -> d <= 1 ? Blocks.SOUL_SOIL : r.nextDouble() < 0.6 ? Blocks.BLACKSTONE : Blocks.COARSE_DIRT;
+                    case VORTEX -> d <= 2 ? Blocks.COARSE_DIRT : r.nextDouble() < 0.5 ? Blocks.GRAVEL : Blocks.ROOTED_DIRT;
+                    case ACID -> d <= 1 ? Blocks.SLIME_BLOCK : r.nextDouble() < 0.6 ? Blocks.MOSS_BLOCK : Blocks.MUD;
+                };
+                c.set(u, 0, w, block);
+            }
+        }
+        if (kind == CordonLayout.AnomalyKind.VORTEX) {
+            // Debris it has torn up.
+            c.set(2, 1, -1, Blocks.DEAD_BUSH);
+            c.set(-2, 1, 2, Blocks.DEAD_BUSH);
+        }
     }
 
     // --- small props

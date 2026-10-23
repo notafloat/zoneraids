@@ -16,6 +16,9 @@
     { "slug": "anomaly-zone", "version": "1.2", "side": "both", "why": "Anomalies, emissions, detectors, artifacts. Version 1.2 = file 2.0.0-pre-release; 2.0 (file 3.0.0) crashes dedicated servers in QuestNetwork" },
     { "slug": "terrablender", "side": "both", "why": "Required by Anomaly Zone" },
     { "slug": "yori3os-grappling-hooks", "version": "5.1.1", "side": "both", "why": "Grappling hook" },
+    { "slug": "tactical-movement", "version": "1.3.1", "side": "both", "why": "Leaning around corners, prone, slide, third-person reload and gun-holding animations made for TaCZ (pulls PlayerAnimator)" },
+    { "slug": "moves-like-mafuyu", "version": "1.2.1-hotfix2", "side": "both", "why": "Climbing over 2-block obstacles and rolls on vanilla keys; its slide, crawl and dodges are off in config (TACtical Movement and TaCZ cover them)" },
+    { "slug": "cameraoverhaul", "side": "client", "why": "Camera tilt and sway when strafing, turning and landing" },
 
     { "slug": "simple-voice-chat", "side": "both", "why": "Proximity voice chat, key for extraction shooters" },
     { "slug": "sound-physics-remastered", "side": "client", "why": "Reverb and muffling, atmosphere" },
