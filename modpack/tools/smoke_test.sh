@@ -145,10 +145,10 @@ done
 for kind in blind_dog flesh snork bloodsucker bandit military; do
   grep -qE "Spawned [0-9]+ enemies \($kind\)" "$REPORT/console.log" || { echo "Enemy kind $kind did not spawn"; fail=1; }
 done
-sed -n '/ENEMY_CHECK_START/,/ENEMY_CHECK_END/p' "$REPORT/console.log" | grep -q 'tacz:modern_kinetic_gun' \
-  || { echo "Armed NPC holds no TaCZ gun"; fail=1; }
-sed -n '/ENEMY_CHECK_START/,/ENEMY_CHECK_END/p' "$REPORT/console.log" | grep -qE 'has the following entity data: \{(Count|id):' \
-  || { echo "Killed enemies dropped no loot"; fail=1; }
+# No "sed | grep -q": with pipefail the early exit of grep fails the pipeline.
+ENEMY_LOG="$(sed -n '/ENEMY_CHECK_START/,/ENEMY_CHECK_END/p' "$REPORT/console.log")"
+grep -q 'tacz:modern_kinetic_gun' <<< "$ENEMY_LOG" || { echo "Armed NPC holds no TaCZ gun"; fail=1; }
+grep -qE 'has the following entity data: \{(Count|id):' <<< "$ENEMY_LOG" || { echo "Killed enemies dropped no loot"; fail=1; }
 echo "===== Memory ====="
 grep -A12 -iE 'Memory usage|Memory Usage' "$REPORT/console.log" | head -30
 exit $fail

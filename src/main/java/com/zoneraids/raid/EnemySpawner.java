@@ -166,10 +166,17 @@ public final class EnemySpawner {
         }
     }
 
-    /** Enemies that stand around without a target turn on a raider they can see. */
+    /** Enemies that stand around without a target turn on a raider they can see; none of them picks up loot. */
     private static void aggro(ServerLevel level, RaidSession session, List<ServerPlayer> raiders) {
         for (UUID id : session.enemies) {
-            if (!(level.getEntity(id) instanceof Mob mob) || !mob.isAlive() || mob.getTarget() != null) {
+            if (!(level.getEntity(id) instanceof Mob mob) || !mob.isAlive()) {
+                continue;
+            }
+            if (mob.canPickUpLoot()) {
+                // TaCZ NPCs re-enable it when their loadout is applied on the first tick.
+                mob.setCanPickUpLoot(false);
+            }
+            if (mob.getTarget() != null) {
                 continue;
             }
             ServerPlayer best = null;
