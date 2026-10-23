@@ -1,12 +1,16 @@
 package com.zoneraids.raid;
 
+import com.zoneraids.data.EnemyPoint;
 import com.zoneraids.data.ExtractPoint;
 import com.zoneraids.data.RaidMap;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.BitSet;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -35,9 +39,16 @@ public final class RaidSession {
     final int totalTicks;
     int ticksLeft;
     final Map<UUID, Participant> participants = new LinkedHashMap<>();
+    /** Enemy points as they were when the raid started; a set bit means that point already had its chance to spawn. */
+    final List<EnemyPoint> enemyPoints;
+    final BitSet enemyPointsDone = new BitSet();
+    /** Live enemies of this raid (UUIDs only), and the subset that are armed NPCs. */
+    final Set<UUID> enemies = new HashSet<>();
+    final Set<UUID> npcs = new HashSet<>();
 
     RaidSession(RaidMap map) {
         this.map = map;
+        this.enemyPoints = List.copyOf(map.enemies);
         this.totalTicks = map.durationSeconds * 20;
         this.ticksLeft = totalTicks;
     }
@@ -52,5 +63,9 @@ public final class RaidSession {
 
     public int size() {
         return participants.size();
+    }
+
+    public int enemyCount() {
+        return enemies.size();
     }
 }

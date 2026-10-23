@@ -71,6 +71,21 @@ if [ "$status" = up ]; then
       say "data get block 0 -60 $z Items" 1
     done
   done
+  # Raid enemies: every kind must spawn; armed NPCs must hold a TaCZ gun and drop loot.
+  say "raidadmin enemy types" 2
+  say "execute in zoneraids:cordon run forceload add 0 0 47 47" 8
+  for kind in blind_dog flesh snork bloodsucker bandit military; do
+    say "execute in zoneraids:cordon positioned 24 0 24 positioned over motion_blocking_no_leaves run raidadmin enemy spawn $kind" 1
+  done
+  say "say ENEMY_CHECK_START" 5
+  say "data get entity @e[type=tacznpcs:npc,limit=1] HandItems" 1
+  say "data get entity @e[type=tacznpcs:npc,limit=1] ArmorItems" 1
+  say "data get entity @e[type=tacznpcs:npc,limit=1] ForgeData" 1
+  say "data get entity @e[type=zoneraids:bloodsucker,limit=1] Health" 1
+  say "kill @e[type=tacznpcs:npc]" 1
+  say "kill @e[type=zoneraids:bloodsucker]" 3
+  say "execute in zoneraids:cordon positioned 24 70 24 run data get entity @e[type=item,limit=3,sort=nearest,distance=..40] Item" 1
+  say "say ENEMY_CHECK_END" 2
   say "spark health --memory" 10
   say "stop" 1
   wait "$PID"
@@ -122,6 +137,16 @@ if [ -f "$IDS_FILE" ]; then
   grep -oE "Unknown block type '[^']*'" "$REPORT/console.log" | cut -d"'" -f2 | sort -u > "$REPORT/unknown-blocks.txt"
   grep -oE '\banomalyzone:anomaly_[a-z0-9_]+\b' "$IDS_FILE" | sort -u | comm -23 - "$REPORT/unknown-blocks.txt" | tr '\n' ' '; echo
 fi
+echo "===== Raid enemies ====="
+grep -E 'MISSING|= .* OK|test spawn|Spawned|No room|Unknown or missing enemy|ENEMY_CHECK|has the following entity data|Zone Raids: (bad )?enemy' "$REPORT/console.log" | cut -c1-600
+for f in config/tacznpc*.json config/tacznpcs*.json config/tacznpcs/*.json; do
+  [ -f "$f" ] && { echo "--- $f"; head -c 4000 "$f"; echo; }
+done
+for kind in blind_dog flesh snork bloodsucker bandit military; do
+  grep -qE "Spawned [0-9]+ enemies \($kind\)" "$REPORT/console.log" || { echo "Enemy kind $kind did not spawn"; fail=1; }
+done
+sed -n '/ENEMY_CHECK_START/,/ENEMY_CHECK_END/p' "$REPORT/console.log" | grep -q 'tacz:modern_kinetic_gun' \
+  || { echo "Armed NPC holds no TaCZ gun"; fail=1; }
 echo "===== Memory ====="
 grep -A12 -iE 'Memory usage|Memory Usage' "$REPORT/console.log" | head -30
 exit $fail

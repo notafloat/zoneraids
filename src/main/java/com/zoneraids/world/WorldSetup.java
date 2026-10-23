@@ -1,6 +1,7 @@
 package com.zoneraids.world;
 
 import com.zoneraids.RaidConfig;
+import com.zoneraids.data.EnemyPoint;
 import com.zoneraids.data.ExtractPoint;
 import com.zoneraids.data.HubPoint;
 import com.zoneraids.data.RaidMap;
@@ -20,6 +21,8 @@ public final class WorldSetup {
     /** Bump a version to make existing worlds rebuild that layout on their next start. */
     private static final String HUB_LAYOUT = "hub@1";
     private static final String CORDON_LAYOUT = "cordon@1";
+    /** Enemy points are added to an already built Cordon without rebuilding it. Bump to reset them. */
+    private static final String CORDON_ENEMIES = "cordon-enemies@1";
 
     private WorldSetup() {
     }
@@ -34,6 +37,12 @@ public final class WorldSetup {
         }
         if (!data.isBuilt(CORDON_LAYOUT)) {
             buildCordon(server);
+        } else if (!data.isBuilt(CORDON_ENEMIES)) {
+            RaidMap map = data.getMap(CORDON);
+            if (map != null) {
+                setCordonEnemies(map, new CordonLayout());
+                data.markBuilt(CORDON_ENEMIES);
+            }
         }
     }
 
@@ -92,9 +101,18 @@ public final class WorldSetup {
                 map.extracts.add(new ExtractPoint(e.name(), new BlockPos(e.x(), e.y(), e.z()), e.radius(), e.chance()));
             }
             map.setBounds(CordonLayout.minBound(), CordonLayout.minBound(), CordonLayout.maxBound(), CordonLayout.maxBound());
+            setCordonEnemies(map, layout);
             data.putMap(map);
             data.markBuilt(CORDON_LAYOUT);
+            data.markBuilt(CORDON_ENEMIES);
         }));
         return true;
+    }
+
+    private static void setCordonEnemies(RaidMap map, CordonLayout layout) {
+        map.enemies.clear();
+        for (CordonLayout.Enemy e : layout.enemies) {
+            map.enemies.add(new EnemyPoint(e.kind(), new BlockPos(e.x(), e.y(), e.z()), e.min(), e.max(), e.chance(), e.trigger()));
+        }
     }
 }

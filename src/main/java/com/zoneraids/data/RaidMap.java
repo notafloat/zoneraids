@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Admin-defined raid location: a dimension plus spawn and extraction points.
+ * Admin-defined raid location: a dimension plus spawn, extraction and enemy points.
  */
 public final class RaidMap {
     public final String id;
@@ -25,6 +25,7 @@ public final class RaidMap {
     public boolean enabled = true;
     public final List<SpawnPoint> spawns = new ArrayList<>();
     public final List<ExtractPoint> extracts = new ArrayList<>();
+    public final List<EnemyPoint> enemies = new ArrayList<>();
     /** Optional play area (inclusive block coordinates); players in a raid are kept inside it. */
     public boolean bounded;
     public int minX;
@@ -70,6 +71,9 @@ public final class RaidMap {
         ListTag extractList = new ListTag();
         extracts.forEach(e -> extractList.add(e.save()));
         tag.put("Extracts", extractList);
+        ListTag enemyList = new ListTag();
+        enemies.forEach(e -> enemyList.add(e.save()));
+        tag.put("Enemies", enemyList);
         if (bounded) {
             tag.putIntArray("Bounds", new int[]{minX, minZ, maxX, maxZ});
         }
@@ -92,6 +96,10 @@ public final class RaidMap {
         ListTag extractList = tag.getList("Extracts", Tag.TAG_COMPOUND);
         for (int i = 0; i < extractList.size(); i++) {
             map.extracts.add(ExtractPoint.load(extractList.getCompound(i)));
+        }
+        ListTag enemyList = tag.getList("Enemies", Tag.TAG_COMPOUND);
+        for (int i = 0; i < enemyList.size(); i++) {
+            map.enemies.add(EnemyPoint.load(enemyList.getCompound(i)));
         }
         int[] bounds = tag.getIntArray("Bounds");
         if (bounds.length == 4) {

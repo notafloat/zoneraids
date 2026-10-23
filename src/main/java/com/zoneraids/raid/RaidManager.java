@@ -125,6 +125,16 @@ public final class RaidManager {
     }
 
     @Nullable
+    public RaidSession sessionById(UUID id) {
+        for (RaidSession session : sessions.values()) {
+            if (session.id.equals(id)) {
+                return session;
+            }
+        }
+        return null;
+    }
+
+    @Nullable
     public String queuedMap(UUID player) {
         return playerQueue.get(player);
     }
@@ -214,6 +224,15 @@ public final class RaidManager {
                 part.hudTicks = 0;
                 sendHud(player, session, part);
             }
+        }
+        if (level != null && tickCounter % 20 == 0) {
+            List<ServerPlayer> raiders = new ArrayList<>();
+            forEachOnline(session, p -> {
+                if (p.isAlive() && p.level() == level) {
+                    raiders.add(p);
+                }
+            });
+            EnemySpawner.tick(level, session, raiders, level.getRandom());
         }
         return session.ticksLeft <= 0 || session.participants.isEmpty();
     }
@@ -417,6 +436,7 @@ public final class RaidManager {
         // Bumping the generation makes every loot crate in this dimension reroll on next open.
         data().nextGeneration(map.dimension);
         clearDroppedItems(level);
+        EnemySpawner.sweep(level);
 
         List<ExtractPoint> open = new ArrayList<>();
         for (ExtractPoint point : map.extracts) {
@@ -490,6 +510,7 @@ public final class RaidManager {
         session.participants.clear();
         ServerLevel level = server.getLevel(session.map.dimension);
         if (level != null) {
+            EnemySpawner.cleanup(level, session);
             clearDroppedItems(level);
         }
     }
