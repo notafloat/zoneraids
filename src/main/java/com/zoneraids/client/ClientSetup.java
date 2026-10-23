@@ -32,6 +32,9 @@ public final class ClientSetup {
     /** Held with the mouse wheel: stance height by steps, Escape from Tarkov's crouch key + wheel. */
     public static final KeyMapping STANCE_ADJUST = new KeyMapping("key.zoneraids.stance_adjust", KeyConflictContext.IN_GAME,
             InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_LEFT_CONTROL, "key.categories.zoneraids");
+    /** Walk / run toggle, Arma 3 style. */
+    public static final KeyMapping WALK = new KeyMapping("key.zoneraids.walk", KeyConflictContext.IN_GAME,
+            InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_CAPS_LOCK, "key.categories.zoneraids");
     public static final KeyMapping ROLL = new KeyMapping("key.zoneraids.roll", KeyConflictContext.IN_GAME,
             InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_C, "key.categories.zoneraids");
 
@@ -51,6 +54,7 @@ public final class ClientSetup {
         event.register(LEAN_ADJUST);
         event.register(STANCE_ADJUST);
         event.register(ROLL);
+        event.register(WALK);
     }
 
     @SubscribeEvent
