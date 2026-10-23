@@ -84,7 +84,7 @@ if [ "$status" = up ]; then
   say "data get entity @e[type=zoneraids:bloodsucker,limit=1] Health" 1
   say "kill @e[type=tacznpcs:npc]" 1
   say "kill @e[type=zoneraids:bloodsucker]" 3
-  say "execute in zoneraids:cordon positioned 24 70 24 run data get entity @e[type=item,limit=3,sort=nearest,distance=..40] Item" 1
+  say "execute in zoneraids:cordon positioned 24 70 24 as @e[type=item,distance=..40] run data get entity @s Item" 2
   say "say ENEMY_CHECK_END" 2
   say "spark health --memory" 10
   say "stop" 1
@@ -147,6 +147,8 @@ for kind in blind_dog flesh snork bloodsucker bandit military; do
 done
 sed -n '/ENEMY_CHECK_START/,/ENEMY_CHECK_END/p' "$REPORT/console.log" | grep -q 'tacz:modern_kinetic_gun' \
   || { echo "Armed NPC holds no TaCZ gun"; fail=1; }
+sed -n '/ENEMY_CHECK_START/,/ENEMY_CHECK_END/p' "$REPORT/console.log" | grep -qE 'has the following entity data: \{(Count|id):' \
+  || { echo "Killed enemies dropped no loot"; fail=1; }
 echo "===== Memory ====="
 grep -A12 -iE 'Memory usage|Memory Usage' "$REPORT/console.log" | head -30
 exit $fail

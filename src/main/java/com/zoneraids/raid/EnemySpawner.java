@@ -280,6 +280,8 @@ public final class EnemySpawner {
                 mob.finalizeSpawn(level, level.getCurrentDifficultyAt(mob.blockPosition()), MobSpawnType.EVENT, null, null);
             }
             equip(level, mob, type.kind());
+            // Enemies must not hoover up what raiders drop: loot comes only from their own tables.
+            mob.setCanPickUpLoot(false);
             mob.setYHeadRot(mob.getYRot());
             if (raid != null) {
                 mob.setPersistenceRequired();
