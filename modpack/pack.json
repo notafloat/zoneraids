@@ -28,7 +28,7 @@
     { "slug": "modernfix", "side": "both", "why": "Less RAM, faster startup, fixes world leaks" },
     { "slug": "ferrite-core", "side": "both", "why": "Less RAM" },
     { "slug": "embeddium", "side": "client", "why": "Fast renderer (Sodium port)" },
-    { "slug": "oculus", "side": "client", "why": "Shader packs (Iris port for Forge, works on top of Embeddium); TaCZ supports it. Zone Raids moves its R/K keys off TaCZ reload and the terminal" },
+    { "slug": "oculus", "side": "client", "why": "Shader packs (Iris port for Forge, works on top of Embeddium); TaCZ supports it. Its R/K/O keys clash with TaCZ and the raid terminal, Zone Raids moves them to F7/F8 (KeyLayout)" },
     { "slug": "entityculling", "side": "client", "why": "Skips rendering of hidden entities and block entities" },
     { "slug": "immediatelyfast", "side": "client", "why": "Faster HUD, text and entity rendering" },
     { "slug": "spark", "side": "both", "why": "TPS/FPS profiler and heap summaries" },

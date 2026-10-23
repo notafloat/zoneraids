@@ -230,6 +230,8 @@ public final class RaidManager {
                 // Walls stop walkers; this also catches grappling hooks, elytra and other ways over them.
                 double x = Mth.clamp(player.getX(), map.minX + 1.5, map.maxX - 0.5);
                 double z = Mth.clamp(player.getZ(), map.minZ + 1.5, map.maxZ - 0.5);
+                // A rider would be pulled straight back out by the vehicle, so off the bike first.
+                player.stopRiding();
                 player.connection.teleport(x, player.getY(), z, player.getYRot(), player.getXRot());
                 player.displayClientMessage(Component.translatable("zoneraids.raid.out_of_bounds").withStyle(ChatFormatting.RED), true);
             }
@@ -706,7 +708,8 @@ public final class RaidManager {
             }
         }
         int needed = session.nextType == RoundType.DEATHMATCH ? 2 : 1;
-        if (level == null || players < needed) {
+        // An admin may have cleared the map's spawns or exits during the break; beginRound needs both.
+        if (level == null || players < needed || !session.map.isPlayable()) {
             Component msg = Component.translatable("zoneraids.round.not_enough").withStyle(ChatFormatting.YELLOW);
             session.roster.keySet().forEach(id -> message(id, msg));
             endSession(session, false);
