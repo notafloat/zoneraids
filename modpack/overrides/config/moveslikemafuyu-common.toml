@@ -1,0 +1,30 @@
+# Moves Like Mafuyu, tuned for an extraction shooter. Only what differs from the defaults is listed,
+# Forge fills in the rest on first start.
+
+[slide]
+	# TACtical Movement already slides on sprint + sneak; two slides on one key fight each other.
+	enableSlide = false
+	enableDap = false
+	enableSlideKnock = false
+	# No invulnerability frames in PvP: a roll must not dodge bullets.
+	enableRollInvulnerability = false
+	enableAirRoll = false
+	# The roll camera spin makes aiming after a roll hard.
+	enableRollCamera = false
+
+[crawling]
+	# Prone comes from TACtical Movement / TaCZ, Mafuyu's crawl detects poses differently and conflicts.
+	enableCraw = false
+	enableCrawSlide = false
+	enableLeap = false
+
+[auto_dodge]
+	enableAutoDodge = false
+
+[shortcut]
+	# Extra Shift/Ctrl bindings would clash with sneak and sprint; rolls stay on double-tap sprint.
+	enableShortcut = false
+
+[roll_attributes]
+	# One roll every 3 seconds: a dash into cover, not a way to move.
+	RollCooldown = 60
