@@ -1,5 +1,6 @@
 package com.zoneraids.raid;
 
+import com.zoneraids.data.EnemyPoint;
 import com.zoneraids.data.ExtractPoint;
 import com.zoneraids.data.RaidMap;
 import net.minecraft.core.BlockPos;
@@ -7,10 +8,13 @@ import net.minecraft.world.item.Item;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -42,6 +46,12 @@ public final class RaidSession {
     int ticksLeft;
     /** Players on the map in the current round. */
     final Map<UUID, Participant> participants = new LinkedHashMap<>();
+    /** Enemy points as they were when the raid started; a set bit means that point already had its chance to spawn. */
+    final List<EnemyPoint> enemyPoints;
+    final BitSet enemyPointsDone = new BitSet();
+    /** Live enemies of this raid (UUIDs only), and the subset that are armed NPCs. */
+    final Set<UUID> enemies = new HashSet<>();
+    final Set<UUID> npcs = new HashSet<>();
     /** Per anomaly of the map: the artifact still waiting to appear in it, or null. */
     final Item[] pendingArtifacts;
     /** Per anomaly: the artifact item entity once it has appeared. */
@@ -83,6 +93,7 @@ public final class RaidSession {
     RaidSession(RaidMap map, int rounds) {
         this.map = map;
         this.rounds = rounds;
+        this.enemyPoints = List.copyOf(map.enemies);
         this.totalTicks = map.durationSeconds * 20;
         this.ticksLeft = totalTicks;
         this.pendingArtifacts = new Item[map.anomalies.size()];
@@ -122,5 +133,9 @@ public final class RaidSession {
 
     public int size() {
         return participants.size();
+    }
+
+    public int enemyCount() {
+        return enemies.size();
     }
 }

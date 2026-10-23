@@ -1,0 +1,140 @@
+{
+  "pools": [
+    {
+      "rolls": {
+        "type": "minecraft:uniform",
+        "min": 1,
+        "max": 1
+      },
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "tacz:modern_kinetic_gun",
+          "weight": 6,
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{GunId:\"tacz:glock_17\",GunFireMode:\"SEMI\",GunCurrentAmmoCount:0,HasBulletInBarrel:0b}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tacz:modern_kinetic_gun",
+          "weight": 5,
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{GunId:\"tacz:m1911\",GunFireMode:\"SEMI\",GunCurrentAmmoCount:0,HasBulletInBarrel:0b}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tacz:modern_kinetic_gun",
+          "weight": 5,
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{GunId:\"tacz:m870\",GunFireMode:\"SEMI\",GunCurrentAmmoCount:0,HasBulletInBarrel:0b}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tacz:modern_kinetic_gun",
+          "weight": 3,
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{GunId:\"tacz:cz75\",GunFireMode:\"SEMI\",GunCurrentAmmoCount:0,HasBulletInBarrel:0b}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tacz:modern_kinetic_gun",
+          "weight": 3,
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{GunId:\"tacz:ak47\",GunFireMode:\"AUTO\",GunCurrentAmmoCount:0,HasBulletInBarrel:0b}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tacz:modern_kinetic_gun",
+          "weight": 2,
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{GunId:\"tacz:hk_mp5a5\",GunFireMode:\"AUTO\",GunCurrentAmmoCount:0,HasBulletInBarrel:0b}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rolls": {
+        "type": "minecraft:uniform",
+        "min": 1,
+        "max": 1
+      },
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "fracturepoint:balaclava_open_face",
+          "weight": 4
+        },
+        {
+          "type": "minecraft:item",
+          "name": "fracturepoint:balaclava_eye_slit",
+          "weight": 3
+        },
+        {
+          "type": "minecraft:item",
+          "name": "fracturepoint:fsb_vkpo_cap",
+          "weight": 2
+        },
+        {
+          "type": "minecraft:empty",
+          "weight": 3
+        }
+      ]
+    },
+    {
+      "rolls": {
+        "type": "minecraft:uniform",
+        "min": 1,
+        "max": 1
+      },
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:leather_chestplate",
+          "weight": 4,
+          "functions": [
+            {
+              "function": "minecraft:set_damage",
+              "damage": {
+                "type": "minecraft:uniform",
+                "min": 0.3,
+                "max": 0.9
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "fracturepoint:soviet_uniform",
+          "weight": 3
+        },
+        {
+          "type": "minecraft:empty",
+          "weight": 3
+        }
+      ]
+    }
+  ]
+}

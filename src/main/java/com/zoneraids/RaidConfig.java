@@ -28,6 +28,12 @@ public final class RaidConfig {
     public static final ForgeConfigSpec.BooleanValue PROTECT_HUB_BLOCKS;
     public static final ForgeConfigSpec.BooleanValue GIVE_MAP_IN_HUB;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> ANOMALY_BLOCKS;
+    public static final ForgeConfigSpec.BooleanValue ENEMIES_ENABLED;
+    public static final ForgeConfigSpec.IntValue MAX_ENEMIES_ALIVE;
+    public static final ForgeConfigSpec.IntValue MAX_NPCS_ALIVE;
+    public static final ForgeConfigSpec.IntValue ENEMY_MIN_SPAWN_DISTANCE;
+    public static final ForgeConfigSpec.DoubleValue ENEMY_GEAR_DROP_CHANCE;
+    public static final ForgeConfigSpec.ConfigValue<List<? extends String>> ENEMY_TYPES;
     public static final ForgeConfigSpec.BooleanValue ANOMALIES;
     public static final ForgeConfigSpec.DoubleValue ANOMALY_DAMAGE;
     public static final ForgeConfigSpec.DoubleValue ARTIFACT_CHANCE;
@@ -97,6 +103,30 @@ public final class RaidConfig {
                 .define("giveMapInHub", true);
         ANOMALY_BLOCKS = b.comment("Optional block ids (e.g. from an anomaly mod) placed in the Cordon's anomaly field. Ids that are not installed are skipped.")
                 .defineListAllowEmpty(List.of("anomalyBlocks"), List.<String>of(), o -> o instanceof String);
+        b.pop();
+
+        b.push("enemies");
+        ENEMIES_ENABLED = b.comment("Spawn enemies (mutants, bandits, soldiers) at the maps' enemy points during raids.")
+                .define("enabled", true);
+        MAX_ENEMIES_ALIVE = b.comment("Most enemies alive at once in one raid. Groups that would exceed it spawn smaller.",
+                        "Keep it low on weak machines: every mob costs server ticks and client frames.")
+                .defineInRange("maxAlivePerRaid", 14, 0, 200);
+        MAX_NPCS_ALIVE = b.comment("Most armed NPCs (kinds not from Zone Raids, e.g. TaCZ NPCs) alive at once in one raid. They cost more than mutants.")
+                .defineInRange("maxNpcsPerRaid", 6, 0, 100);
+        ENEMY_MIN_SPAWN_DISTANCE = b.comment("Enemies do not appear closer than this many blocks to a raider (if the spot allows).")
+                .defineInRange("minSpawnDistance", 12, 0, 64);
+        ENEMY_GEAR_DROP_CHANCE = b.comment("Chance for each piece of an armed enemy's gear (weapon, armor) to drop on death.")
+                .defineInRange("gearDropChance", 0.15, 0.0, 1.0);
+        ENEMY_TYPES = b.comment("Enemy kinds used by enemy points: kind=entity_id or kind=entity_id{nbt}.",
+                        "Kinds whose entity is not installed are skipped. On death an enemy also drops loot from",
+                        "zoneraids:enemies/<kind>; armed kinds get gear from zoneraids:enemies/<kind>_gear when that table has items.")
+                .defineListAllowEmpty(List.of("types"), List.of(
+                        "blind_dog=zoneraids:blind_dog",
+                        "flesh=zoneraids:flesh",
+                        "snork=zoneraids:snork",
+                        "bloodsucker=zoneraids:bloodsucker",
+                        "bandit=tacznpcs:npc{template:\"zr_bandit\"}",
+                        "military=tacznpcs:npc{template:\"zr_military\"}"), o -> o instanceof String s && s.contains("="));
         b.pop();
 
         b.push("anomalies");

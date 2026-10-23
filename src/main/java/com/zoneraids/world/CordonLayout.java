@@ -26,6 +26,10 @@ final class CordonLayout {
     record Extract(String name, int x, int y, int z, double radius, double chance, int markerX, int markerZ) {
     }
 
+    /** An enemy group; {@code y} is where they stand (spawning searches a few blocks up and down). */
+    record Enemy(String kind, int x, int y, int z, int min, int max, double chance, int trigger) {
+    }
+
     enum AnomalyKind { ELECTRA, BURNER, VORTEX, ACID }
 
     /** {@code y} is the block a player stands in at the anomaly's centre. */
@@ -40,6 +44,7 @@ final class CordonLayout {
     final List<Site> sites = new ArrayList<>();
     final List<Spawn> spawns = new ArrayList<>();
     final List<Extract> extracts = new ArrayList<>();
+    final List<Enemy> enemies = new ArrayList<>();
     final List<Anomaly> anomalies = new ArrayList<>();
     final int bridgeX;
     final int bridgeZ;
@@ -161,6 +166,48 @@ final class CordonLayout {
             anomalies.add(new Anomaly(kind, x, t.top(x, z) + 1, z, kind == AnomalyKind.VORTEX ? 3 : 2.5, false));
             t.reserve(x - 3, z - 3, x + 3, z + 3);
         }
+        addEnemies();
+    }
+
+    /**
+     * Enemy groups, away from the player spawns at the edges so nobody is jumped on arrival.
+     * Rookie village stays quiet; bandits hold the buildings, the military the checkpoint and the hill,
+     * mutants the fields, the swamp, the anomalies and the lab.
+     */
+    private void addEnemies() {
+        Site farm = site(Kind.FARM);
+        Site gas = site(Kind.GAS_STATION);
+        Site flats = site(Kind.APARTMENTS);
+        Site factory = site(Kind.FACTORY);
+        Site checkpoint = site(Kind.CHECKPOINT);
+        Site hill = site(Kind.RADIO_HILL);
+        Site swamp = site(Kind.SWAMP_HUT);
+
+        enemies.add(new Enemy("bandit", gas.x(), gas.y() + 1, gas.z(), 2, 3, 0.75, 40));
+        enemies.add(new Enemy("bandit", flats.x(), flats.y() + 1, flats.z(), 2, 3, 0.85, 36));
+        enemies.add(new Enemy("bandit", factory.x(), factory.y() + 1, factory.z(), 2, 4, 0.9, 40));
+        enemies.add(new Enemy("military", checkpoint.x(), checkpoint.y() + 1, checkpoint.z(), 2, 3, 0.6, 36));
+        enemies.add(new Enemy("military", hill.x() + 6, hill.y() + 1, hill.z() - 2, 2, 2, 0.6, 40));
+        // Lab under the hill: 12 blocks down the shaft.
+        enemies.add(new Enemy("bloodsucker", hill.x() - 5, hill.y() - 11, hill.z() + 3, 1, 1, 0.7, 14));
+
+        enemies.add(new Enemy("flesh", farm.x() + 10, farm.y() + 1, farm.z() + 4, 2, 3, 0.85, 40));
+        int[][] dogs = {{-100, 30}, {-55, -105}, {105, 35}};
+        for (int[] d : dogs) {
+            enemies.add(new Enemy("blind_dog", d[0], terrain.top(d[0], d[1]) + 1, d[1], 2, 4, 0.7, 40));
+        }
+        int ax = CordonTerrain.ANOMALY_X, az = CordonTerrain.ANOMALY_Z;
+        enemies.add(new Enemy("snork", ax, terrain.top(ax, az) + 1, az, 2, 3, 0.6, 36));
+        enemies.add(new Enemy("snork", swamp.x(), swamp.y() + 1, swamp.z(), 1, 2, 0.5, 32));
+    }
+
+    private Site site(Kind kind) {
+        for (Site s : sites) {
+            if (s.kind() == kind) {
+                return s;
+            }
+        }
+        throw new IllegalStateException("no " + kind);
     }
 
     /** Raid area: everything strictly inside the perimeter wall. */

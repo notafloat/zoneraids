@@ -3,6 +3,7 @@ package com.zoneraids.event;
 import com.zoneraids.RaidConfig;
 import com.zoneraids.ZoneRaids;
 import com.zoneraids.command.RaidCommands;
+import com.zoneraids.raid.EnemySpawner;
 import com.zoneraids.raid.RaidManager;
 import com.zoneraids.registry.ModRegistry;
 import com.zoneraids.util.Teleports;
@@ -18,9 +19,12 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.event.CommandEvent;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.EntityJoinLevelEvent;
+import net.minecraftforge.event.entity.EntityLeaveLevelEvent;
 import net.minecraftforge.event.entity.EntityTravelToDimensionEvent;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
+import net.minecraftforge.event.entity.living.LivingDropsEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.level.BlockEvent;
@@ -96,6 +100,26 @@ public final class RaidEvents {
         if (manager != null && event.getEntity() instanceof ServerPlayer player) {
             manager.onDeath(player, event.getSource());
         }
+    }
+
+    /** Raid enemies whose raid is over (saved in a chunk, or across a restart) never come back. */
+    @SubscribeEvent
+    public static void onEntityJoin(EntityJoinLevelEvent event) {
+        if (!event.getLevel().isClientSide() && EnemySpawner.shouldRejectOnLoad(event.getEntity())) {
+            event.setCanceled(true);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onEntityLeave(EntityLeaveLevelEvent event) {
+        if (!event.getLevel().isClientSide()) {
+            EnemySpawner.onRemoved(event.getEntity());
+        }
+    }
+
+    @SubscribeEvent
+    public static void onDrops(LivingDropsEvent event) {
+        EnemySpawner.addDrops(event.getEntity(), event.getDrops());
     }
 
     @SubscribeEvent

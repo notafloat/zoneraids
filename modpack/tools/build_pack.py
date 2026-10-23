@@ -263,7 +263,7 @@ def main():
     copy_tree(server_only, server)
     with open(os.path.join(server, "forge-version.txt"), "w") as fh:
         fh.write(f"{pack['minecraft']}-{forge}\n")
-    for script in ("start.sh",):
+    for script in ("start-linux.sh",):
         p = os.path.join(server, script)
         if os.path.exists(p):
             os.chmod(p, 0o755)
