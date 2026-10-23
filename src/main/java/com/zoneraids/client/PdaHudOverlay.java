@@ -1,5 +1,6 @@
 package com.zoneraids.client;
 
+import com.zoneraids.util.AnomalyZoneCompat;
 import com.zoneraids.util.FirstAidCompat;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -17,17 +18,22 @@ import java.util.Set;
 /**
  * The game's own HUD redrawn as a PDA: hotbar slots in a dark panel with the selected one in amber,
  * the off-hand slot beside it, a strip with health and food bars above, a small body diagram coloured
- * by First Aid limb health, and the experience as a thin line. Replaces the vanilla hearts, food,
- * armor, air and experience bars and First Aid's own corner overlay. Spectators keep the vanilla hotbar,
- * which carries the spectator menu.
+ * by First Aid limb health, badges for the contamination worn artifacts cause, and the experience as a
+ * thin line. Replaces the vanilla hearts, food, armor, air and experience bars and First Aid's own
+ * corner overlay. Spectators keep the vanilla hotbar, which carries the spectator menu.
  */
 public final class PdaHudOverlay implements IGuiOverlay {
     private static final int SLOT = 20;
     private static final int STEP = 22;
     private static final int HOTBAR_W = 9 * STEP - 2;
+    private static final int HAZARD = 11;
     private static final ResourceLocation FIRST_AID_HUD = new ResourceLocation("firstaid", "hud");
     private static final Set<ResourceLocation> REPLACED = Set.of(VanillaGuiOverlay.PLAYER_HEALTH.id(), VanillaGuiOverlay.ARMOR_LEVEL.id(),
             VanillaGuiOverlay.FOOD_LEVEL.id(), VanillaGuiOverlay.AIR_LEVEL.id(), VanillaGuiOverlay.EXPERIENCE_BAR.id(), FIRST_AID_HUD);
+
+    /** Hazards from the worn artifacts, read every half second. */
+    private static double[] hazards;
+    private static int hazardsTick = -1;
 
     /** Cancels the vanilla parts this overlay draws itself. Called from {@link ClientEvents}. */
     static void onOverlayPre(RenderGuiOverlayEvent.Pre event) {
@@ -101,6 +107,26 @@ public final class PdaHudOverlay implements IGuiOverlay {
         ZoneUi.body(g, bx + 10, height - bodyH - 3, 2, FirstAidCompat.read(player), hpFraction);
         if (armor > 0) {
             g.drawString(font, armorText, bx + 19, height - 11, ZoneUi.DIM);
+        }
+        drawHazards(g, font, player, bx + boxW + 3, height);
+    }
+
+    /** Contamination badges (radiation, psi, bio, heat) beside the body box, only for the ones present. */
+    private static void drawHazards(GuiGraphics g, Font font, LocalPlayer player, int x, int bottom) {
+        if (hazardsTick < 0 || Math.abs(player.tickCount - hazardsTick) >= 10) {
+            hazardsTick = player.tickCount;
+            hazards = AnomalyZoneCompat.stats(player);
+        }
+        if (hazards == null) {
+            return;
+        }
+        int y = bottom - HAZARD;
+        for (int i = 0; i < StatusScreen.HAZARDS.length; i++) {
+            double value = hazards[StatusScreen.HAZARDS[i].ordinal()];
+            if (value > 0) {
+                ZoneUi.hazard(g, font, x, y, HAZARD, StatusScreen.HAZARD_GLYPHS[i], ZoneUi.hazardColor(value, AnomalyZoneCompat.HARMFUL));
+                y -= HAZARD + 1;
+            }
         }
     }
 

@@ -23,19 +23,21 @@ import java.util.List;
 /**
  * The PDA: every window of the mod is one of its tabs. Raids, perks and watching read the terminal
  * data from the server; the trader and the stash are opened by the server; the map, health and
- * inventory are purely client-side. Curios' own screen (backpack, rig, artifact container) opens from the
- * inventory tab and gets the tab row too (see {@link ClientEvents}). Every PDA tab shares the panel size
- * and position, with the tab row on top.
+ * status and inventory are purely client-side. Curios' slots (backpack, rig, artifact container) and the
+ * worn container open from the inventory tab as views inside it ({@link PdaCuriosScreen},
+ * {@link PdaContainerScreen}). Every PDA tab shares the panel size and position, with the tab row on top.
  */
 public final class PdaTabs {
-    public static final int PANEL_W = 380;
+    public static final int PANEL_W = 424;
     public static final int PANEL_H = 236;
     public static final int TAB_H = 14;
     private static final int TAB_PAD = 6;
+    /** ZoneButton clips its label 3 pixels from each edge. */
+    private static final int MIN_PAD = 3;
     private static final int TAB_GAP = 2;
 
     public enum Tab {
-        RAIDS, PERKS, SHOP, WATCH, STASH, MAP, HEALTH, INVENTORY;
+        RAIDS, PERKS, SHOP, WATCH, STASH, MAP, HEALTH, STATUS, INVENTORY;
 
         final String key = "zoneraids.pda.tab." + name().toLowerCase();
     }
@@ -64,18 +66,21 @@ public final class PdaTabs {
     public static List<ZoneButton> buttons(int left, int top, int panelW, @Nullable Tab current) {
         Font font = Minecraft.getInstance().font;
         Tab[] tabs = Tab.values();
-        int[] widths = new int[tabs.length];
-        int total = 0;
+        int[] text = new int[tabs.length];
+        int textTotal = 0;
         for (Tab tab : tabs) {
-            widths[tab.ordinal()] = font.width(Component.translatable(tab.key)) + 2 * TAB_PAD;
-            total += widths[tab.ordinal()] + TAB_GAP;
+            text[tab.ordinal()] = font.width(Component.translatable(tab.key));
+            textTotal += text[tab.ordinal()];
         }
-        float scale = Math.min(1.0F, (panelW - 8) / (float) total);
+        // Padding shrinks first (down to what the label needs to show whole), then the whole row scales.
+        int room = panelW - 8 - tabs.length * TAB_GAP;
+        int pad = Math.max(MIN_PAD, Math.min(TAB_PAD, (room - textTotal) / (2 * tabs.length)));
+        float scale = Math.min(1.0F, room / (float) (textTotal + 2 * pad * tabs.length));
         TerminalDataPacket data = ClientRaidState.terminal;
         List<ZoneButton> list = new ArrayList<>();
         int x = left + 4;
         for (Tab tab : tabs) {
-            int w = (int) (widths[tab.ordinal()] * scale);
+            int w = (int) ((text[tab.ordinal()] + 2 * pad) * scale);
             ZoneButton button = new ZoneButton(x, top - TAB_H, w, TAB_H + 1, Component.translatable(tab.key), b -> open(tab, current));
             button.selected = tab == current;
             if (data != null && tab != current) {
@@ -130,6 +135,7 @@ public final class PdaTabs {
             case STASH -> send(Action.STASH);
             case MAP -> mc.setScreen(new CordonMapScreen());
             case HEALTH -> mc.setScreen(new HealthScreen());
+            case STATUS -> mc.setScreen(new StatusScreen());
             case INVENTORY -> mc.setScreen(new PdaInventoryScreen(mc.player));
         }
     }
@@ -152,7 +158,7 @@ public final class PdaTabs {
         }
     }
 
-    /** True for Curios' screens (its slots beside the inventory), which get the PDA tab row. */
+    /** True for Curios' screens (its slots beside the inventory), which open as {@link PdaCuriosScreen}. */
     static boolean isCuriosScreen(Screen screen) {
         return screen.getClass().getName().startsWith("top.theillusivec4.curios.client.gui.CuriosScreen");
     }

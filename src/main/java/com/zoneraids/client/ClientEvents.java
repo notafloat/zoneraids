@@ -46,7 +46,7 @@ public final class ClientEvents {
         }
     }
 
-    /** The vanilla inventory and the stash's chest screen open as PDA tabs instead. */
+    /** The vanilla inventory, the stash's chest screen and Curios' screen open as PDA tabs instead. */
     @SubscribeEvent
     public static void onScreenOpening(ScreenEvent.Opening event) {
         Minecraft mc = Minecraft.getInstance();
@@ -55,32 +55,12 @@ public final class ClientEvents {
         }
         if (event.getNewScreen().getClass() == InventoryScreen.class && mc.gameMode != null && !mc.gameMode.hasInfiniteItems()) {
             event.setNewScreen(new PdaInventoryScreen(mc.player));
+        } else if (event.getNewScreen() instanceof AbstractContainerScreen<?> curios && PdaTabs.isCuriosScreen(curios)) {
+            event.setNewScreen(new PdaCuriosScreen(curios.getMenu(), mc.player.getInventory(), curios.getTitle()));
         } else if (event.getNewScreen() instanceof ContainerScreen chest
                 && chest.getTitle().getContents() instanceof TranslatableContents title
                 && title.getKey().equals("container.zoneraids.stash")) {
             event.setNewScreen(new PdaStashScreen(chest.getMenu(), mc.player.getInventory(), chest.getTitle()));
-        }
-    }
-
-    /**
-     * Curios' screen (backpack, rig, artifact container slots) is the inventory tab's gear view: it gets the
-     * PDA tab row, centred over it, with the inventory tab lit.
-     */
-    @SubscribeEvent
-    public static void onScreenInit(ScreenEvent.Init.Post event) {
-        if (event.getScreen() instanceof AbstractContainerScreen<?> screen && PdaTabs.isCuriosScreen(screen)) {
-            int left = screen.getGuiLeft() + (screen.getXSize() - PdaTabs.PANEL_W) / 2;
-            PdaTabs.subview(left, Math.max(PdaTabs.TAB_H + 1, screen.getGuiTop()), PdaTabs.PANEL_W, PdaTabs.Tab.INVENTORY)
-                    .forEach(event::addListener);
-        }
-    }
-
-    /** The terminal key closes Curios' screen like any PDA tab. */
-    @SubscribeEvent
-    public static void onScreenKey(ScreenEvent.KeyPressed.Pre event) {
-        if (PdaTabs.isCuriosScreen(event.getScreen()) && ClientSetup.OPEN_TERMINAL.matches(event.getKeyCode(), event.getScanCode())) {
-            event.getScreen().onClose();
-            event.setCanceled(true);
         }
     }
 
