@@ -25,6 +25,7 @@ import net.minecraftforge.event.entity.EntityTravelToDimensionEvent;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.LivingDropsEvent;
+import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.level.BlockEvent;
@@ -115,6 +116,12 @@ public final class RaidEvents {
         if (!event.getLevel().isClientSide()) {
             EnemySpawner.onRemoved(event.getEntity());
         }
+    }
+
+    /** Highest priority so the scaled amount is what First Aid and armor work with. */
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onHurt(LivingHurtEvent event) {
+        EnemySpawner.scaleDamageToPlayer(event);
     }
 
     @SubscribeEvent
