@@ -15,6 +15,7 @@ import com.zoneraids.network.TerminalDataPacket;
 import com.zoneraids.perk.Perk;
 import com.zoneraids.perk.PerkService;
 import com.zoneraids.registry.ModRegistry;
+import com.zoneraids.shop.ShopService;
 import com.zoneraids.util.CuriosCompat;
 import com.zoneraids.util.Teleports;
 import net.minecraft.ChatFormatting;
@@ -816,11 +817,14 @@ public final class RaidManager {
         return true;
     }
 
-    /** End of a session: everything gathered in it is gone, perks and stats stay. */
+    /** End of a session: everything gathered in it is gone, perks and stats stay (money too, unless configured otherwise). */
     private void resetProgress(ServerPlayer player) {
         wipeInventory(player);
         player.getEnderChestInventory().clearContent();
         PlayerRaidData.clearStash(player);
+        if (!RaidConfig.KEEP_MONEY_AFTER_SESSION.get()) {
+            PlayerRaidData.setMoney(player, 0);
+        }
         PlayerRaidData.setMatch(player, null);
         if (player.isAlive()) {
             player.removeAllEffects();
@@ -1158,6 +1162,22 @@ public final class RaidManager {
             case ACCEPT_INVITE -> acceptInvite(player);
             case WATCH -> spectators.watch(player, arg);
             case STOP_WATCH -> spectators.stop(player);
+            case SHOP -> {
+                ShopService.open(player, false);
+                return;
+            }
+            case SHOP_BUY -> {
+                ShopService.buy(player, arg);
+                return;
+            }
+            case SHOP_SELL -> {
+                ShopService.sell(player, arg, false);
+                return;
+            }
+            case SHOP_SELL_ALL -> {
+                ShopService.sell(player, arg, true);
+                return;
+            }
         }
         RaidNetwork.sendTo(player, buildTerminal(player, false));
     }
@@ -1207,7 +1227,8 @@ public final class RaidManager {
         return new TerminalDataPacket(open, entries, playerQueue.getOrDefault(id, ""), isInRaid(id), stats, party,
                 parties.isLeaderOrSolo(id), inviterPlayer == null ? "" : inviterPlayer.getGameProfile().getName(),
                 RaidConfig.REMOTE_STASH.get() && !isInRaid(id), PlayerRaidData.getPerkPoints(player), perks,
-                spectators.entries(player), watching == null ? "" : watching);
+                spectators.entries(player), watching == null ? "" : watching,
+                RaidConfig.SHOP.get() && RaidConfig.REMOTE_SHOP.get() && !isInRaid(id));
     }
 
     // ------------------------------------------------------------------ parties

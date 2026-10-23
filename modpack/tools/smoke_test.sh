@@ -60,6 +60,8 @@ if [ "$status" = up ]; then
     sleep 8
   fi
   say "raidadmin map list" 3
+  # Every item in the trader's price lists must be installed, or its line silently drops out of the shop.
+  say "raidadmin shop check" 3
   say "forceload add 0 0" 5
   i=0
   for table in crates/common crates/military crates/medical crates/weapons kits/round_start; do
@@ -136,6 +138,9 @@ if [ -f "$IDS_FILE" ]; then
   grep -oE "Unknown block type '[^']*'" "$REPORT/console.log" | cut -d"'" -f2 | sort -u > "$REPORT/unknown-blocks.txt"
   grep -oE '\banomalyzone:anomaly_[a-z0-9_]+\b' "$IDS_FILE" | sort -u | comm -23 - "$REPORT/unknown-blocks.txt" | tr '\n' ' '; echo
 fi
+echo "===== Trader ====="
+grep -E 'Zone Raids shop|Trader: ' "$REPORT/console.log" | cut -c1-400
+grep -qE 'Zone Raids shop: (unknown item|cannot read)' "$REPORT/console.log" && { echo "Trader price lists name items that are not installed"; fail=1; }
 echo "===== Raid enemies ====="
 grep -E 'MISSING|= .* OK|test spawn|Spawned|No room|Unknown or missing enemy|ENEMY_CHECK|has the following entity data|Zone Raids: (bad )?enemy' "$REPORT/console.log" | cut -c1-2500
 for f in config/tacznpc*.json config/tacznpcs*.json config/tacznpcs/*.json; do

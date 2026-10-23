@@ -54,6 +54,11 @@ public final class RaidConfig {
     public static final ForgeConfigSpec.DoubleValue ZONE_DAMAGE;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> STARTER_KIT;
     public static final ForgeConfigSpec.ConfigValue<String> ROUND_KIT_LOOT_TABLE;
+    public static final ForgeConfigSpec.BooleanValue SHOP;
+    public static final ForgeConfigSpec.BooleanValue REMOTE_SHOP;
+    public static final ForgeConfigSpec.BooleanValue KEEP_MONEY_AFTER_SESSION;
+    public static final ForgeConfigSpec.ConfigValue<List<? extends String>> SHOP_SELL;
+    public static final ForgeConfigSpec.ConfigValue<List<? extends String>> SHOP_BUY;
 
     static {
         ForgeConfigSpec.Builder b = new ForgeConfigSpec.Builder();
@@ -184,6 +189,72 @@ public final class RaidConfig {
                         "Armor goes only into empty armor slots, a single item (a gun) is skipped if the player already carries the same item,",
                         "stackable items (ammo, bandages) are always given. Empty string turns the kit off.")
                 .define("roundKitLootTable", "zoneraids:kits/round_start");
+        b.pop();
+
+        b.push("shop");
+        SHOP = b.comment("Trader in the hub bunker: sells artifacts for money and buys guns, armor, ammo and medicine.",
+                        "Trading is only possible outside raids (in the hub, also between the rounds of a session).")
+                .define("enabled", true);
+        REMOTE_SHOP = b.comment("Allow trading from the raid terminal menu (K) too, not only at the trader counter.")
+                .define("remoteShop", true);
+        KEEP_MONEY_AFTER_SESSION = b.comment("Money is not an item: it is never lost in a raid. If true it also survives the end of a session",
+                        "(like perks); if false it is wiped together with the inventory and the stash.")
+                .define("keepMoneyAfterSession", true);
+        SHOP_SELL = b.comment("What the trader buys from players, as \"item_id price\". Any NBT of the item is accepted. Ids that are not installed are skipped.")
+                .defineListAllowEmpty(List.of("sell"), List.of(
+                        "anomalyzone:bubble 1500",
+                        "anomalyzone:flash 1500",
+                        "anomalyzone:hedgehog 1800",
+                        "anomalyzone:spiral 1800",
+                        "anomalyzone:crust 1800",
+                        "anomalyzone:prism 3000",
+                        "anomalyzone:snake_eye 3000",
+                        "anomalyzone:hoop 3000",
+                        "anomalyzone:magma_pearl 3000",
+                        "anomalyzone:heat_stone 3000",
+                        "anomalyzone:sun 5000",
+                        "anomalyzone:thunder 5000",
+                        "anomalyzone:polyhedron 5000",
+                        "anomalyzone:atom 12000"), o -> o instanceof String);
+        SHOP_BUY = b.comment("What the trader sells, as \"category price count item_id{nbt}\" (the NBT part is optional).",
+                        "Categories: weapons, armor, ammo, medicine (other names get their own tab). Ids that are not installed are skipped.")
+                .defineListAllowEmpty(List.of("buy"), List.of(
+                        "weapons 1500 1 tacz:modern_kinetic_gun{GunId:\"tacz:glock_17\",GunFireMode:\"SEMI\",GunCurrentAmmoCount:0,HasBulletInBarrel:0b}",
+                        "weapons 1800 1 tacz:modern_kinetic_gun{GunId:\"tacz:m1911\",GunFireMode:\"SEMI\",GunCurrentAmmoCount:0,HasBulletInBarrel:0b}",
+                        "weapons 2000 1 tacz:modern_kinetic_gun{GunId:\"tacz:cz75\",GunFireMode:\"SEMI\",GunCurrentAmmoCount:0,HasBulletInBarrel:0b}",
+                        "weapons 3500 1 tacz:modern_kinetic_gun{GunId:\"tacz:m870\",GunFireMode:\"SEMI\",GunCurrentAmmoCount:0,HasBulletInBarrel:0b}",
+                        "weapons 4500 1 tacz:modern_kinetic_gun{GunId:\"tacz:deagle\",GunFireMode:\"SEMI\",GunCurrentAmmoCount:0,HasBulletInBarrel:0b}",
+                        "weapons 5000 1 tacz:modern_kinetic_gun{GunId:\"tacz:hk_mp5a5\",GunFireMode:\"AUTO\",GunCurrentAmmoCount:0,HasBulletInBarrel:0b}",
+                        "weapons 5500 1 tacz:modern_kinetic_gun{GunId:\"tacz:ump45\",GunFireMode:\"AUTO\",GunCurrentAmmoCount:0,HasBulletInBarrel:0b}",
+                        "weapons 6500 1 tacz:modern_kinetic_gun{GunId:\"tacz:sks_tactical\",GunFireMode:\"SEMI\",GunCurrentAmmoCount:0,HasBulletInBarrel:0b}",
+                        "weapons 8000 1 tacz:modern_kinetic_gun{GunId:\"tacz:ak47\",GunFireMode:\"AUTO\",GunCurrentAmmoCount:0,HasBulletInBarrel:0b}",
+                        "weapons 9000 1 tacz:modern_kinetic_gun{GunId:\"tacz:m4a1\",GunFireMode:\"AUTO\",GunCurrentAmmoCount:0,HasBulletInBarrel:0b}",
+                        "weapons 12000 1 tacz:modern_kinetic_gun{GunId:\"tacz:rpk\",GunFireMode:\"AUTO\",GunCurrentAmmoCount:0,HasBulletInBarrel:0b}",
+                        "ammo 300 30 tacz:ammo{AmmoId:\"tacz:9mm\"}",
+                        "ammo 400 30 tacz:ammo{AmmoId:\"tacz:45acp\"}",
+                        "ammo 400 16 tacz:ammo{AmmoId:\"tacz:12g\"}",
+                        "ammo 600 30 tacz:ammo{AmmoId:\"tacz:762x39\"}",
+                        "ammo 700 30 tacz:ammo{AmmoId:\"tacz:556x45\"}",
+                        "ammo 900 20 tacz:ammo{AmmoId:\"tacz:308\"}",
+                        "armor 1500 1 fracturepoint:soviet_soldier_helmet",
+                        "armor 3000 1 fracturepoint:soviet_soldier_chestplate",
+                        "armor 800 1 fracturepoint:soviet_uniform",
+                        "armor 600 1 fracturepoint:soviet_leggings",
+                        "armor 400 1 fracturepoint:soviet_boots",
+                        "armor 4000 1 fracturepoint:ratnik_helmet",
+                        "armor 6000 1 fracturepoint:ratnik_chestplate",
+                        "armor 3000 1 fracturepoint:ratnik_leggings",
+                        "armor 2000 1 fracturepoint:ratnik_boots",
+                        "armor 2500 1 fracturepoint:kevlar_plate_level_iiia",
+                        "armor 4000 1 fracturepoint:steel_plate_level_iii",
+                        "armor 7000 1 fracturepoint:ceramic_plate_level_iv",
+                        "armor 2500 1 fracturepoint:ratnik_backpack",
+                        "medicine 200 3 firstaid:plaster",
+                        "medicine 300 2 firstaid:bandage",
+                        "medicine 1200 1 firstaid:morphine",
+                        "medicine 1000 1 fracturepoint:cure",
+                        "medicine 1500 1 fracturepoint:propital",
+                        "medicine 1500 1 anomalyzone:injection_run_heal"), o -> o instanceof String);
         b.pop();
 
         SPEC = b.build();

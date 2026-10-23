@@ -13,7 +13,7 @@ import java.util.function.Consumer;
 
 /**
  * Builds the hub: a closed bunker ("Last Frontier" stalker camp) with raid terminals, stash
- * lockers, a bar, bunks, a medic corner and an armoury. Players spawn facing the terminals.
+ * lockers, a bar, bunks, a medic corner and an armoury with the trader's counter. Players spawn facing the terminals.
  */
 final class HubBuilder {
     static final int Y = 64;
@@ -32,7 +32,12 @@ final class HubBuilder {
 
     static List<Consumer<Painter>> steps() {
         return List.of(HubBuilder::shell, HubBuilder::terminals, HubBuilder::stash, HubBuilder::bar, HubBuilder::corners,
-                HubBuilder::notices, HubBuilder::lights);
+                HubBuilder::trader, HubBuilder::notices, HubBuilder::lights);
+    }
+
+    /** The trader's counter alone, for hubs built before it existed. */
+    static List<Consumer<Painter>> traderSteps() {
+        return List.of(HubBuilder::trader);
     }
 
     private static Canvas canvas(Painter p) {
@@ -151,6 +156,17 @@ final class HubBuilder {
         // Sealed entrance.
         c.door(-1, 1, 13, Blocks.IRON_DOOR, Direction.NORTH, false);
         c.door(0, 1, 13, Blocks.IRON_DOOR, Direction.NORTH, false);
+    }
+
+    /** Trader's counter across the armoury (south-east), facing the room. */
+    private static void trader(Painter p) {
+        Canvas c = canvas(p);
+        c.fill(11, 1, 9, 13, 1, 9, Blocks.DARK_OAK_PLANKS);
+        c.set(12, 1, 9, ModRegistry.TRADER.get());
+        c.set(11, 2, 9, Canvas.slab(Blocks.DARK_OAK_SLAB, false));
+        c.set(13, 2, 9, Canvas.lantern(Blocks.LANTERN, false));
+        c.wallSign(11, 4, 12, Direction.NORTH, "ТОРГОВЕЦ", "ПКМ по", "прилавку", "или K");
+        c.wallSign(12, 4, 12, Direction.NORTH, "Скупаю", "артефакты.", "Продаю стволы,", "броню, аптечки");
     }
 
     private static void notices(Painter p) {
