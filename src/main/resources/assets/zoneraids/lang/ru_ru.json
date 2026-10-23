@@ -17,6 +17,8 @@
   "key.categories.zoneraids": "Zone Raids",
   "key.zoneraids.lean_left": "Наклон влево",
   "key.zoneraids.lean_right": "Наклон вправо",
+  "key.zoneraids.lean_adjust": "Плавный наклон (зажать + колесо)",
+  "key.zoneraids.stance_adjust": "Высота стойки (зажать + колесо)",
   "key.zoneraids.roll": "Перекат",
   "key.zoneraids.terminal": "Терминал рейдов",
   "subtitles.zoneraids.pit_bike_engine": "Работает мотор питбайка",
