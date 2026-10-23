@@ -188,7 +188,7 @@ public final class RaidConfig {
         ZONE_DAMAGE = b.comment("Damage per second outside the safe zone (emission, deathmatch); grows the longer a player stays outside.")
                 .defineInRange("zoneDamage", 1.0, 0.0, 100.0);
         STARTER_KIT = b.comment("Items every player gets when a session starts, as \"namespace:item count\". Unknown ids are skipped.")
-                .defineListAllowEmpty(List.of("starterKit"), List.of("minecraft:bread 4"), o -> o instanceof String);
+                .defineListAllowEmpty(List.of("starterKit"), List.of("minecraft:bread 4", "anomalyzone:ksm 1"), o -> o instanceof String);
         ROUND_KIT_LOOT_TABLE = b.comment("Loot table rolled for every player at the start of every round (also single-round raids): a basic gun and armor.",
                         "Armor goes only into empty armor slots, a single item (a gun) is skipped if the player already carries the same item,",
                         "stackable items (ammo, bandages) are always given. Empty string turns the kit off.")
@@ -221,7 +221,7 @@ public final class RaidConfig {
                         "anomalyzone:polyhedron 5000",
                         "anomalyzone:atom 12000"), o -> o instanceof String);
         SHOP_BUY = b.comment("What the trader sells, as \"category price count item_id{nbt}\" (the NBT part is optional).",
-                        "Categories: weapons, armor, ammo, medicine (other names get their own tab). Ids that are not installed are skipped.")
+                        "Categories: weapons, armor, ammo, containers, medicine (other names get their own tab). Ids that are not installed are skipped.")
                 .defineListAllowEmpty(List.of("buy"), List.of(
                         "weapons 1500 1 tacz:modern_kinetic_gun{GunId:\"tacz:glock_17\",GunFireMode:\"SEMI\",GunCurrentAmmoCount:0,HasBulletInBarrel:0b}",
                         "weapons 1800 1 tacz:modern_kinetic_gun{GunId:\"tacz:m1911\",GunFireMode:\"SEMI\",GunCurrentAmmoCount:0,HasBulletInBarrel:0b}",
@@ -253,6 +253,10 @@ public final class RaidConfig {
                         "armor 4000 1 fracturepoint:steel_plate_level_iii",
                         "armor 7000 1 fracturepoint:ceramic_plate_level_iv",
                         "armor 2500 1 fracturepoint:ratnik_backpack",
+                        "containers 2500 1 anomalyzone:ksm",
+                        "containers 6000 1 anomalyzone:berloga",
+                        "containers 10000 1 anomalyzone:hive",
+                        "containers 18000 1 anomalyzone:legend_zone",
                         "medicine 200 3 firstaid:plaster",
                         "medicine 300 2 firstaid:bandage",
                         "medicine 1200 1 firstaid:morphine",

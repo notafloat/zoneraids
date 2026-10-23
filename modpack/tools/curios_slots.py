@@ -40,7 +40,7 @@ def main():
                     data = load(z, n)
                     if isinstance(data, dict):
                         for k, v in sorted(data.items()):
-                            if re.search(r'(?i)curio|slot|artifact|artefact|tooltip|desc', k):
+                            if re.search(r'(?i)curio|slot|artifact|artefact|tooltip|desc|container|ksm|berloga|hive|legend_zone|money|price|ruble|trader', k):
                                 lang.append(f"  {n.split('/')[-1]} {k} = {v}")
             if not (lines or classes or lang):
                 continue
