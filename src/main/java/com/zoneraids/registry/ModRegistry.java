@@ -43,13 +43,15 @@ public final class ModRegistry {
             () -> new LootCrateBlock(adminProps(MapColor.COLOR_GREEN, SoundType.WOOD), crateLoot("military")));
     public static final RegistryObject<Block> MEDICAL_CRATE = block("medical_crate",
             () -> new LootCrateBlock(adminProps(MapColor.SNOW, SoundType.METAL), crateLoot("medical")));
+    public static final RegistryObject<Block> WEAPON_CRATE = block("weapon_crate",
+            () -> new LootCrateBlock(adminProps(MapColor.COLOR_GRAY, SoundType.WOOD), crateLoot("weapons")));
 
     public static final RegistryObject<Item> CORDON_MAP = ITEMS.register("cordon_map", () -> new CordonMapItem(new Item.Properties().stacksTo(1)));
 
     @SuppressWarnings("ConstantConditions")
     public static final RegistryObject<BlockEntityType<LootCrateBlockEntity>> LOOT_CRATE_BE = BLOCK_ENTITIES.register("loot_crate",
             () -> BlockEntityType.Builder.of(LootCrateBlockEntity::new,
-                    COMMON_CRATE.get(), MILITARY_CRATE.get(), MEDICAL_CRATE.get()).build(null));
+                    COMMON_CRATE.get(), MILITARY_CRATE.get(), MEDICAL_CRATE.get(), WEAPON_CRATE.get()).build(null));
 
     public static final RegistryObject<CreativeModeTab> TAB = TABS.register("main", () -> CreativeModeTab.builder()
             .title(Component.translatable("itemGroup.zoneraids"))
@@ -60,6 +62,7 @@ public final class ModRegistry {
                 output.accept(COMMON_CRATE.get());
                 output.accept(MILITARY_CRATE.get());
                 output.accept(MEDICAL_CRATE.get());
+                output.accept(WEAPON_CRATE.get());
                 output.accept(CORDON_MAP.get());
             })
             .build());

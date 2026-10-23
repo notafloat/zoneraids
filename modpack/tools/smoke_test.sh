@@ -62,11 +62,11 @@ if [ "$status" = up ]; then
   say "raidadmin map list" 3
   say "forceload add 0 0" 5
   i=0
-  for table in common military medical; do
+  for table in crates/common crates/military crates/medical crates/weapons kits/round_start; do
     for roll in 1 2 3; do
       z=$((i * 2)); i=$((i + 1))
       say "setblock 0 -60 $z minecraft:chest replace" 1
-      say "loot insert 0 -60 $z loot zoneraids:crates/$table" 1
+      say "loot insert 0 -60 $z loot zoneraids:$table" 1
       say "data get block 0 -60 $z Items" 1
     done
   done
@@ -122,7 +122,7 @@ grep -E 'has the following block data' "$REPORT/console.log" | sed 's/.*has the 
 fail=0
 grep -q 'tacz:' "$REPORT/console.log" || { echo "No TaCZ items rolled from crates"; fail=1; }
 grep -q 'firstaid:' "$REPORT/console.log" || { echo "No First Aid items rolled from crates"; fail=1; }
-grep -qE "Couldn't parse element.*zoneraids|zoneraids:crates.*(error|invalid)" "$REPORT/console.log" && { echo "Crate loot table failed to load"; fail=1; }
+grep -qE "Couldn't parse element.*zoneraids|zoneraids:(crates|kits).*(error|invalid)" "$REPORT/console.log" && { echo "Crate loot table failed to load"; fail=1; }
 LOOT_IDS="$(grep -rhoE '"name": "[a-z0-9_]+:[a-z0-9_/]+"' "$PACK_GLUE/data" | cut -d'"' -f4 | sort -u)"
 UNKNOWN="$(grep -oE "Unknown item '[^']*'" "$REPORT/console.log" | cut -d"'" -f2 | sort -u)"
 BAD="$(comm -12 <(echo "$LOOT_IDS") <(echo "$UNKNOWN"))"

@@ -52,6 +52,7 @@ public final class RaidConfig {
     public static final ForgeConfigSpec.IntValue DROP_LOOT_ROLLS;
     public static final ForgeConfigSpec.DoubleValue ZONE_DAMAGE;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> STARTER_KIT;
+    public static final ForgeConfigSpec.ConfigValue<String> ROUND_KIT_LOOT_TABLE;
 
     static {
         ForgeConfigSpec.Builder b = new ForgeConfigSpec.Builder();
@@ -175,6 +176,10 @@ public final class RaidConfig {
                 .defineInRange("zoneDamage", 1.0, 0.0, 100.0);
         STARTER_KIT = b.comment("Items every player gets when a session starts, as \"namespace:item count\". Unknown ids are skipped.")
                 .defineListAllowEmpty(List.of("starterKit"), List.of("minecraft:bread 4"), o -> o instanceof String);
+        ROUND_KIT_LOOT_TABLE = b.comment("Loot table rolled for every player at the start of every round (also single-round raids): a basic gun and armor.",
+                        "Armor goes only into empty armor slots, a single item (a gun) is skipped if the player already carries the same item,",
+                        "stackable items (ammo, bandages) are always given. Empty string turns the kit off.")
+                .define("roundKitLootTable", "zoneraids:kits/round_start");
         b.pop();
 
         SPEC = b.build();

@@ -24,6 +24,8 @@ public final class WorldSetup {
     private static final String CORDON_LAYOUT = "cordon@2";
     /** Enemy points are added to an already built Cordon without rebuilding it. Bump to reset them. */
     private static final String CORDON_ENEMIES = "cordon-enemies@1";
+    /** Weapon crates are added to an already built Cordon without rebuilding it. */
+    private static final String CORDON_WEAPONS = "cordon-weapons@1";
 
     private WorldSetup() {
     }
@@ -38,11 +40,17 @@ public final class WorldSetup {
         }
         if (!data.isBuilt(CORDON_LAYOUT)) {
             buildCordon(server);
-        } else if (!data.isBuilt(CORDON_ENEMIES)) {
-            RaidMap map = data.getMap(CORDON);
-            if (map != null) {
-                setCordonEnemies(map, new CordonLayout());
-                data.markBuilt(CORDON_ENEMIES);
+        } else {
+            if (!data.isBuilt(CORDON_ENEMIES)) {
+                RaidMap map = data.getMap(CORDON);
+                if (map != null) {
+                    setCordonEnemies(map, new CordonLayout());
+                    data.markBuilt(CORDON_ENEMIES);
+                }
+            }
+            if (!data.isBuilt(CORDON_WEAPONS)) {
+                WorldBuilder.enqueue(new WorldBuilder.Job(CORDON, ZoneDimensions.CORDON, CordonBuilder.weaponCrateSteps(),
+                        s -> RaidWorldData.get(s).markBuilt(CORDON_WEAPONS)));
             }
         }
     }
@@ -111,6 +119,7 @@ public final class WorldSetup {
             data.putMap(map);
             data.markBuilt(CORDON_LAYOUT);
             data.markBuilt(CORDON_ENEMIES);
+            data.markBuilt(CORDON_WEAPONS);
         }));
         return true;
     }
