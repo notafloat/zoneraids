@@ -11,6 +11,7 @@ import com.zoneraids.world.WorldBuilder;
 import com.zoneraids.world.WorldSetup;
 import com.zoneraids.world.ZoneDimensions;
 import net.minecraft.ChatFormatting;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
@@ -38,6 +39,8 @@ import net.minecraftforge.server.ServerLifecycleHooks;
 
 @Mod.EventBusSubscriber(modid = ZoneRaids.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class RaidEvents {
+    private static final String ANOMALY_ZONE_WELCOME = "anomalyzone_valhalla_welcome_given";
+
     private RaidEvents() {
     }
 
@@ -68,6 +71,22 @@ public final class RaidEvents {
             manager.tick();
         }
         WorldBuilder.tick(ServerLifecycleHooks.getCurrentServer());
+    }
+
+    /**
+     * Anomaly Zone searches 48 chunks around a joining player for a Red Forest to put its Valhalla
+     * bubble in, on the server thread, and retries on every login until it finds one. Players live
+     * in the hub here, so the search never succeeds and froze the server for 20-90 s per login.
+     * Marking its welcome as already given skips the search.
+     */
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void skipAnomalyZoneWelcome(PlayerEvent.PlayerLoggedInEvent event) {
+        CompoundTag data = event.getEntity().getPersistentData();
+        CompoundTag persisted = data.getCompound(Player.PERSISTED_NBT_TAG);
+        if (!persisted.getBoolean(ANOMALY_ZONE_WELCOME)) {
+            persisted.putBoolean(ANOMALY_ZONE_WELCOME, true);
+            data.put(Player.PERSISTED_NBT_TAG, persisted);
+        }
     }
 
     @SubscribeEvent
