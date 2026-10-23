@@ -21,6 +21,8 @@ import com.zoneraids.perk.PerkService;
 import com.zoneraids.raid.EnemySpawner;
 import com.zoneraids.raid.RaidManager;
 import com.zoneraids.raid.RaidSession;
+import com.zoneraids.shop.ShopCatalog;
+import com.zoneraids.shop.ShopService;
 import com.zoneraids.world.WorldBuilder;
 import com.zoneraids.world.WorldSetup;
 import net.minecraft.ChatFormatting;
@@ -56,6 +58,15 @@ public final class RaidCommands {
     private RaidCommands() {
     }
 
+    private static int setMoney(CommandContext<CommandSourceStack> ctx, boolean add) throws CommandSyntaxException {
+        ServerPlayer target = EntityArgument.getPlayer(ctx, "player");
+        int amount = IntegerArgumentType.getInteger(ctx, "amount");
+        long money = Math.max(0, (add ? PlayerRaidData.getMoney(target) : 0) + amount);
+        PlayerRaidData.setMoney(target, money);
+        ctx.getSource().sendSuccess(() -> Component.translatable("zoneraids.admin.money", target.getDisplayName(), money), true);
+        return 1;
+    }
+
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("raid")
                 .executes(ctx -> withManager(ctx, m -> m.openTerminal(ctx.getSource().getPlayerOrException())))
@@ -68,6 +79,10 @@ public final class RaidCommands {
                 .then(Commands.literal("extracts")
                         .executes(ctx -> withManager(ctx, m -> m.showExtracts(ctx.getSource().getPlayerOrException()))))
                 .then(Commands.literal("stats").executes(RaidCommands::stats))
+                .then(Commands.literal("shop").executes(ctx -> {
+                    ShopService.open(ctx.getSource().getPlayerOrException(), false);
+                    return 1;
+                }))
                 .then(Commands.literal("perks").executes(ctx -> {
                     PerkService.showList(ctx.getSource().getPlayerOrException());
                     return 1;
@@ -139,6 +154,22 @@ public final class RaidCommands {
                             ctx.getSource().sendSuccess(() -> Component.translatable("zoneraids.admin.perks_reset", target.getDisplayName()), true);
                             return 1;
                         }))))
+                .then(Commands.literal("shop").then(Commands.literal("check").executes(ctx -> {
+                    List<String> unknown = ShopCatalog.unknownIds();
+                    int offers = ShopCatalog.offers().size();
+                    int prices = ShopCatalog.sellPrices().size();
+                    if (unknown.isEmpty()) {
+                        ctx.getSource().sendSuccess(() -> Component.translatable("zoneraids.admin.shop_ok", offers, prices), false);
+                    } else {
+                        ctx.getSource().sendFailure(Component.translatable("zoneraids.admin.shop_unknown", String.join(", ", unknown)));
+                    }
+                    return unknown.isEmpty() ? 1 : 0;
+                })))
+                .then(Commands.literal("money").then(Commands.argument("player", EntityArgument.player())
+                        .then(Commands.literal("set").then(Commands.argument("amount", IntegerArgumentType.integer(0))
+                                .executes(ctx -> setMoney(ctx, false))))
+                        .then(Commands.literal("add").then(Commands.argument("amount", IntegerArgumentType.integer())
+                                .executes(ctx -> setMoney(ctx, true))))))
                 .then(Commands.literal("enemy")
                         .then(Commands.literal("types").executes(RaidCommands::enemyTypes))
                         .then(Commands.literal("spawn").then(Commands.argument("kind", StringArgumentType.word()).suggests(ENEMY_KINDS)

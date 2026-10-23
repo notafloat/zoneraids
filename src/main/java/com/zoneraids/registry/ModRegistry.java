@@ -5,6 +5,7 @@ import com.zoneraids.block.LootCrateBlock;
 import com.zoneraids.block.LootCrateBlockEntity;
 import com.zoneraids.block.RaidTerminalBlock;
 import com.zoneraids.block.StashBlock;
+import com.zoneraids.block.TraderBlock;
 import com.zoneraids.item.CordonMapItem;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
@@ -37,6 +38,7 @@ public final class ModRegistry {
 
     public static final RegistryObject<Block> RAID_TERMINAL = block("raid_terminal", () -> new RaidTerminalBlock(adminProps(MapColor.METAL, SoundType.METAL)));
     public static final RegistryObject<Block> STASH = block("stash", () -> new StashBlock(adminProps(MapColor.METAL, SoundType.METAL)));
+    public static final RegistryObject<Block> TRADER = block("trader", () -> new TraderBlock(adminProps(MapColor.WOOD, SoundType.WOOD)));
     public static final RegistryObject<Block> COMMON_CRATE = block("common_crate",
             () -> new LootCrateBlock(adminProps(MapColor.WOOD, SoundType.WOOD), crateLoot("common")));
     public static final RegistryObject<Block> MILITARY_CRATE = block("military_crate",
@@ -59,6 +61,7 @@ public final class ModRegistry {
             .displayItems((params, output) -> {
                 output.accept(RAID_TERMINAL.get());
                 output.accept(STASH.get());
+                output.accept(TRADER.get());
                 output.accept(COMMON_CRATE.get());
                 output.accept(MILITARY_CRATE.get());
                 output.accept(MEDICAL_CRATE.get());
