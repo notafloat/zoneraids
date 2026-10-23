@@ -1,0 +1,6 @@
+{
+  "pit_bike_engine": {
+    "subtitle": "subtitles.zoneraids.pit_bike_engine",
+    "sounds": [{ "name": "zoneraids:pit_bike_engine", "attenuation_distance": 32 }]
+  }
+}
