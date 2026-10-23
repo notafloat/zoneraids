@@ -4,6 +4,7 @@ import com.zoneraids.ZoneRaids;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.ContainerScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.client.tutorial.TutorialSteps;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
@@ -25,6 +26,22 @@ public final class ClientEvents {
         }
         while (ClientSetup.OPEN_TERMINAL.consumeClick()) {
             PdaTabs.open(PdaTabs.Tab.RAIDS, null);
+        }
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.options.tutorialStep != TutorialSteps.NONE) {
+            // The vanilla tutorial ("punch a tree", "craft planks") makes no sense on a raid server.
+            mc.getTutorial().setStep(TutorialSteps.NONE);
+        }
+    }
+
+    /**
+     * No toasts in the corner: advancement, recipe and tutorial pop-ups cover the PDA HUD and mean
+     * nothing in raids. Cleared before every frame, so they never show.
+     */
+    @SubscribeEvent
+    public static void onRenderTick(TickEvent.RenderTickEvent event) {
+        if (event.phase == TickEvent.Phase.START) {
+            Minecraft.getInstance().getToasts().clear();
         }
     }
 
