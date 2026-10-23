@@ -738,6 +738,16 @@
           "type": "minecraft:item",
           "name": "anomalyzone:atom",
           "weight": 1
+        },
+        {
+          "type": "minecraft:item",
+          "name": "anomalyzone:ksm",
+          "weight": 4
+        },
+        {
+          "type": "minecraft:item",
+          "name": "anomalyzone:berloga",
+          "weight": 1
         }
       ]
     }

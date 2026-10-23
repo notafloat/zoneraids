@@ -612,6 +612,7 @@ public final class RaidManager {
                     rosterSessions.put(id, session);
                     PlayerRaidData.setMatch(player, session.id);
                     giveStarterKit(player);
+                    giveStarterContainer(player);
                 }
             }
             if (!online.isEmpty()) {
@@ -947,6 +948,20 @@ public final class RaidManager {
                     player.drop(stack, false);
                 }
             }
+        }
+    }
+
+    /** An artifact container (config {@code starterContainer}), unless the player has one in the inventory or a Curios slot. */
+    private static void giveStarterContainer(ServerPlayer player) {
+        ResourceLocation id = ResourceLocation.tryParse(RaidConfig.STARTER_CONTAINER.get().trim());
+        Item item = id == null ? null : ForgeRegistries.ITEMS.getValue(id);
+        if (item == null || item == net.minecraft.world.item.Items.AIR || player.getInventory().hasAnyOf(Set.of(item))
+                || CuriosCompat.has(player, item)) {
+            return;
+        }
+        ItemStack stack = new ItemStack(item);
+        if (!player.getInventory().add(stack)) {
+            player.drop(stack, false);
         }
     }
 

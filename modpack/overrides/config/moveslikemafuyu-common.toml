@@ -11,6 +11,9 @@
 	enableAirRoll = false
 	# The roll camera spin makes aiming after a roll hard.
 	enableRollCamera = false
+	# The roll is on Zone Raids' own key (C), also from standstill. The sprint trigger is cut off: double tap
+	# only, within a 0 ms window (RollDoublePressDelay below), which never happens.
+	enableSprintRollDoubleTapTrigger = true
 
 [crawling]
 	# Prone comes from TACtical Movement / TaCZ, Mafuyu's crawl detects poses differently and conflicts.
@@ -22,9 +25,11 @@
 	enableAutoDodge = false
 
 [shortcut]
-	# Extra Shift/Ctrl bindings would clash with sneak and sprint; rolls stay on double-tap sprint.
+	# Extra Shift/Ctrl bindings would clash with sneak and sprint; the roll has its own key in Zone Raids.
 	enableShortcut = false
 
 [roll_attributes]
-	# One roll every 3 seconds: a dash into cover, not a way to move.
+	# One roll every 3 seconds: a dash into cover, not a way to move. Zone Raids' roll key keeps the same
+	# cooldown itself, Mafuyu's entry point it calls does not check this one.
 	RollCooldown = 60
+	RollDoublePressDelay = 0

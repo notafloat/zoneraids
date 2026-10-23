@@ -97,10 +97,10 @@ public final class ShopScreen extends Screen {
         if (!tabs.contains(tab)) {
             tab = SELL;
         }
-        int tabW = (PANEL_W - 12 - (tabs.size() - 1) * 3) / tabs.size();
+        int[] x = tabEdges(tabs, left);
         for (int i = 0; i < tabs.size(); i++) {
             String id = tabs.get(i);
-            addRenderableWidget(new ZoneButton(left + 6 + i * (tabW + 3), top + TABS_Y, tabW, 15, tabName(id), b -> select(id)));
+            addRenderableWidget(new ZoneButton(x[i], top + TABS_Y, x[i + 1] - 3 - x[i], 15, tabName(id), b -> select(id)));
         }
         int pages = pages(data);
         page = Math.min(page, pages - 1);
@@ -275,9 +275,25 @@ public final class ShopScreen extends Screen {
         if (index < 0) {
             return;
         }
-        int tabW = (PANEL_W - 12 - (tabs.size() - 1) * 3) / tabs.size();
-        int x0 = left + 6 + index * (tabW + 3);
-        ZoneUi.outline(g, x0, top + TABS_Y, x0 + tabW, top + TABS_Y + 15, ZoneUi.AMBER);
+        int[] x = tabEdges(tabs, left);
+        ZoneUi.outline(g, x[index], top + TABS_Y, x[index + 1] - 3, top + TABS_Y + 15, ZoneUi.AMBER);
+    }
+
+    /** Left edges of the tabs plus the end: each tab is as wide as its name, the spare width is shared out evenly. */
+    private int[] tabEdges(List<String> tabs, int left) {
+        int[] widths = new int[tabs.size()];
+        int used = 0;
+        for (int i = 0; i < tabs.size(); i++) {
+            widths[i] = font.width(tabName(tabs.get(i))) + 8;
+            used += widths[i] + 3;
+        }
+        int spare = Math.max(0, PANEL_W - 9 - used) / tabs.size();
+        int[] x = new int[tabs.size() + 1];
+        x[0] = left + 6;
+        for (int i = 0; i < tabs.size(); i++) {
+            x[i + 1] = x[i] + widths[i] + spare + 3;
+        }
+        return x;
     }
 
     /** 12345 -> "12 345" */
