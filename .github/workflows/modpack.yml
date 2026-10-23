@@ -66,6 +66,14 @@ jobs:
           python modpack/tools/check_mod_links.py "${JARS[@]}" \
             --strict tacmove MovesLikeMafuyu CameraOverhaul --report build/modpack/report/mod-links.txt
 
+      - name: Default keys of every mod and the keys they share
+        if: always()
+        run: |
+          mkdir -p build/modpack/report
+          JAR="$(ls build/libs/*.jar | grep -v -e sources -e slim | head -1)"
+          mapfile -t JARS < build/modpack/jars.txt
+          python modpack/tools/key_defaults.py "$JAR" "${JARS[@]}" | tee build/modpack/report/key-defaults.txt
+
       - name: Shader pack options (for settings in pack.json)
         if: always()
         run: mkdir -p build/modpack/report && python modpack/tools/shader_options.py build/modpack/mods.lock.json | tee build/modpack/report/shader-options.txt
