@@ -1,6 +1,9 @@
 package com.zoneraids.util;
 
 import com.mojang.logging.LogUtils;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.ItemTags;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -41,6 +44,23 @@ public final class CuriosCompat {
             }
         }
         return false;
+    }
+
+    /** Items in Anomaly Zone's artifact container slot ({@code curios:container}). Artifacts only work inside one. */
+    public static final TagKey<Item> ARTIFACT_CONTAINERS = ItemTags.create(new ResourceLocation("curios", "container"));
+
+    /** The artifact container the entity wears, or an empty stack. Works on the client too: Curios syncs worn items. */
+    public static ItemStack wornContainer(LivingEntity entity) {
+        IItemHandlerModifiable items = equipped(entity);
+        if (items != null) {
+            for (int i = 0; i < items.getSlots(); i++) {
+                ItemStack stack = items.getStackInSlot(i);
+                if (stack.is(ARTIFACT_CONTAINERS)) {
+                    return stack;
+                }
+            }
+        }
+        return ItemStack.EMPTY;
     }
 
     @Nullable

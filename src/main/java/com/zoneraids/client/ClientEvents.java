@@ -2,6 +2,7 @@ package com.zoneraids.client;
 
 import com.zoneraids.ZoneRaids;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.ContainerScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.tutorial.TutorialSteps;
@@ -58,6 +59,31 @@ public final class ClientEvents {
                 && chest.getTitle().getContents() instanceof TranslatableContents title
                 && title.getKey().equals("container.zoneraids.stash")) {
             event.setNewScreen(new PdaStashScreen(chest.getMenu(), mc.player.getInventory(), chest.getTitle()));
+        }
+    }
+
+    /**
+     * Curios' screen (backpack, rig, artifact container slots) is the inventory tab's gear view: it gets the
+     * PDA tab row, centred over it, with the inventory tab lit.
+     */
+    @SubscribeEvent
+    public static void onScreenInit(ScreenEvent.Init.Post event) {
+        if (event.getScreen() instanceof AbstractContainerScreen<?> screen && PdaTabs.isCuriosScreen(screen)) {
+            int left = screen.getGuiLeft() + (screen.getXSize() - PdaTabs.PANEL_W) / 2;
+            for (ZoneButton button : PdaTabs.buttons(left, Math.max(PdaTabs.TAB_H + 1, screen.getGuiTop()), null)) {
+                button.selected = button.getMessage().getContents() instanceof TranslatableContents key
+                        && key.getKey().equals(PdaTabs.Tab.INVENTORY.key);
+                event.addListener(button);
+            }
+        }
+    }
+
+    /** The terminal key closes Curios' screen like any PDA tab. */
+    @SubscribeEvent
+    public static void onScreenKey(ScreenEvent.KeyPressed.Pre event) {
+        if (PdaTabs.isCuriosScreen(event.getScreen()) && ClientSetup.OPEN_TERMINAL.matches(event.getKeyCode(), event.getScanCode())) {
+            event.getScreen().onClose();
+            event.setCanceled(true);
         }
     }
 

@@ -1,5 +1,6 @@
 package com.zoneraids.client;
 
+import com.mojang.logging.LogUtils;
 import com.zoneraids.network.RaidNetwork;
 import com.zoneraids.network.TerminalActionPacket;
 import com.zoneraids.network.TerminalActionPacket.Action;
@@ -9,7 +10,12 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.fml.ModList;
+import net.minecraftforge.network.PacketDistributor;
+import net.minecraftforge.network.simple.SimpleChannel;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +23,9 @@ import java.util.List;
 /**
  * The PDA: every window of the mod is one of its tabs. Raids, perks and watching read the terminal
  * data from the server; the trader and the stash are opened by the server; the map, health and
- * inventory are purely client-side. Every tab shares the panel size and position, with the tab row on top.
+ * inventory are purely client-side. Curios' own screen (backpack, rig, artifact container) opens from the
+ * inventory tab and gets the tab row too (see {@link ClientEvents}). Every PDA tab shares the panel size
+ * and position, with the tab row on top.
  */
 public final class PdaTabs {
     public static final int PANEL_W = 380;
@@ -35,6 +43,9 @@ public final class PdaTabs {
     /** Tab to show when the terminal data the PDA asked for arrives. */
     static Tab pending = Tab.RAIDS;
 
+    private static final Logger LOGGER = LogUtils.getLogger();
+    private static boolean curiosWarned;
+
     private PdaTabs() {
     }
 
@@ -50,7 +61,7 @@ public final class PdaTabs {
      * Tab buttons above a panel whose top-left corner is {@code left, top} and width {@code panelW};
      * the screen adds them as widgets. Tabs the player cannot use right now are greyed out.
      */
-    public static List<ZoneButton> buttons(int left, int top, int panelW, Tab current) {
+    public static List<ZoneButton> buttons(int left, int top, int panelW, @Nullable Tab current) {
         Font font = Minecraft.getInstance().font;
         Tab[] tabs = Tab.values();
         int[] widths = new int[tabs.length];
@@ -81,7 +92,7 @@ public final class PdaTabs {
         return list;
     }
 
-    public static List<ZoneButton> buttons(int left, int top, Tab current) {
+    public static List<ZoneButton> buttons(int left, int top, @Nullable Tab current) {
         return buttons(left, top, PANEL_W, current);
     }
 
@@ -111,6 +122,29 @@ public final class PdaTabs {
             case HEALTH -> mc.setScreen(new HealthScreen());
             case INVENTORY -> mc.setScreen(new PdaInventoryScreen(mc.player));
         }
+    }
+
+    /** Asks Curios' server side to open its screen, as its own key does (no compile-time dependency on Curios). */
+    static void openCurios() {
+        if (!ModList.get().isLoaded("curios")) {
+            return;
+        }
+        try {
+            Object channel = Class.forName("top.theillusivec4.curios.common.network.NetworkHandler").getField("INSTANCE").get(null);
+            Object packet = Class.forName("top.theillusivec4.curios.common.network.client.CPacketOpenCurios")
+                    .getConstructor(ItemStack.class).newInstance(ItemStack.EMPTY);
+            ((SimpleChannel) channel).send(PacketDistributor.SERVER.noArg(), packet);
+        } catch (ReflectiveOperationException | ClassCastException | LinkageError e) {
+            if (!curiosWarned) {
+                curiosWarned = true;
+                LOGGER.warn("Zone Raids: could not open the Curios screen", e);
+            }
+        }
+    }
+
+    /** True for Curios' screens (its slots beside the inventory), which get the PDA tab row. */
+    static boolean isCuriosScreen(Screen screen) {
+        return screen.getClass().getName().startsWith("top.theillusivec4.curios.client.gui.CuriosScreen");
     }
 
     private static void requestTerminal(Tab tab) {
