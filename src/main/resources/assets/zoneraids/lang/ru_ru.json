@@ -2,6 +2,7 @@
   "block.zoneraids.common_crate": "Ящик с припасами",
   "block.zoneraids.medical_crate": "Медицинский ящик",
   "block.zoneraids.military_crate": "Военный ящик",
+  "block.zoneraids.weapon_crate": "Оружейный ящик",
   "block.zoneraids.raid_terminal": "Терминал рейдов",
   "block.zoneraids.stash": "Схрон",
   "container.zoneraids.stash": "Схрон",

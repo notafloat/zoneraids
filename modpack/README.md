@@ -220,7 +220,8 @@ Movement (перелезание уже работает на прыжок), Cra
 ## Как менять сборку
 
 * Список модов: `modpack/pack.json` (slug с Modrinth, сторона `both`/`client`/`server`, при желании точная версия).
-* Таблицы лута ящиков: `modpack/glue/data/zoneraids/loot_tables/crates/{common,military,medical}.json`. Список
+* Таблицы лута ящиков: `modpack/glue/data/zoneraids/loot_tables/crates/{common,military,medical,weapons}.json`,
+  набор на начало раунда: `kits/round_start.json`. Список
   настоящих id предметов из модов сборки: артефакт `modpack-report` → `report/registered-items.txt`
   (`item-ids.txt` собран по моделям и содержит id, которых в игре нет). Неверный id роняет всю таблицу, тест это ловит.
 * Общие конфиги: `modpack/overrides/`, только сервер: `modpack/server-overrides/`.

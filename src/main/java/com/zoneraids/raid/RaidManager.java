@@ -33,12 +33,17 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.storage.loot.LootParams;
+import net.minecraft.world.level.storage.loot.LootTable;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.jetbrains.annotations.Nullable;
 
@@ -588,6 +593,7 @@ public final class RaidManager {
                 if (protection > 0) {
                     player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, protection, 4, false, false));
                 }
+                giveRoundKit(player, level);
                 if (session.rounds > 1) {
                     title(player, Component.translatable("zoneraids.round.title", session.round, session.rounds,
                                     Component.translatable("zoneraids.round." + session.type.id)).withStyle(ChatFormatting.RED),
@@ -835,6 +841,38 @@ public final class RaidManager {
                 if (!player.getInventory().add(stack)) {
                     player.drop(stack, false);
                 }
+            }
+        }
+    }
+
+    /**
+     * Basic gear for the round from {@code roundKitLootTable}. Armor is put on only where the slot is
+     * empty and a single item (a gun) only if the player has none of it, so the kit fills what a
+     * player lacks instead of piling up over the rounds; stackable items are always handed out.
+     */
+    private static void giveRoundKit(ServerPlayer player, ServerLevel level) {
+        String name = RaidConfig.ROUND_KIT_LOOT_TABLE.get().trim();
+        ResourceLocation id = name.isEmpty() ? null : ResourceLocation.tryParse(name);
+        if (id == null) {
+            return;
+        }
+        LootTable table = level.getServer().getLootData().getLootTable(id);
+        if (table == LootTable.EMPTY) {
+            return;
+        }
+        for (ItemStack stack : table.getRandomItems(new LootParams.Builder(level).create(LootContextParamSets.EMPTY))) {
+            EquipmentSlot slot = Mob.getEquipmentSlotForItem(stack);
+            if (slot.getType() == EquipmentSlot.Type.ARMOR) {
+                if (player.getItemBySlot(slot).isEmpty()) {
+                    player.setItemSlot(slot, stack);
+                }
+                continue;
+            }
+            if (!stack.isStackable() && player.getInventory().hasAnyOf(Set.of(stack.getItem()))) {
+                continue;
+            }
+            if (!player.getInventory().add(stack)) {
+                player.drop(stack, false);
             }
         }
     }

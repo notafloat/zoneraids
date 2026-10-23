@@ -37,6 +37,9 @@ import java.util.function.Consumer;
 final class CordonBuilder {
     private static final Logger LOGGER = LogUtils.getLogger();
     private static final int CLEAR_TOP = 150;
+    /** Share of military and supply crates that get a weapon crate stacked on top. */
+    private static final double WEAPON_ON_MILITARY = 0.6;
+    private static final double WEAPON_ON_COMMON = 0.25;
 
     private static final Palette STONE = Palette.of(Blocks.STONE, 8, Blocks.ANDESITE, 1, Blocks.TUFF, 1);
     private static final Palette CONCRETE = Palette.of(Blocks.LIGHT_GRAY_CONCRETE, 10, Blocks.GRAY_CONCRETE, 2,
@@ -106,7 +109,42 @@ final class CordonBuilder {
             }
         }
         steps.add(this::markers);
+        steps.addAll(weaponCrateSteps());
         return steps;
+    }
+
+    /**
+     * Weapon crates stacked on top of some supply and military crates, one step per chunk. Works
+     * from the crates found in the world, so it also runs alone on an already built (or edited) Cordon.
+     */
+    static List<Consumer<Painter>> weaponCrateSteps() {
+        List<Consumer<Painter>> steps = new ArrayList<>();
+        int minChunk = Math.floorDiv(-CordonTerrain.OUTER, 16);
+        int maxChunk = Math.floorDiv(CordonTerrain.OUTER, 16);
+        for (int cx = minChunk; cx <= maxChunk; cx++) {
+            for (int cz = minChunk; cz <= maxChunk; cz++) {
+                int fx = cx;
+                int fz = cz;
+                steps.add(p -> weaponCrates(p, fx, fz));
+            }
+        }
+        return steps;
+    }
+
+    private static void weaponCrates(Painter p, int cx, int cz) {
+        List<BlockPos> crates = new ArrayList<>();
+        for (BlockPos pos : p.level.getChunk(cx, cz).getBlockEntities().keySet()) {
+            Block block = p.level.getBlockState(pos).getBlock();
+            double chance = block == military() ? WEAPON_ON_MILITARY : block == common() ? WEAPON_ON_COMMON : 0.0;
+            if (chance > 0.0 && new Random(CordonTerrain.SEED ^ pos.asLong()).nextDouble() < chance) {
+                crates.add(pos);
+            }
+        }
+        for (BlockPos pos : crates) {
+            if (p.get(pos.getX(), pos.getY() + 1, pos.getZ()).isAir()) {
+                p.set(pos.getX(), pos.getY() + 1, pos.getZ(), ModRegistry.WEAPON_CRATE.get().defaultBlockState());
+            }
+        }
     }
 
     private Random random(int a, int b) {

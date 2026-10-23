@@ -2,6 +2,7 @@
   "block.zoneraids.common_crate": "Supply Crate",
   "block.zoneraids.medical_crate": "Medical Crate",
   "block.zoneraids.military_crate": "Military Crate",
+  "block.zoneraids.weapon_crate": "Weapon Crate",
   "block.zoneraids.raid_terminal": "Raid Terminal",
   "block.zoneraids.stash": "Stash",
   "container.zoneraids.stash": "Stash",
