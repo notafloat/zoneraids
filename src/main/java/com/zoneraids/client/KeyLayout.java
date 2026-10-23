@@ -31,7 +31,7 @@ import java.util.Map;
 public final class KeyLayout {
     private static final Logger LOGGER = LogUtils.getLogger();
     /** Bump the number when the table changes, so clients apply the new entries once more. */
-    private static final String MARKER = "zoneraids-keys-1.done";
+    private static final String MARKER = "zoneraids-keys-3.done";
     private static final Map<String, InputConstants.Key> LAYOUT = new HashMap<>();
     private static boolean checked;
 
@@ -48,9 +48,15 @@ public final class KeyLayout {
         mouse("key.tacmove.aim_animation", GLFW.GLFW_MOUSE_BUTTON_RIGHT);
         key("key.tacmove.tac_sprint", GLFW.GLFW_KEY_LEFT_ALT);
         unbind("key.tacmove.mantle"); // Moves Like Mafuyu climbs on jump
+        // Lean is Zone Raids' own (key.zoneraids.lean_left/right on Q/E, smooth and visible to others).
+        unbind("key.tacmove.lean_left");
+        unbind("key.tacmove.lean_right");
+        // C is Zone Raids' roll (key.zoneraids.roll); TACtical Movement's prone/slide dash leaves it.
+        unbind("key.tacmove.prone_and_slide");
         unbind("key.tacmove.high_ready");
         unbind("key.tacmove.low_ready");
-        // Moves Like Mafuyu shortcuts are off in its config, but their keys would still sit on Shift and Ctrl.
+        // Moves Like Mafuyu shortcuts are off in its config (the roll is on C), but their keys would still sit on
+        // Shift and Ctrl.
         unbind("key.moveslikemafuyu.roll");
         unbind("key.moveslikemafuyu.slide");
         // Gear, health and artifacts.

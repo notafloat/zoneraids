@@ -5,7 +5,6 @@ import com.mojang.math.Axis;
 import com.zoneraids.ZoneRaids;
 import com.zoneraids.network.LeanPacket;
 import com.zoneraids.network.RaidNetwork;
-import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.util.Mth;
@@ -14,6 +13,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.client.event.RenderPlayerEvent;
+import net.minecraftforge.client.event.ViewportEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -24,21 +24,22 @@ import java.util.Iterator;
 import java.util.Map;
 
 /**
- * Draws leaning players with the whole body tilted sideways, pivoting at the feet.
+ * Leaning on Q/E: the leaning player's camera rolls and every client draws the whole body tilted sideways,
+ * pivoting at the feet. Both are interpolated per frame, so the lean eases in and out instead of stepping.
  *
- * The local player's lean comes from TACtical Movement's lean keys (bound to Q/E by KeyLayout) and is sent to the
- * server, which relays it to everyone who sees the player (see com.zoneraids.lean.Lean).
+ * TACtical Movement's own lean (camera roll set per tick, torso animation that snaps back on release) looked
+ * jerky, so its keys are unbound by KeyLayout and Zone Raids has its own. The local player's lean is sent to
+ * the server, which relays it to everyone who sees the player (see com.zoneraids.lean.Lean).
  */
 @Mod.EventBusSubscriber(modid = ZoneRaids.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class LeanClient {
-    private static final float MAX_ANGLE = 16.0F;
-    private static final float SPEED = 0.35F;
+    private static final float MAX_ANGLE = 9.0F;
+    /** Camera roll per degree of body tilt: the view tilts less than the body, enough to feel the lean. */
+    private static final float CAMERA_ROLL = 0.8F;
+    private static final float SPEED = 0.3F;
 
     /** entity id -> {previous angle, current angle, target direction}. */
     private static final Map<Integer, float[]> TILTS = new HashMap<>();
-    private static KeyMapping leftKey;
-    private static KeyMapping rightKey;
-    private static boolean keysLooked;
     private static int sent;
     private static boolean pushed;
 
@@ -65,19 +66,9 @@ public final class LeanClient {
         if (player == null || mc.level == null) {
             return;
         }
-        if (!keysLooked) {
-            keysLooked = true;
-            for (KeyMapping key : mc.options.keyMappings) {
-                if (key.getName().equals("key.tacmove.lean_left")) {
-                    leftKey = key;
-                } else if (key.getName().equals("key.tacmove.lean_right")) {
-                    rightKey = key;
-                }
-            }
-        }
         int direction = 0;
         if (canLean(player)) {
-            direction = (rightKey != null && rightKey.isDown() ? 1 : 0) - (leftKey != null && leftKey.isDown() ? 1 : 0);
+            direction = (ClientSetup.LEAN_RIGHT.isDown() ? 1 : 0) - (ClientSetup.LEAN_LEFT.isDown() ? 1 : 0);
         }
         if (direction != sent) {
             sent = direction;
@@ -109,10 +100,14 @@ public final class LeanClient {
         if (Math.abs(angle) < 0.05F) {
             return;
         }
-        float yaw = Mth.rotLerp(event.getPartialTick(), player.yBodyRotO, player.yBodyRot);
+        // Standing still, the body turns after the head only past 50 degrees, so a lean along the body would go
+        // off to the side of where the player looks. While leaning, the body follows the view.
+        player.yBodyRotO = player.yHeadRotO;
+        player.yBodyRot = player.yHeadRot;
+        float yaw = Mth.rotLerp(event.getPartialTick(), player.yHeadRotO, player.yHeadRot);
         PoseStack pose = event.getPoseStack();
         pose.pushPose();
-        // Turn so that +Z is where the body faces, roll about it (positive = to the player's right), turn back.
+        // Turn so that +Z is where the player looks, roll about it (positive = to the player's right), turn back.
         pose.mulPose(Axis.YP.rotationDegrees(-yaw));
         pose.mulPose(Axis.ZP.rotationDegrees(angle));
         pose.mulPose(Axis.YP.rotationDegrees(yaw));
@@ -124,6 +119,19 @@ public final class LeanClient {
         if (pushed) {
             pushed = false;
             event.getPoseStack().popPose();
+        }
+    }
+
+    @SubscribeEvent
+    public static void onCameraAngles(ViewportEvent.ComputeCameraAngles event) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null || !mc.options.getCameraType().isFirstPerson()) {
+            return;
+        }
+        float[] tilt = TILTS.get(mc.player.getId());
+        if (tilt != null) {
+            float angle = Mth.lerp((float) event.getPartialTick(), tilt[0], tilt[1]);
+            event.setRoll(event.getRoll() + angle * CAMERA_ROLL);
         }
     }
 

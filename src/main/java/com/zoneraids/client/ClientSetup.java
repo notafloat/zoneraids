@@ -19,6 +19,12 @@ import org.lwjgl.glfw.GLFW;
 public final class ClientSetup {
     public static final KeyMapping OPEN_TERMINAL = new KeyMapping("key.zoneraids.terminal", KeyConflictContext.IN_GAME,
             InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_K, "key.categories.zoneraids");
+    public static final KeyMapping LEAN_LEFT = new KeyMapping("key.zoneraids.lean_left", KeyConflictContext.IN_GAME,
+            InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_Q, "key.categories.zoneraids");
+    public static final KeyMapping LEAN_RIGHT = new KeyMapping("key.zoneraids.lean_right", KeyConflictContext.IN_GAME,
+            InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_E, "key.categories.zoneraids");
+    public static final KeyMapping ROLL = new KeyMapping("key.zoneraids.roll", KeyConflictContext.IN_GAME,
+            InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_C, "key.categories.zoneraids");
 
     private ClientSetup() {
     }
@@ -26,6 +32,9 @@ public final class ClientSetup {
     @SubscribeEvent
     public static void onRegisterKeys(RegisterKeyMappingsEvent event) {
         event.register(OPEN_TERMINAL);
+        event.register(LEAN_LEFT);
+        event.register(LEAN_RIGHT);
+        event.register(ROLL);
     }
 
     @SubscribeEvent
