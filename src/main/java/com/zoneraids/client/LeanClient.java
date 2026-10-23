@@ -100,10 +100,14 @@ public final class LeanClient {
         if (Math.abs(angle) < 0.05F) {
             return;
         }
-        float yaw = Mth.rotLerp(event.getPartialTick(), player.yBodyRotO, player.yBodyRot);
+        // Standing still, the body turns after the head only past 50 degrees, so a lean along the body would go
+        // off to the side of where the player looks. While leaning, the body follows the view.
+        player.yBodyRotO = player.yHeadRotO;
+        player.yBodyRot = player.yHeadRot;
+        float yaw = Mth.rotLerp(event.getPartialTick(), player.yHeadRotO, player.yHeadRot);
         PoseStack pose = event.getPoseStack();
         pose.pushPose();
-        // Turn so that +Z is where the body faces, roll about it (positive = to the player's right), turn back.
+        // Turn so that +Z is where the player looks, roll about it (positive = to the player's right), turn back.
         pose.mulPose(Axis.YP.rotationDegrees(-yaw));
         pose.mulPose(Axis.ZP.rotationDegrees(angle));
         pose.mulPose(Axis.YP.rotationDegrees(yaw));
