@@ -25,6 +25,7 @@ public class PitBikeRenderer extends EntityRenderer<PitBike> {
     @Override
     public void render(PitBike bike, float yaw, float partialTicks, PoseStack pose, MultiBufferSource buffers, int light) {
         pose.pushPose();
+        pose.translate(0.0F, Mth.lerp(partialTicks, bike.stepOffsetO, bike.stepOffset), 0.0F);
         pose.mulPose(Axis.YP.rotationDegrees(180.0F - yaw));
         float lean = Mth.lerp(partialTicks, bike.leanO, bike.lean);
         float hurt = bike.hurtTicks() - partialTicks;
