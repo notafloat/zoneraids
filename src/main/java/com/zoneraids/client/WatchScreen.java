@@ -12,24 +12,22 @@ import net.minecraft.network.chat.Component;
 import java.util.List;
 
 /**
- * Raiders that can be watched, opened from the raid terminal. Picking one closes the terminal and
+ * PDA watch tab: raiders that can be watched. Picking one closes the terminal and
  * puts the camera on the raider; Shift (vanilla spectator) or the stop button here goes back to the hub.
- * The terminal key closes the whole terminal, the mouse wheel turns pages.
+ * The terminal key closes the PDA, the mouse wheel turns pages.
  */
 public final class WatchScreen extends Screen {
-    private static final int PANEL_W = 380;
-    private static final int PANEL_H = 236;
+    private static final int PANEL_W = PdaTabs.PANEL_W;
+    private static final int PANEL_H = PdaTabs.PANEL_H;
     private static final int ROWS_PER_PAGE = 7;
     private static final int ROW_H = 24;
     private static final int LIST_Y = 22;
 
-    private final Screen parent;
     private int page;
     private int refreshTicks;
 
-    public WatchScreen(Screen parent) {
+    public WatchScreen() {
         super(Component.translatable("zoneraids.watch.title"));
-        this.parent = parent;
     }
 
     void onDataUpdated() {
@@ -37,11 +35,11 @@ public final class WatchScreen extends Screen {
     }
 
     private int left() {
-        return (width - PANEL_W) / 2;
+        return PdaTabs.left(width);
     }
 
     private int top() {
-        return (height - PANEL_H) / 2;
+        return PdaTabs.top(height);
     }
 
     private static List<TerminalDataPacket.WatchEntry> entries() {
@@ -58,6 +56,7 @@ public final class WatchScreen extends Screen {
         TerminalDataPacket data = ClientRaidState.terminal;
         int left = left();
         int top = top();
+        PdaTabs.buttons(left, top, PdaTabs.Tab.WATCH).forEach(this::addRenderableWidget);
         List<TerminalDataPacket.WatchEntry> entries = entries();
         int pages = pages();
         page = Math.min(page, pages - 1);
@@ -90,7 +89,6 @@ public final class WatchScreen extends Screen {
                 minecraft.setScreen(null);
             }));
         }
-        addRenderableWidget(new ZoneButton(left + PANEL_W - 84, by, 74, 17, Component.translatable("gui.back"), b -> onClose()));
     }
 
     private void turn(int delta) {
@@ -171,11 +169,6 @@ public final class WatchScreen extends Screen {
 
         Component hint = Component.translatable("zoneraids.watch.hint", minecraft.options.keyShift.getTranslatedKeyMessage());
         g.drawCenteredString(font, hint, width / 2, Math.min(height - 10, top + PANEL_H + 5), ZoneUi.DIM);
-    }
-
-    @Override
-    public void onClose() {
-        minecraft.setScreen(parent);
     }
 
     @Override

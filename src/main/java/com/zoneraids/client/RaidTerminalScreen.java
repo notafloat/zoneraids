@@ -12,10 +12,10 @@ import net.minecraft.network.chat.Component;
 import java.util.List;
 
 /**
- * Raid terminal: map list with matchmaking state, join/leave, stash shortcut, party and stats, the
- * way to watching players in raids and to the trader.
+ * Raid terminal, the first tab of the PDA: map list with matchmaking state, join/leave, party and
+ * stats. Perks, the trader, watching, the stash and the rest are the PDA's other tabs.
  * Widgets are rebuilt whenever new data arrives; while open it asks for a refresh every 2 seconds.
- * The terminal key closes it again, the mouse wheel turns map pages. It is the first tab of the PDA.
+ * The terminal key closes it again, the mouse wheel turns map pages.
  */
 public final class RaidTerminalScreen extends Screen {
     private static final int PANEL_W = PdaTabs.PANEL_W;
@@ -82,13 +82,6 @@ public final class RaidTerminalScreen extends Screen {
         }
 
         int py = top + LIST_Y + ROWS_PER_PAGE * ROW_H + 1;
-        ZoneButton watch = new ZoneButton(left + 10, py, 120, 13,
-                Component.translatable("zoneraids.terminal.watch", data.watchable().size()), b -> minecraft.setScreen(new WatchScreen(this)));
-        watch.active = !data.inRaid() && (!data.watchable().isEmpty() || !data.watching().isEmpty());
-        addRenderableWidget(watch);
-        ZoneButton shop = new ZoneButton(left + 134, py, 90, 13, Component.translatable("zoneraids.terminal.shop"), b -> send(Action.SHOP, ""));
-        shop.active = data.canShop();
-        addRenderableWidget(shop);
         if (pages > 1) {
             ZoneButton prev = new ZoneButton(left + PANEL_W - 84, py, 20, 13, Component.literal("<"), b -> turn(-1));
             prev.active = page > 0;
@@ -99,18 +92,13 @@ public final class RaidTerminalScreen extends Screen {
         }
 
         int by = top + PANEL_H - 25;
-        ZoneButton stash = new ZoneButton(left + 10, by, 80, 17, Component.translatable("zoneraids.terminal.stash"), b -> send(Action.STASH, ""));
-        stash.active = data.canStash();
-        addRenderableWidget(stash);
         if (!data.pendingInvite().isEmpty()) {
-            addRenderableWidget(new ZoneButton(left + 94, by, 130, 17,
+            addRenderableWidget(new ZoneButton(left + 10, by, 130, 17,
                     Component.translatable("zoneraids.terminal.accept_invite", data.pendingInvite()), b -> send(Action.ACCEPT_INVITE, "")));
         } else if (!data.party().isEmpty()) {
-            addRenderableWidget(new ZoneButton(left + 94, by, 130, 17,
+            addRenderableWidget(new ZoneButton(left + 10, by, 130, 17,
                     Component.translatable("zoneraids.terminal.leave_party"), b -> send(Action.LEAVE_PARTY, "")));
         }
-        addRenderableWidget(new ZoneButton(left + 228, by, 64, 17, Component.translatable("zoneraids.terminal.perks", data.perkPoints()),
-                b -> minecraft.setScreen(new PerksScreen(this))));
         addRenderableWidget(new ZoneButton(left + PANEL_W - 84, by, 74, 17, Component.translatable("gui.done"), b -> onClose()));
     }
 

@@ -13,8 +13,8 @@ import net.minecraft.world.inventory.Slot;
 /**
  * PDA inventory tab: the player's own inventory menu (always open on the client, like vanilla's
  * inventory screen) drawn in the PDA style, with the player model, health and gear stats beside it.
- * Items move exactly as in the vanilla screen. Mod buttons that hook only the vanilla inventory screen
- * (Curios and the like) stay on the usual inventory key.
+ * Items move exactly as in the vanilla screen. It replaces the vanilla inventory screen (see
+ * {@link ClientEvents}); Curios slots have their own key.
  */
 public final class PdaInventoryScreen extends AbstractContainerScreen<InventoryMenu> {
     private static final int MENU_X = 10;
@@ -74,10 +74,7 @@ public final class PdaInventoryScreen extends AbstractContainerScreen<InventoryM
                 leftPos + 51 - mouseX, topPos + 25 - mouseY, player);
 
         for (Slot slot : menu.slots) {
-            int sx = leftPos + slot.x;
-            int sy = topPos + slot.y;
-            g.fill(sx - 1, sy - 1, sx + 17, sy + 17, 0xE00C0D09);
-            ZoneUi.outline(g, sx - 1, sy - 1, sx + 17, sy + 17, ZoneUi.EDGE);
+            ZoneUi.slotFrame(g, leftPos + slot.x, topPos + slot.y);
         }
         // Hotbar: the selected slot is marked like on the HUD.
         int selected = inventory.selected;
@@ -123,6 +120,6 @@ public final class PdaInventoryScreen extends AbstractContainerScreen<InventoryM
     protected boolean hasClickedOutside(double mouseX, double mouseY, int guiLeft, int guiTop, int button) {
         int left = PdaTabs.left(width);
         int top = PdaTabs.top(height);
-        return mouseX < left || mouseY < top - 14 || mouseX >= left + PdaTabs.PANEL_W || mouseY >= top + PdaTabs.PANEL_H;
+        return mouseX < left || mouseY < top - PdaTabs.TAB_H || mouseX >= left + PdaTabs.PANEL_W || mouseY >= top + PdaTabs.PANEL_H;
     }
 }
