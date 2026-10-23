@@ -71,7 +71,10 @@ public final class PdaHudOverlay implements IGuiOverlay {
         if (!survival) {
             return;
         }
+        // Stamina as the line between the bars and the hotbar: amber, red while exhausted.
         g.fill(x0, y0 - 3, x0 + HOTBAR_W, y0 - 2, 0x40D9A441);
+        g.fill(x0, y0 - 3, x0 + (int) (HOTBAR_W * MovementClient.stamina()), y0 - 2,
+                MovementClient.exhausted() ? ZoneUi.RED : ZoneUi.AMBER);
         float hp = player.getHealth();
         float hpFraction = player.getMaxHealth() <= 0 ? 0 : hp / player.getMaxHealth();
         int half = HOTBAR_W / 2;
