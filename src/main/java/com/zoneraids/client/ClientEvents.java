@@ -12,6 +12,7 @@ import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.client.event.RenderGuiOverlayEvent;
 import net.minecraftforge.client.event.ScreenEvent;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
@@ -64,7 +65,12 @@ public final class ClientEvents {
         }
     }
 
-    @SubscribeEvent
+    /**
+     * Highest priority, so the vanilla parts the PDA HUD replaces are cancelled before other mods see
+     * them: Anomaly Zone draws its stamina bar on the vanilla health bar's event, right where the PDA
+     * strip sits, and skips it once that event is cancelled (the PDA HUD draws stamina itself).
+     */
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onOverlayPre(RenderGuiOverlayEvent.Pre event) {
         PdaHudOverlay.onOverlayPre(event);
     }

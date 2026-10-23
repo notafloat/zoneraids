@@ -18,7 +18,7 @@ import java.util.List;
 
 /**
  * PDA status tab: what every mod knows about the player, in one place. Contamination from worn
- * artifacts (radiation, psi, bio, heat) as badges, Anomaly Zone stamina, body stats, effects, the
+ * artifacts (radiation, psi, bio, heat) as badges, stamina and load, body stats, effects, the
  * worn container's bonuses, perks and Anomaly Zone food buffs. All read on the client; the
  * Anomaly Zone stats are recomputed twice a second.
  */
@@ -114,13 +114,20 @@ public final class StatusScreen extends Screen {
             y += 13;
         }
 
-        float stamina = AnomalyZoneCompat.stamina();
-        if (stamina >= 0) {
+        // Our own stamina (sprinting, jumping, load) and Anomaly Zone's, which also locks sprinting.
+        boolean exhausted = MovementClient.exhausted();
+        g.drawString(font, Component.translatable("zoneraids.pda.status.stamina", Math.round(MovementClient.stamina() * 100)), x, y,
+                exhausted ? ZoneUi.RED : ZoneUi.TEXT);
+        ZoneUi.bar(g, x + 96, y + 2, w - 96, 4, MovementClient.stamina(), exhausted ? ZoneUi.RED : ZoneUi.AMBER);
+        y += 11;
+        float azStamina = AnomalyZoneCompat.stamina();
+        if (azStamina >= 0) {
             boolean locked = AnomalyZoneCompat.staminaLocked();
-            g.drawString(font, Component.translatable("zoneraids.pda.status.stamina", Math.round(stamina * 100)), x, y, locked ? ZoneUi.RED : ZoneUi.TEXT);
-            ZoneUi.bar(g, x + 96, y + 2, w - 96, 4, stamina, locked ? ZoneUi.RED : ZoneUi.GREEN);
-            y += 13;
+            g.drawString(font, Component.translatable("zoneraids.pda.status.az_stamina", Math.round(azStamina * 100)), x, y, locked ? ZoneUi.RED : ZoneUi.TEXT);
+            ZoneUi.bar(g, x + 96, y + 2, w - 96, 4, azStamina, locked ? ZoneUi.RED : ZoneUi.GREEN);
+            y += 11;
         }
+        y += 2;
 
         y = section(g, x, y, w, "zoneraids.pda.status.body");
         double speed = player.getAttributeValue(Attributes.MOVEMENT_SPEED) / player.getAttributeBaseValue(Attributes.MOVEMENT_SPEED);
@@ -129,7 +136,7 @@ public final class StatusScreen extends Screen {
                 player.getArmorValue() + " / " + HealthScreen.fmt((float) player.getAttributeValue(Attributes.ARMOR_TOUGHNESS)), ZoneUi.TEXT);
         y = row(g, x, y, w, Component.translatable("zoneraids.pda.status.speed"), Math.round(speed * 100) + "%",
                 speed < 0.99 ? ZoneUi.RED : speed > 1.01 ? ZoneUi.GREEN : ZoneUi.TEXT);
-        y = row(g, x, y, w, Component.translatable("zoneraids.pda.status.level"), String.valueOf(player.experienceLevel), ZoneUi.TEXT);
+        y = row(g, x, y, w, Component.translatable("zoneraids.pda.status.load"), String.format("%.1f", MovementClient.load()), ZoneUi.TEXT);
 
         y = section(g, x, y + 2, w, "zoneraids.pda.status.effects");
         int shown = 0;
