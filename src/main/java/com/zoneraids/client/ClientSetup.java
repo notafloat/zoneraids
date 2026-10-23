@@ -31,6 +31,9 @@ public final class ClientSetup {
             InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_LEFT_CONTROL, "key.categories.zoneraids");
     public static final KeyMapping ROLL = new KeyMapping("key.zoneraids.roll", KeyConflictContext.IN_GAME,
             InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_C, "key.categories.zoneraids");
+    /** Arma 3's action key: does the action under the crosshair, or the one picked in the list (InteractionMenu). */
+    public static final KeyMapping INTERACT = new KeyMapping("key.zoneraids.interact", KeyConflictContext.IN_GAME,
+            InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_F, "key.categories.zoneraids");
 
     private ClientSetup() {
     }
@@ -43,12 +46,14 @@ public final class ClientSetup {
         event.register(LEAN_ADJUST);
         event.register(STANCE_ADJUST);
         event.register(ROLL);
+        event.register(INTERACT);
     }
 
     @SubscribeEvent
     public static void onRegisterOverlays(RegisterGuiOverlaysEvent event) {
         event.registerAbove(VanillaGuiOverlay.HOTBAR.id(), "pda_hud", new PdaHudOverlay());
         event.registerAbove(VanillaGuiOverlay.HOTBAR.id(), "raid_hud", new RaidHudOverlay());
+        event.registerAbove(VanillaGuiOverlay.CROSSHAIR.id(), "interaction", new InteractionMenu());
     }
 
     @SubscribeEvent

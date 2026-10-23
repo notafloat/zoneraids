@@ -31,7 +31,7 @@ import java.util.Map;
 public final class KeyLayout {
     private static final Logger LOGGER = LogUtils.getLogger();
     /** Bump the number when the table changes, so clients apply the new entries once more. */
-    private static final String MARKER = "zoneraids-keys-4.done";
+    private static final String MARKER = "zoneraids-keys-5.done";
     private static final Map<String, InputConstants.Key> LAYOUT = new HashMap<>();
     private static boolean checked;
 
@@ -40,6 +40,8 @@ public final class KeyLayout {
         key("key.inventory", GLFW.GLFW_KEY_TAB);
         key("key.playerlist", GLFW.GLFW_KEY_GRAVE_ACCENT);
         key("key.drop", GLFW.GLFW_KEY_BACKSPACE);
+        // F is the Arma-style interaction key (key.zoneraids.interact); the off hand swap is in its self menu.
+        unbind("key.swapOffhand");
         // TaCZ: the scope zoom moves off V (melee stays there) to the wheel click; its crawl is the prone key,
         // on X in place of TACtical Movement's dolphin dive (C is the roll).
         mouse("key.tacz.zoom.desc", GLFW.GLFW_MOUSE_BUTTON_MIDDLE);

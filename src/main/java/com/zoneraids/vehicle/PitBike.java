@@ -122,6 +122,11 @@ public class PitBike extends Entity {
         return entityData.get(DATA_HEALTH);
     }
 
+    /** Health as a fraction of a new bike's, for the inspect action. */
+    public float healthFraction() {
+        return Mth.clamp(health() / Vehicles.health(), 0.0F, 1.0F);
+    }
+
     public int hurtTicks() {
         return entityData.get(DATA_HURT);
     }
