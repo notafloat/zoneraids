@@ -112,7 +112,7 @@ public final class AnomalyZoneCompat {
             }
             staminaMap.put(player.getUUID(), stamina);
             staminaLocks.remove(player.getUUID());
-        } catch (ReflectiveOperationException | ClassCastException | LinkageError | RuntimeException e) {
+        } catch (ReflectiveOperationException | LinkageError | RuntimeException e) {
             staminaFailed = true;
             LOGGER.warn("Zone Raids: could not reach Anomaly Zone's stamina, it runs on its own", e);
         }
