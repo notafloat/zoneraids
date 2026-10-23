@@ -70,6 +70,8 @@ import java.util.UUID;
 public final class RaidManager {
     private static final int[] TIME_WARNINGS = {600, 300, 120, 60, 30, 10};
     private static final int ACTION_COOLDOWN_TICKS = 4;
+    /** Seconds before the next round at which session members in the hub get a countdown title. */
+    private static final int[] ROUND_COUNTDOWN = {10, 5, 3, 2, 1};
 
     @Nullable
     private static RaidManager instance;
@@ -217,7 +219,21 @@ public final class RaidManager {
 
     /** @return true when the break is over and the next round should start. */
     private boolean tickIntermission(RaidSession session, int dt) {
+        int before = session.ticksLeft;
         session.ticksLeft -= dt;
+        for (int warning : ROUND_COUNTDOWN) {
+            if (before > warning * 20 && session.ticksLeft <= warning * 20) {
+                Component title = Component.translatable("zoneraids.round.countdown", session.round + 1,
+                        Component.translatable("zoneraids.round." + session.nextType.id)).withStyle(ChatFormatting.GOLD);
+                Component subtitle = Component.literal(String.valueOf(warning)).withStyle(ChatFormatting.YELLOW);
+                for (UUID id : session.roster.keySet()) {
+                    ServerPlayer player = server.getPlayerList().getPlayer(id);
+                    if (player != null && !playerSessions.containsKey(id)) {
+                        title(player, title, subtitle);
+                    }
+                }
+            }
+        }
         if (tickCounter % 20 == 0) {
             for (UUID id : session.roster.keySet()) {
                 ServerPlayer player = server.getPlayerList().getPlayer(id);
@@ -309,7 +325,7 @@ public final class RaidManager {
                 }
             }
         }
-        if (session.type == RoundType.DEATHMATCH && session.roundStartSize >= 2
+        if (session.type == RoundType.DEATHMATCH && !lateJoinOpen(session)
                 && RoundObjectives.onlineParticipants(server, null, session).size() <= 1) {
             return true;
         }
@@ -323,7 +339,60 @@ public final class RaidManager {
             });
             EnemySpawner.tick(level, session, raiders, level.getRandom());
         }
-        return session.ticksLeft <= 0 || session.participants.isEmpty();
+        return session.ticksLeft <= 0 || (session.participants.isEmpty() && !lateJoinOpen(session));
+    }
+
+    /** True while a session member who missed the start of the round can still join it. */
+    private boolean lateJoinOpen(RaidSession session) {
+        if (session.rounds <= 1 || (session.totalTicks - session.ticksLeft) / 20 >= RaidConfig.LATE_JOIN_SECONDS.get()) {
+            return false;
+        }
+        for (UUID id : session.roster.keySet()) {
+            if (!session.playedThisRound.contains(id) && server.getPlayerList().getPlayer(id) != null) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Puts a session member who was dead or offline when the round began into the round, so nobody
+     * has to do anything between rounds. Called on login and respawn.
+     */
+    public void tryLateJoin(ServerPlayer player) {
+        UUID id = player.getUUID();
+        RaidSession session = rosterSessions.get(id);
+        if (session == null || session.intermission || session.round == 0 || playerSessions.containsKey(id)
+                || session.playedThisRound.contains(id) || !player.isAlive() || !lateJoinOpen(session)) {
+            return;
+        }
+        ServerLevel level = server.getLevel(session.map.dimension);
+        if (level == null || session.map.spawns.isEmpty()) {
+            return;
+        }
+        // Join the group's teammates where possible: same exits, spawn next to the first one found.
+        List<ExtractPoint> assigned = null;
+        Integer group = session.groupOf.get(id);
+        if (session.type != RoundType.DEATHMATCH && group != null) {
+            for (RaidSession.Participant part : session.participants.values()) {
+                if (group.equals(session.groupOf.get(part.id))) {
+                    assigned = part.extracts;
+                    break;
+                }
+            }
+        }
+        if (assigned == null) {
+            assigned = List.of();
+            if (!session.openExtracts.isEmpty()) {
+                List<ExtractPoint> shuffled = new ArrayList<>(session.openExtracts);
+                Collections.shuffle(shuffled, random);
+                assigned = List.copyOf(shuffled.subList(0, Math.max(1, Math.min(session.map.extractsPerPlayer, shuffled.size()))));
+            }
+        }
+        SpawnPoint spawn = session.map.spawns.get(random.nextInt(session.map.spawns.size()));
+        enterRound(session, level, player, spawn, assigned);
+        session.roundStartSize = Math.max(session.roundStartSize, session.participants.size());
+        sendHud(player, session, session.participants.get(id));
     }
 
     private void tickQueues() {
@@ -585,9 +654,9 @@ public final class RaidManager {
         List<SpawnPoint> spawns = new ArrayList<>(map.spawns);
         Collections.shuffle(spawns, random);
 
+        session.openExtracts = List.copyOf(open);
+        session.playedThisRound.clear();
         int spawnIndex = 0;
-        int protection = RaidConfig.SPAWN_PROTECTION_SECONDS.get() * 20;
-        int seconds = session.totalTicks / 20;
         for (List<UUID> group : groups) {
             SpawnPoint spawn = spawns.get(spawnIndex++ % spawns.size());
             List<ExtractPoint> assigned = List.of();
@@ -598,39 +667,48 @@ public final class RaidManager {
             }
             for (UUID id : group) {
                 ServerPlayer player = server.getPlayerList().getPlayer(id);
-                if (player == null || !player.isAlive()) {
-                    continue;
-                }
-                RaidSession.Participant part = new RaidSession.Participant(id, player.getGameProfile().getName(), assigned);
-                session.participants.put(id, part);
-                playerSessions.put(id, session);
-                PlayerRaidData.setSession(player, session.id);
-                PlayerRaidData.incrementStat(player, Stat.RAIDS);
-
-                spectators.release(player);
-                BlockPos pos = spawn.pos();
-                Teleports.teleport(player, level, pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, spawn.yaw(), 0.0F);
-                if (protection > 0) {
-                    player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, protection, 4, false, false));
-                }
-                giveRoundKit(player, level);
-                if (session.rounds > 1) {
-                    title(player, Component.translatable("zoneraids.round.title", session.round, session.rounds,
-                                    Component.translatable("zoneraids.round." + session.type.id)).withStyle(ChatFormatting.RED),
-                            Component.translatable("zoneraids.round." + session.type.id + ".subtitle", formatTime(seconds)));
-                    player.sendSystemMessage(Component.translatable("zoneraids.round." + session.type.id + ".rules").withStyle(ChatFormatting.GOLD));
-                } else {
-                    title(player, Component.translatable("zoneraids.raid.start.title").withStyle(ChatFormatting.RED),
-                            Component.translatable("zoneraids.raid.start.subtitle", map.displayName, formatTime(seconds)));
-                }
-                if (!assigned.isEmpty()) {
-                    sendExtractList(player, part);
+                if (player != null && player.isAlive()) {
+                    enterRound(session, level, player, spawn, assigned);
                 }
             }
         }
         session.roundStartSize = session.participants.size();
         RoundObjectives.setup(server, level, session, random);
         forEachOnline(session, p -> sendHud(p, session, session.participants.get(p.getUUID())));
+    }
+
+    /** Puts one player on the map for the session's current round. */
+    private void enterRound(RaidSession session, ServerLevel level, ServerPlayer player, SpawnPoint spawn, List<ExtractPoint> assigned) {
+        RaidMap map = session.map;
+        UUID id = player.getUUID();
+        int protection = RaidConfig.SPAWN_PROTECTION_SECONDS.get() * 20;
+        int seconds = session.secondsLeft();
+        session.playedThisRound.add(id);
+        RaidSession.Participant part = new RaidSession.Participant(id, player.getGameProfile().getName(), assigned);
+        session.participants.put(id, part);
+        playerSessions.put(id, session);
+        PlayerRaidData.setSession(player, session.id);
+        PlayerRaidData.incrementStat(player, Stat.RAIDS);
+
+        spectators.release(player);
+        BlockPos pos = spawn.pos();
+        Teleports.teleport(player, level, pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, spawn.yaw(), 0.0F);
+        if (protection > 0) {
+            player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, protection, 4, false, false));
+        }
+        giveRoundKit(player, level);
+        if (session.rounds > 1) {
+            title(player, Component.translatable("zoneraids.round.title", session.round, session.rounds,
+                            Component.translatable("zoneraids.round." + session.type.id)).withStyle(ChatFormatting.RED),
+                    Component.translatable("zoneraids.round." + session.type.id + ".subtitle", formatTime(seconds)));
+            player.sendSystemMessage(Component.translatable("zoneraids.round." + session.type.id + ".rules").withStyle(ChatFormatting.GOLD));
+        } else {
+            title(player, Component.translatable("zoneraids.raid.start.title").withStyle(ChatFormatting.RED),
+                    Component.translatable("zoneraids.raid.start.subtitle", map.displayName, formatTime(seconds)));
+        }
+        if (!assigned.isEmpty()) {
+            sendExtractList(player, part);
+        }
     }
 
     /** Players still on the map when a round ends go missing, or survive if the round has no extraction. */
@@ -721,11 +799,14 @@ public final class RaidManager {
             List<UUID> ready = new ArrayList<>();
             for (UUID id : group) {
                 ServerPlayer player = server.getPlayerList().getPlayer(id);
-                if (player != null && player.isAlive() && !playerSessions.containsKey(id)) {
-                    ready.add(id);
+                if (player != null && !playerSessions.containsKey(id)) {
+                    players++;
+                    // Dead players (still on the respawn screen) join as soon as they respawn.
+                    if (player.isAlive()) {
+                        ready.add(id);
+                    }
                 }
             }
-            players += ready.size();
             if (session.nextType == RoundType.DEATHMATCH) {
                 // Everyone for themselves: every player gets their own spawn point.
                 ready.forEach(id -> groups.add(List.of(id)));

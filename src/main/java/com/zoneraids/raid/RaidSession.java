@@ -70,6 +70,10 @@ public final class RaidSession {
     final List<List<UUID>> groups = new ArrayList<>();
     final Map<UUID, Integer> groupOf = new HashMap<>();
     int roundStartSize;
+    /** Extracts open in the current round, for players who join it late. */
+    List<ExtractPoint> openExtracts = List.of();
+    /** Players who were on the map in the current round; nobody joins the same round twice. */
+    final Set<UUID> playedThisRound = new HashSet<>();
 
     // Shrinking zone (emission, deathmatch): a circle around (zoneX, zoneZ).
     double zoneX;

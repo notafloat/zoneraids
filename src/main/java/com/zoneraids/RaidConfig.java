@@ -44,6 +44,7 @@ public final class RaidConfig {
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> ARTIFACT_ITEMS;
     public static final ForgeConfigSpec.BooleanValue ROUNDS;
     public static final ForgeConfigSpec.IntValue INTERMISSION_SECONDS;
+    public static final ForgeConfigSpec.IntValue LATE_JOIN_SECONDS;
     public static final ForgeConfigSpec.IntValue SECOND_ROUND_MINUTES;
     public static final ForgeConfigSpec.IntValue DEATHMATCH_MINUTES;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> SECOND_ROUND_MODES;
@@ -166,6 +167,9 @@ public final class RaidConfig {
                 .define("rounds", true);
         INTERMISSION_SECONDS = b.comment("Time in the hub between rounds (stash is available).")
                 .defineInRange("intermissionSeconds", 60, 10, 600);
+        LATE_JOIN_SECONDS = b.comment("Session members who were dead or offline when a round started join it automatically",
+                        "when they respawn or log in during its first seconds. 0 = off.")
+                .defineInRange("lateJoinSeconds", 60, 0, 600);
         SECOND_ROUND_MINUTES = b.defineInRange("secondRoundMinutes", 12, 2, 120);
         DEATHMATCH_MINUTES = b.defineInRange("deathmatchMinutes", 8, 2, 60);
         SECOND_ROUND_MODES = b.comment("Modes the second round is picked from at random: supply_drop, emission, documents.")
