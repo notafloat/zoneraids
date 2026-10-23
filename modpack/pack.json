@@ -93,7 +93,12 @@
         "WATER_COLOR_R": "0.06",
         "WATER_COLOR_G": "0.08",
         "WATER_COLOR_B": "0.05",
-        "WATER_ABSORPTION": "0.20"
+        "WATER_ABSORPTION": "0.20",
+        "FOG_ACTIVE": "true",
+        "FOG_ADJUST": "1.0",
+        "NV_COLOR_R": "0.4",
+        "NV_COLOR_G": "1.0",
+        "NV_COLOR_B": "0.45"
       }
     }
   ],
