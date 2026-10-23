@@ -107,8 +107,8 @@ public final class RaidConfig {
                         "flesh=zoneraids:flesh",
                         "snork=zoneraids:snork",
                         "bloodsucker=zoneraids:bloodsucker",
-                        "bandit=tacznpcs:npc",
-                        "military=tacznpcs:npc"), o -> o instanceof String s && s.contains("="));
+                        "bandit=tacznpcs:npc{template:\"zr_bandit\"}",
+                        "military=tacznpcs:npc{template:\"zr_military\"}"), o -> o instanceof String s && s.contains("="));
         b.pop();
 
         SPEC = b.build();

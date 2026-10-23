@@ -1,0 +1,123 @@
+{
+  "illagers": {
+    "aligned": [
+      "illagers",
+      "monster"
+    ],
+    "opposed": [
+      "villagers"
+    ],
+    "equipment": {
+      "table": "tacznpcs:npc/illager",
+      "dropChances": {
+        "mainhand": 1,
+        "head": 0.2,
+        "chest": 0.2,
+        "legs": 0.2,
+        "feet": 0.2
+      }
+    },
+    "skin": [
+      {
+        "id": "tacznpcs:entity/illager1.png"
+      },
+      {
+        "id": "tacznpcs:entity/illager1.png"
+      },
+      {
+        "id": "tacznpcs:entity/illager1.png"
+      },
+      {
+        "id": "tacznpcs:entity/illager2.png"
+      }
+    ]
+  },
+  "villagers": {
+    "aligned": [
+      "villagers"
+    ],
+    "opposed": [
+      "illagers",
+      "monster"
+    ],
+    "equipment": {
+      "table": "tacznpcs:npc/villager",
+      "dropChances": {
+        "mainhand": 1,
+        "head": 0.2,
+        "chest": 0.2,
+        "legs": 0.2,
+        "feet": 0.2
+      }
+    },
+    "skin": [
+      {
+        "id": "tacznpcs:entity/villager2.png"
+      },
+      {
+        "id": "tacznpcs:entity/villager2.png"
+      },
+      {
+        "id": "tacznpcs:entity/villager2.png"
+      },
+      {
+        "id": "tacznpcs:entity/villager1.png"
+      }
+    ]
+  },
+  "default": {
+    "primary": "%tacz:glock_17",
+    "skin": {
+      "id": "tacznpcs:entity/default.png"
+    },
+    "opposed": [
+      "monster"
+    ]
+  },
+  "zr_bandit": {
+    "aligned": [
+      "zr_bandit",
+      "zr_military",
+      "monster"
+    ],
+    "opposed": [
+      "players"
+    ],
+    "equipment": {
+      "table": "zoneraids:enemies/bandit_gear",
+      "dropChances": {
+        "mainhand": 0.15,
+        "head": 0.15,
+        "chest": 0.15,
+        "legs": 0.15,
+        "feet": 0.15
+      }
+    },
+    "skin": {
+      "id": "tacznpcs:entity/default.png"
+    }
+  },
+  "zr_military": {
+    "aligned": [
+      "zr_military",
+      "zr_bandit",
+      "monster"
+    ],
+    "opposed": [
+      "players"
+    ],
+    "equipment": {
+      "table": "zoneraids:enemies/military_gear",
+      "dropChances": {
+        "mainhand": 0.15,
+        "head": 0.15,
+        "chest": 0.15,
+        "legs": 0.15,
+        "feet": 0.15
+      }
+    },
+    "skin": {
+      "id": "tacznpcs:entity/default.png"
+    }
+  }
+}

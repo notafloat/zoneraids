@@ -80,7 +80,7 @@ if [ "$status" = up ]; then
   say "say ENEMY_CHECK_START" 5
   say "data get entity @e[type=tacznpcs:npc,limit=1] HandItems" 1
   say "data get entity @e[type=tacznpcs:npc,limit=1] ArmorItems" 1
-  say "data get entity @e[type=tacznpcs:npc,limit=1] ForgeData" 1
+  say "data get entity @e[type=tacznpcs:npc,limit=1]" 1
   say "data get entity @e[type=zoneraids:bloodsucker,limit=1] Health" 1
   say "kill @e[type=tacznpcs:npc]" 1
   say "kill @e[type=zoneraids:bloodsucker]" 3
@@ -138,7 +138,7 @@ if [ -f "$IDS_FILE" ]; then
   grep -oE '\banomalyzone:anomaly_[a-z0-9_]+\b' "$IDS_FILE" | sort -u | comm -23 - "$REPORT/unknown-blocks.txt" | tr '\n' ' '; echo
 fi
 echo "===== Raid enemies ====="
-grep -E 'MISSING|= .* OK|test spawn|Spawned|No room|Unknown or missing enemy|ENEMY_CHECK|has the following entity data|Zone Raids: (bad )?enemy' "$REPORT/console.log" | cut -c1-600
+grep -E 'MISSING|= .* OK|test spawn|Spawned|No room|Unknown or missing enemy|ENEMY_CHECK|has the following entity data|Zone Raids: (bad )?enemy' "$REPORT/console.log" | cut -c1-2500
 for f in config/tacznpc*.json config/tacznpcs*.json config/tacznpcs/*.json; do
   [ -f "$f" ] && { echo "--- $f"; head -c 4000 "$f"; echo; }
 done
