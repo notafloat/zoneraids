@@ -17,6 +17,8 @@
   "key.categories.zoneraids": "Zone Raids",
   "key.zoneraids.lean_left": "Lean left",
   "key.zoneraids.lean_right": "Lean right",
+  "key.zoneraids.lean_adjust": "Lean by steps (hold + mouse wheel)",
+  "key.zoneraids.stance_adjust": "Stance height (hold + mouse wheel)",
   "key.zoneraids.roll": "Roll",
   "key.zoneraids.terminal": "Raid terminal",
   "subtitles.zoneraids.pit_bike_engine": "Bike engine runs",

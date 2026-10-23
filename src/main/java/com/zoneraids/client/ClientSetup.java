@@ -23,6 +23,12 @@ public final class ClientSetup {
             InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_Q, "key.categories.zoneraids");
     public static final KeyMapping LEAN_RIGHT = new KeyMapping("key.zoneraids.lean_right", KeyConflictContext.IN_GAME,
             InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_E, "key.categories.zoneraids");
+    /** Held with the mouse wheel: lean by steps, Escape from Tarkov's Alt + wheel. */
+    public static final KeyMapping LEAN_ADJUST = new KeyMapping("key.zoneraids.lean_adjust", KeyConflictContext.IN_GAME,
+            InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_LEFT_ALT, "key.categories.zoneraids");
+    /** Held with the mouse wheel: stance height by steps, Escape from Tarkov's crouch key + wheel. */
+    public static final KeyMapping STANCE_ADJUST = new KeyMapping("key.zoneraids.stance_adjust", KeyConflictContext.IN_GAME,
+            InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_LEFT_CONTROL, "key.categories.zoneraids");
     public static final KeyMapping ROLL = new KeyMapping("key.zoneraids.roll", KeyConflictContext.IN_GAME,
             InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_C, "key.categories.zoneraids");
 
@@ -34,6 +40,8 @@ public final class ClientSetup {
         event.register(OPEN_TERMINAL);
         event.register(LEAN_LEFT);
         event.register(LEAN_RIGHT);
+        event.register(LEAN_ADJUST);
+        event.register(STANCE_ADJUST);
         event.register(ROLL);
     }
 
