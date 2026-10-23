@@ -9,7 +9,7 @@ import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 public final class RaidNetwork {
-    private static final String PROTOCOL = "7";
+    private static final String PROTOCOL = "8";
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             new ResourceLocation(ZoneRaids.MODID, "main"), () -> PROTOCOL, PROTOCOL::equals, PROTOCOL::equals);
 
@@ -39,6 +39,9 @@ public final class RaidNetwork {
         CHANNEL.messageBuilder(InteractPacket.class, id++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(InteractPacket::encode).decoder(InteractPacket::decode)
                 .consumerMainThread(InteractPacket::handle).add();
+        CHANNEL.messageBuilder(StaminaPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(StaminaPacket::encode).decoder(StaminaPacket::decode)
+                .consumerMainThread(StaminaPacket::handle).add();
     }
 
     public static void sendTo(ServerPlayer player, Object message) {
