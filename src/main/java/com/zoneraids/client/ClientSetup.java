@@ -30,6 +30,7 @@ public final class ClientSetup {
 
     @SubscribeEvent
     public static void onRegisterOverlays(RegisterGuiOverlaysEvent event) {
+        event.registerAbove(VanillaGuiOverlay.HOTBAR.id(), "pda_hud", new PdaHudOverlay());
         event.registerAbove(VanillaGuiOverlay.HOTBAR.id(), "raid_hud", new RaidHudOverlay());
     }
 
