@@ -70,11 +70,8 @@ public final class ClientEvents {
     public static void onScreenInit(ScreenEvent.Init.Post event) {
         if (event.getScreen() instanceof AbstractContainerScreen<?> screen && PdaTabs.isCuriosScreen(screen)) {
             int left = screen.getGuiLeft() + (screen.getXSize() - PdaTabs.PANEL_W) / 2;
-            for (ZoneButton button : PdaTabs.buttons(left, Math.max(PdaTabs.TAB_H + 1, screen.getGuiTop()), null)) {
-                button.selected = button.getMessage().getContents() instanceof TranslatableContents key
-                        && key.getKey().equals(PdaTabs.Tab.INVENTORY.key);
-                event.addListener(button);
-            }
+            PdaTabs.subview(left, Math.max(PdaTabs.TAB_H + 1, screen.getGuiTop()), PdaTabs.PANEL_W, PdaTabs.Tab.INVENTORY)
+                    .forEach(event::addListener);
         }
     }
 

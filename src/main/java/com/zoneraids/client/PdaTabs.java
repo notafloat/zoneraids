@@ -96,6 +96,16 @@ public final class PdaTabs {
         return buttons(left, top, PANEL_W, current);
     }
 
+    /**
+     * Tab row for a view inside a tab (Curios' slots, the artifact container): the {@code parent} tab is lit
+     * but still clickable, and takes the player back to it.
+     */
+    public static List<ZoneButton> subview(int left, int top, int panelW, Tab parent) {
+        List<ZoneButton> list = buttons(left, top, panelW, null);
+        list.get(parent.ordinal()).selected = true;
+        return list;
+    }
+
     /** Opens a tab from outside the PDA or from another tab. */
     public static void open(Tab tab, @Nullable Tab current) {
         Minecraft mc = Minecraft.getInstance();

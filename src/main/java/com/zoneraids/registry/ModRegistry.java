@@ -7,11 +7,13 @@ import com.zoneraids.block.RaidTerminalBlock;
 import com.zoneraids.block.StashBlock;
 import com.zoneraids.block.TraderBlock;
 import com.zoneraids.item.CordonMapItem;
+import com.zoneraids.menu.ArtifactContainerMenu;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.TagKey;
+import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
@@ -21,6 +23,7 @@ import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
+import net.minecraftforge.common.extensions.IForgeMenuType;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -33,6 +36,7 @@ public final class ModRegistry {
     public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, ZoneRaids.MODID);
     public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES = DeferredRegister.create(ForgeRegistries.BLOCK_ENTITY_TYPES, ZoneRaids.MODID);
     public static final DeferredRegister<CreativeModeTab> TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, ZoneRaids.MODID);
+    public static final DeferredRegister<MenuType<?>> MENUS = DeferredRegister.create(ForgeRegistries.MENU_TYPES, ZoneRaids.MODID);
 
     public static final TagKey<Block> RAID_BREAKABLE = BlockTags.create(new ResourceLocation(ZoneRaids.MODID, "raid_breakable"));
 
@@ -47,6 +51,9 @@ public final class ModRegistry {
             () -> new LootCrateBlock(adminProps(MapColor.SNOW, SoundType.METAL), crateLoot("medical")));
     public static final RegistryObject<Block> WEAPON_CRATE = block("weapon_crate",
             () -> new LootCrateBlock(adminProps(MapColor.COLOR_GRAY, SoundType.WOOD), crateLoot("weapons")));
+
+    public static final RegistryObject<MenuType<ArtifactContainerMenu>> ARTIFACT_CONTAINER_MENU = MENUS.register("artifact_container",
+            () -> IForgeMenuType.create(ArtifactContainerMenu::new));
 
     public static final RegistryObject<Item> CORDON_MAP = ITEMS.register("cordon_map", () -> new CordonMapItem(new Item.Properties().stacksTo(1)));
 
@@ -78,6 +85,7 @@ public final class ModRegistry {
         ITEMS.register(modBus);
         BLOCK_ENTITIES.register(modBus);
         TABS.register(modBus);
+        MENUS.register(modBus);
     }
 
     /** Map furniture: unbreakable in survival, removable in creative. */

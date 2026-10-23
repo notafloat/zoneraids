@@ -1,5 +1,7 @@
 package com.zoneraids.client;
 
+import com.zoneraids.network.RaidNetwork;
+import com.zoneraids.network.TerminalActionPacket;
 import com.zoneraids.util.CuriosCompat;
 import com.zoneraids.util.FirstAidCompat;
 import net.minecraft.client.KeyMapping;
@@ -22,7 +24,8 @@ import java.util.List;
  * inventory screen) drawn in the PDA style, with the player model, health and gear stats beside it.
  * Items move exactly as in the vanilla screen. It replaces the vanilla inventory screen (see
  * {@link ClientEvents}). The worn artifact container is shown with its artifacts and total bonuses (the
- * lines Anomaly Zone puts in its tooltip); its button opens Curios' slots, where it is put on.
+ * lines Anomaly Zone puts in its tooltip). Its button (or the container's frame) opens the worn container to
+ * put artifacts in and take them out; the gear button opens Curios' slots, where the container is put on.
  */
 public final class PdaInventoryScreen extends AbstractContainerScreen<InventoryMenu> {
     private static final int MENU_X = 10;
@@ -35,6 +38,7 @@ public final class PdaInventoryScreen extends AbstractContainerScreen<InventoryM
     private ItemStack container = ItemStack.EMPTY;
     private List<Component> containerLines = List.of();
     private int refreshTicks;
+    private ZoneButton openContainer;
     private int containerX;
     private int containerY;
 
@@ -51,7 +55,12 @@ public final class PdaInventoryScreen extends AbstractContainerScreen<InventoryM
         PdaTabs.buttons(PdaTabs.left(width), PdaTabs.top(height), PdaTabs.Tab.INVENTORY).forEach(this::addRenderableWidget);
         int x = sideX();
         int right = PdaTabs.left(width) + PdaTabs.PANEL_W - 10;
-        ZoneButton gear = new ZoneButton(x - 4, PdaTabs.top(height) + PdaTabs.PANEL_H - 24, right + 2 - x, 16,
+        int by = PdaTabs.top(height) + PdaTabs.PANEL_H - 24;
+        int half = (right + 2 - x) / 2;
+        openContainer = new ZoneButton(x - 4, by, half - 2, 16, Component.translatable("zoneraids.pda.inventory.open_container"),
+                b -> openContainer());
+        addRenderableWidget(openContainer);
+        ZoneButton gear = new ZoneButton(x - 4 + half, by, right + 2 - x - half, 16,
                 Component.translatable("zoneraids.pda.inventory.gear", curiosKey()), b -> PdaTabs.openCurios());
         gear.active = ModList.get().isLoaded("curios");
         addRenderableWidget(gear);
@@ -72,8 +81,15 @@ public final class PdaInventoryScreen extends AbstractContainerScreen<InventoryM
         return Component.literal("-");
     }
 
+    private void openContainer() {
+        RaidNetwork.sendToServer(new TerminalActionPacket(TerminalActionPacket.Action.CONTAINER, ""));
+    }
+
     private void readContainer() {
         container = CuriosCompat.wornContainer(player);
+        if (openContainer != null) {
+            openContainer.active = !container.isEmpty();
+        }
         // The tooltip has the artifacts inside and the total bonuses; the first line is the name.
         List<Component> lines = container.isEmpty() ? List.of() : Screen.getTooltipFromItem(minecraft, container);
         containerLines = lines.size() > 1 ? lines.subList(1, lines.size()) : List.of();
@@ -91,7 +107,11 @@ public final class PdaInventoryScreen extends AbstractContainerScreen<InventoryM
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (overContainer(mouseX, mouseY) && menu.getCarried().isEmpty()) {
-            PdaTabs.openCurios();
+            if (container.isEmpty()) {
+                PdaTabs.openCurios();
+            } else {
+                openContainer();
+            }
             return true;
         }
         return super.mouseClicked(mouseX, mouseY, button);
