@@ -26,6 +26,7 @@ public final class RaidConfig {
     public static final ForgeConfigSpec.IntValue BUILD_MILLIS_PER_TICK;
     public static final ForgeConfigSpec.BooleanValue FORCE_HUB_ON_LOGIN;
     public static final ForgeConfigSpec.BooleanValue PROTECT_HUB_BLOCKS;
+    public static final ForgeConfigSpec.BooleanValue GIVE_MAP_IN_HUB;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> ANOMALY_BLOCKS;
     public static final ForgeConfigSpec.BooleanValue ENEMIES_ENABLED;
     public static final ForgeConfigSpec.IntValue MAX_ENEMIES_ALIVE;
@@ -83,6 +84,8 @@ public final class RaidConfig {
                 .define("forceHubOnLogin", true);
         PROTECT_HUB_BLOCKS = b.comment("Players not in creative mode cannot break or place blocks in the hub dimension.")
                 .define("protectHubBlocks", true);
+        GIVE_MAP_IN_HUB = b.comment("Give players in the hub a Cordon map if they have none.")
+                .define("giveMapInHub", true);
         ANOMALY_BLOCKS = b.comment("Optional block ids (e.g. from an anomaly mod) placed in the Cordon's anomaly field. Ids that are not installed are skipped.")
                 .defineListAllowEmpty(List.of("anomalyBlocks"), List.<String>of(), o -> o instanceof String);
         b.pop();

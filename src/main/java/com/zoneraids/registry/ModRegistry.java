@@ -5,6 +5,7 @@ import com.zoneraids.block.LootCrateBlock;
 import com.zoneraids.block.LootCrateBlockEntity;
 import com.zoneraids.block.RaidTerminalBlock;
 import com.zoneraids.block.StashBlock;
+import com.zoneraids.item.CordonMapItem;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -43,6 +44,8 @@ public final class ModRegistry {
     public static final RegistryObject<Block> MEDICAL_CRATE = block("medical_crate",
             () -> new LootCrateBlock(adminProps(MapColor.SNOW, SoundType.METAL), crateLoot("medical")));
 
+    public static final RegistryObject<Item> CORDON_MAP = ITEMS.register("cordon_map", () -> new CordonMapItem(new Item.Properties().stacksTo(1)));
+
     @SuppressWarnings("ConstantConditions")
     public static final RegistryObject<BlockEntityType<LootCrateBlockEntity>> LOOT_CRATE_BE = BLOCK_ENTITIES.register("loot_crate",
             () -> BlockEntityType.Builder.of(LootCrateBlockEntity::new,
@@ -57,6 +60,7 @@ public final class ModRegistry {
                 output.accept(COMMON_CRATE.get());
                 output.accept(MILITARY_CRATE.get());
                 output.accept(MEDICAL_CRATE.get());
+                output.accept(CORDON_MAP.get());
             })
             .build());
 

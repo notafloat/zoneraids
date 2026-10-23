@@ -12,6 +12,7 @@ import com.zoneraids.network.RaidHudPacket;
 import com.zoneraids.network.RaidNetwork;
 import com.zoneraids.network.TerminalActionPacket;
 import com.zoneraids.network.TerminalDataPacket;
+import com.zoneraids.registry.ModRegistry;
 import com.zoneraids.util.Teleports;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -669,10 +670,25 @@ public final class RaidManager {
             return;
         }
         HubPoint hub = data().getHub();
-        if (hub == null || server.getLevel(hub.dimension()) == null || player.level().dimension().equals(hub.dimension())) {
+        if (hub == null || server.getLevel(hub.dimension()) == null) {
+            return;
+        }
+        if (player.level().dimension().equals(hub.dimension())) {
+            giveMap(player);
             return;
         }
         sendToHub(player);
+    }
+
+    /** Players in the hub always have a Cordon map; it can be lost in a raid like any other item. */
+    private static void giveMap(ServerPlayer player) {
+        if (!RaidConfig.GIVE_MAP_IN_HUB.get() || player.isCreative() || player.isSpectator()) {
+            return;
+        }
+        ItemStack map = new ItemStack(ModRegistry.CORDON_MAP.get());
+        if (!player.getInventory().contains(map)) {
+            player.getInventory().add(map);
+        }
     }
 
     public void sendToHub(ServerPlayer player) {
@@ -680,6 +696,7 @@ public final class RaidManager {
         ServerLevel level = hub == null ? null : server.getLevel(hub.dimension());
         if (hub != null && level != null) {
             Teleports.teleport(player, level, hub.x(), hub.y(), hub.z(), hub.yaw(), hub.pitch());
+            giveMap(player);
             return;
         }
         ServerLevel overworld = server.overworld();
