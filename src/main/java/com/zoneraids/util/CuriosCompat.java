@@ -2,16 +2,18 @@ package com.zoneraids.util;
 
 import com.mojang.logging.LogUtils;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.items.IItemHandlerModifiable;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
 import java.lang.reflect.Method;
 
 /**
- * Empties Curios slots (backpacks, rigs, artifacts) without a compile-time dependency on Curios,
+ * Reads and empties Curios slots (backpacks, rigs, artifact containers) without a compile-time dependency on Curios,
  * so wiping a player's gear also covers what they wear there.
  */
 public final class CuriosCompat {
@@ -22,8 +24,29 @@ public final class CuriosCompat {
     }
 
     public static void clear(LivingEntity entity) {
+        IItemHandlerModifiable items = equipped(entity);
+        if (items != null) {
+            empty(items);
+        }
+    }
+
+    /** True if the entity wears the item in a Curios slot. */
+    public static boolean has(LivingEntity entity, Item item) {
+        IItemHandlerModifiable items = equipped(entity);
+        if (items != null) {
+            for (int i = 0; i < items.getSlots(); i++) {
+                if (items.getStackInSlot(i).is(item)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    @Nullable
+    private static IItemHandlerModifiable equipped(LivingEntity entity) {
         if (!ModList.get().isLoaded("curios")) {
-            return;
+            return null;
         }
         try {
             Class<?> api = Class.forName("top.theillusivec4.curios.api.CuriosApi");
@@ -32,14 +55,13 @@ public final class CuriosCompat {
             Method equipped = handlerType.getMethod("getEquippedCurios");
             LazyOptional<?> handler = (LazyOptional<?>) inventory.invoke(null, entity);
             Object handlerObj = handler.orElse(null);
-            if (handlerObj != null) {
-                empty((IItemHandlerModifiable) equipped.invoke(handlerObj));
-            }
+            return handlerObj == null ? null : (IItemHandlerModifiable) equipped.invoke(handlerObj);
         } catch (ReflectiveOperationException | ClassCastException | LinkageError e) {
             if (!warned) {
                 warned = true;
-                LOGGER.warn("Zone Raids: could not clear Curios slots, worn curios survive a wipe", e);
+                LOGGER.warn("Zone Raids: could not read Curios slots, worn curios survive a wipe", e);
             }
+            return null;
         }
     }
 
