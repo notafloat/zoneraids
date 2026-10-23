@@ -9,7 +9,7 @@ import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 public final class RaidNetwork {
-    private static final String PROTOCOL = "4";
+    private static final String PROTOCOL = "5";
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             new ResourceLocation(ZoneRaids.MODID, "main"), () -> PROTOCOL, PROTOCOL::equals, PROTOCOL::equals);
 
@@ -30,6 +30,12 @@ public final class RaidNetwork {
         CHANNEL.messageBuilder(ShopDataPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
                 .encoder(ShopDataPacket::encode).decoder(ShopDataPacket::decode)
                 .consumerMainThread(ShopDataPacket::handle).add();
+        CHANNEL.messageBuilder(LeanPacket.class, id++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(LeanPacket::encode).decoder(LeanPacket::decode)
+                .consumerMainThread(LeanPacket::handle).add();
+        CHANNEL.messageBuilder(LeanSyncPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(LeanSyncPacket::encode).decoder(LeanSyncPacket::decode)
+                .consumerMainThread(LeanSyncPacket::handle).add();
     }
 
     public static void sendTo(ServerPlayer player, Object message) {
