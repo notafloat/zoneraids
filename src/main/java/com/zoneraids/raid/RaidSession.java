@@ -49,6 +49,8 @@ public final class RaidSession {
     /** Enemy points as they were when the raid started; a set bit means that point already had its chance to spawn. */
     final List<EnemyPoint> enemyPoints;
     final BitSet enemyPointsDone = new BitSet();
+    /** Points whose chance roll already happened (a passed roll may still be waiting for room to spawn). */
+    final BitSet enemyPointsRolled = new BitSet();
     /** Live enemies of this raid (UUIDs only), and the subset that are armed NPCs. */
     final Set<UUID> enemies = new HashSet<>();
     final Set<UUID> npcs = new HashSet<>();

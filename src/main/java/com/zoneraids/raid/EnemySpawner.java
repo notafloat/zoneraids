@@ -29,6 +29,7 @@ import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -135,35 +136,48 @@ public final class EnemySpawner {
             if (!level.isLoaded(point.pos()) || nearestDistanceSqr(center, raiders) > (double) point.trigger() * point.trigger()) {
                 continue;
             }
-            session.enemyPointsDone.set(i);
-            if (random.nextDouble() < point.chance()) {
-                spawnGroup(level, session, point, raiders, random);
+            // The chance is rolled once; a group that passed it waits until it has room away from the raiders.
+            if (!session.enemyPointsRolled.get(i)) {
+                session.enemyPointsRolled.set(i);
+                if (random.nextDouble() >= point.chance()) {
+                    session.enemyPointsDone.set(i);
+                    continue;
+                }
+            }
+            if (spawnGroup(level, session, point, raiders, random)) {
+                session.enemyPointsDone.set(i);
             }
         }
         aggro(level, session, raiders);
     }
 
-    private static void spawnGroup(ServerLevel level, RaidSession session, EnemyPoint point, List<ServerPlayer> raiders, RandomSource random) {
+    /** @return false if the group should try again later: the alive caps are full or no spot is far enough from the raiders */
+    private static boolean spawnGroup(ServerLevel level, RaidSession session, EnemyPoint point, List<ServerPlayer> raiders, RandomSource random) {
         EnemyType type = usableType(point.kind());
         if (type == null) {
-            return;
+            return true;
         }
         int count = point.min() + (point.max() > point.min() ? random.nextInt(point.max() - point.min() + 1) : 0);
         count = Math.min(count, RaidConfig.MAX_ENEMIES_ALIVE.get() - session.enemies.size());
         if (type.isNpc()) {
             count = Math.min(count, RaidConfig.MAX_NPCS_ALIVE.get() - session.npcs.size());
         }
-        int minDistance = RaidConfig.ENEMY_MIN_SPAWN_DISTANCE.get();
+        // Small trigger radii (the lab) would otherwise never have a spot that far from the raider.
+        int minDistance = Math.min(RaidConfig.ENEMY_MIN_SPAWN_DISTANCE.get(), Math.max(6, point.trigger() / 2));
+        int spawned = 0;
         for (int n = 0; n < count; n++) {
             Entity entity = spawn(level, type, point.pos(), raiders, minDistance, random, session.id);
             if (entity == null) {
                 break;
             }
+            spawned++;
             session.enemies.add(entity.getUUID());
             if (type.isNpc()) {
                 session.npcs.add(entity.getUUID());
             }
         }
+        // A full cap or no safe spot yet: try again later instead of losing the group.
+        return point.max() <= 0 || spawned > 0;
     }
 
     /** Enemies that stand around without a target turn on a raider they can see; none of them picks up loot. */
@@ -196,7 +210,8 @@ public final class EnemySpawner {
 
     /** Removes the raid's enemies that are loaded; unloaded ones are removed when they load (see {@link #shouldRejectOnLoad}). */
     static void cleanup(ServerLevel level, RaidSession session) {
-        for (UUID id : session.enemies) {
+        // discard() fires onRemoved, which edits session.enemies, so walk a copy.
+        for (UUID id : List.copyOf(session.enemies)) {
             Entity entity = level.getEntity(id);
             if (entity != null) {
                 entity.discard();
@@ -207,11 +222,13 @@ public final class EnemySpawner {
         sweep(level);
     }
 
-    /** Removes loaded enemies that belong to no running raid. */
+    /** Removes loaded enemies that belong to no running raid, including admin test spawns. */
     static void sweep(ServerLevel level) {
         List<Entity> stale = new ArrayList<>();
         for (Entity entity : level.getAllEntities()) {
-            if (shouldRejectOnLoad(entity)) {
+            CompoundTag data = entity.getPersistentData();
+            boolean testSpawn = data.contains(TAG_KIND) && !data.contains(TAG_RAID);
+            if (testSpawn || shouldRejectOnLoad(entity)) {
                 stale.add(entity);
             }
         }
@@ -243,6 +260,22 @@ public final class EnemySpawner {
             session.enemies.remove(entity.getUUID());
             session.npcs.remove(entity.getUUID());
         }
+    }
+
+    /**
+     * Softens what raid enemies deal to players. Mutants and NPC guns are tuned for vanilla health,
+     * but with First Aid a 4 HP head goes down to one bite or one headshot; the per-hit cap keeps
+     * every single hit survivable at full health.
+     */
+    public static void scaleDamageToPlayer(LivingHurtEvent event) {
+        if (!(event.getEntity() instanceof ServerPlayer) || !(event.getSource().getEntity() instanceof LivingEntity attacker)
+                || !attacker.getPersistentData().contains(TAG_KIND)) {
+            return;
+        }
+        ResourceLocation id = ForgeRegistries.ENTITY_TYPES.getKey(attacker.getType());
+        boolean mutant = id != null && id.getNamespace().equals(ZoneRaids.MODID);
+        double multiplier = mutant ? RaidConfig.MUTANT_DAMAGE_MULTIPLIER.get() : RaidConfig.NPC_DAMAGE_MULTIPLIER.get();
+        event.setAmount((float) Math.min(event.getAmount() * multiplier, RaidConfig.ENEMY_MAX_DAMAGE_PER_HIT.get()));
     }
 
     /** Adds the kind's loot table ({@code zoneraids:enemies/<kind>}) to an enemy's drops. */
@@ -331,7 +364,6 @@ public final class EnemySpawner {
     @Nullable
     private static Vec3 findSpot(ServerLevel level, EntityType<?> type, BlockPos center, Collection<ServerPlayer> avoid, int minDistance,
                                  RandomSource random) {
-        Vec3 fallback = null;
         double minSqr = (double) minDistance * minDistance;
         for (int attempt = 0; attempt < SPOT_ATTEMPTS; attempt++) {
             int dx = attempt == 0 ? 0 : random.nextInt(SPOT_SPREAD * 2 + 1) - SPOT_SPREAD;
@@ -345,13 +377,11 @@ public final class EnemySpawner {
                 if (nearestDistanceSqr(spot, avoid) >= minSqr) {
                     return spot;
                 }
-                if (fallback == null) {
-                    fallback = spot;
-                }
                 break;
             }
         }
-        return fallback;
+        // Never drop an enemy next to a raider: a mob appearing at arm's length gets a free hit.
+        return null;
     }
 
     private static boolean isStandable(ServerLevel level, EntityType<?> type, BlockPos feet) {

@@ -33,6 +33,9 @@ public final class RaidConfig {
     public static final ForgeConfigSpec.IntValue MAX_NPCS_ALIVE;
     public static final ForgeConfigSpec.IntValue ENEMY_MIN_SPAWN_DISTANCE;
     public static final ForgeConfigSpec.DoubleValue ENEMY_GEAR_DROP_CHANCE;
+    public static final ForgeConfigSpec.DoubleValue MUTANT_DAMAGE_MULTIPLIER;
+    public static final ForgeConfigSpec.DoubleValue NPC_DAMAGE_MULTIPLIER;
+    public static final ForgeConfigSpec.DoubleValue ENEMY_MAX_DAMAGE_PER_HIT;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> ENEMY_TYPES;
     public static final ForgeConfigSpec.BooleanValue ANOMALIES;
     public static final ForgeConfigSpec.DoubleValue ANOMALY_DAMAGE;
@@ -117,6 +120,14 @@ public final class RaidConfig {
                 .defineInRange("minSpawnDistance", 12, 0, 64);
         ENEMY_GEAR_DROP_CHANCE = b.comment("Chance for each piece of an armed enemy's gear (weapon, armor) to drop on death.")
                 .defineInRange("gearDropChance", 0.15, 0.0, 1.0);
+        MUTANT_DAMAGE_MULTIPLIER = b.comment("Multiplier for damage mutants deal to players.")
+                .defineInRange("mutantDamageMultiplier", 1.0, 0.0, 10.0);
+        NPC_DAMAGE_MULTIPLIER = b.comment("Multiplier for damage armed NPCs (their guns) deal to players. TaCZ guns are tuned for",
+                        "players with 20 HP; with First Aid's 4 HP head an unscaled bullet often kills outright.")
+                .defineInRange("npcDamageMultiplier", 0.35, 0.0, 10.0);
+        ENEMY_MAX_DAMAGE_PER_HIT = b.comment("Most damage one hit or bullet from a raid enemy can deal to a player, after the multipliers",
+                        "and difficulty, before armor. 3.5 keeps every body part (First Aid: head 4 HP) alive after a single hit.")
+                .defineInRange("maxDamagePerHit", 3.5, 0.5, 100.0);
         ENEMY_TYPES = b.comment("Enemy kinds used by enemy points: kind=entity_id or kind=entity_id{nbt}.",
                         "Kinds whose entity is not installed are skipped. On death an enemy also drops loot from",
                         "zoneraids:enemies/<kind>; armed kinds get gear from zoneraids:enemies/<kind>_gear when that table has items.")
