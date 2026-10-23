@@ -30,6 +30,8 @@ public final class Vehicles {
                     .sized(1.1F, 1.0F)
                     .clientTrackingRange(8)
                     .updateInterval(3)
+                    // The driver's client owns the motion; server velocity packets would only reset its fall speed.
+                    .setShouldReceiveVelocityUpdates(false)
                     .build(ZoneRaids.MODID + ":pit_bike"));
 
     /** Places a pit bike that belongs to no raid (admin and creative use; it is never removed automatically). */

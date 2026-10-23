@@ -79,6 +79,12 @@ public class PitBike extends Entity {
     public float lean;
     public float leanO;
     public float clientSpeed;
+    /**
+     * Client-only height offset that hides step-ups: the bike climbs a block in one tick, which jolted the
+     * camera, so the bike and its riders are drawn at the old height and rise to the new one over a few ticks.
+     */
+    public float stepOffset;
+    public float stepOffsetO;
     private boolean soundStarted;
 
     public PitBike(EntityType<? extends PitBike> type, Level level) {
@@ -170,6 +176,9 @@ public class PitBike extends Entity {
         double x = getX() + Mth.sin(yaw) * back;
         double z = getZ() - Mth.cos(yaw) * back;
         double y = getY() + getPassengersRidingOffset() + passenger.getMyRidingOffset();
+        if (level().isClientSide) {
+            y += stepOffset;
+        }
         move.accept(passenger, x, y, z);
         // Turning riders here (after their own tick saved last rotation) lets the camera interpolate the
         // turn between frames, like a boat; turning them during the bike's tick made first person jerk.
@@ -320,6 +329,18 @@ public class PitBike extends Entity {
         float turned = Mth.wrapDegrees(getYRot() - yRotO);
         float target = Mth.clamp(-turned * 4.0F, -25.0F, 25.0F);
         lean += (target - lean) * 0.3F;
+
+        stepOffsetO = stepOffset;
+        stepOffset *= 0.5F;
+        double climbed = getY() - yo;
+        if (climbed > 0.2 && climbed < 1.5) {
+            // Over this tick the position rises by `climbed` while the offset falls by it, so the drawn height
+            // stays put; on the next ticks the offset halves back towards zero.
+            stepOffset -= (float) climbed;
+        }
+        if (Math.abs(stepOffset) < 0.01F) {
+            stepOffset = 0.0F;
+        }
     }
 
     private void tickLerp() {
@@ -346,7 +367,9 @@ public class PitBike extends Entity {
         lerpZ = z;
         lerpYRot = yRot;
         lerpXRot = xRot;
-        lerpSteps = 10;
+        // The tracker sends a position every few ticks and says how many ticks to spread it over; using that
+        // gives viewers an even speed instead of a stop-and-go one.
+        lerpSteps = Math.max(1, steps);
     }
 
     // ------------------------------------------------------------------ damage
