@@ -23,10 +23,12 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.EntityLeaveLevelEvent;
 import net.minecraftforge.event.entity.EntityTravelToDimensionEvent;
+import net.minecraftforge.event.entity.item.ItemTossEvent;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.LivingDropsEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
+import net.minecraftforge.event.entity.player.EntityItemPickupEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.level.BlockEvent;
@@ -144,6 +146,33 @@ public final class RaidEvents {
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onHurt(LivingHurtEvent event) {
         EnemySpawner.scaleDamageToPlayer(event);
+    }
+
+    /** Lowest priority: only hurt that actually lands counts as being in a fight (see combatLogSeconds). */
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public static void onPlayerHurt(LivingHurtEvent event) {
+        RaidManager manager = RaidManager.get();
+        if (manager != null && event.getAmount() > 0 && event.getEntity() instanceof ServerPlayer player
+                && event.getSource().getEntity() != null) {
+            manager.markCombat(player, event.getSource().getEntity());
+        }
+    }
+
+    @SubscribeEvent
+    public static void onToss(ItemTossEvent event) {
+        RaidManager manager = RaidManager.get();
+        if (manager != null && !event.getPlayer().level().isClientSide()) {
+            manager.onToss(event.getPlayer(), event.getEntity());
+        }
+    }
+
+    /** Gear dropped by a session member cannot reach anyone outside that session, who would keep it past the wipe. */
+    @SubscribeEvent
+    public static void onPickup(EntityItemPickupEvent event) {
+        RaidManager manager = RaidManager.get();
+        if (manager != null && !event.getEntity().level().isClientSide() && !manager.mayPickUp(event.getEntity(), event.getItem())) {
+            event.setCanceled(true);
+        }
     }
 
     @SubscribeEvent

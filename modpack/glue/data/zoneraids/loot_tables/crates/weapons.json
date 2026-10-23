@@ -129,6 +129,10 @@
               "tag": "{GunId:\"tacz:deagle\",GunFireMode:\"SEMI\",GunCurrentAmmoCount:0,HasBulletInBarrel:0b}"
             }
           ]
+        },
+        {
+          "type": "minecraft:empty",
+          "weight": 54
         }
       ]
     },

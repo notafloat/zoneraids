@@ -32,6 +32,8 @@ public final class RaidSession {
         int extractTicks;
         int hudTicks;
         int outsideTicks;
+        /** How long the player has been offline in this round; see {@code offlineMiaSeconds}. */
+        int offlineTicks;
 
         Participant(UUID id, String name, List<ExtractPoint> extracts) {
             this.id = id;

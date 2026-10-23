@@ -238,6 +238,12 @@ public final class Interactions {
 
     /** Hands the main hand stack over, as much as fits in the other player's inventory. */
     private static void give(ServerPlayer player, Player target) {
+        RaidManager manager = RaidManager.get();
+        // Gear may not leave a running session for someone outside it, who would keep it past the wipe.
+        if (manager != null && !manager.mayHandOver(player.getUUID(), target.getUUID())) {
+            player.displayClientMessage(Component.translatable("zoneraids.interact.give_session").withStyle(ChatFormatting.RED), true);
+            return;
+        }
         ItemStack hand = player.getMainHandItem();
         Component name = hand.getHoverName();
         ItemStack moving = hand.copy();

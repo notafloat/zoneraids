@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * The hub trader: artifacts are sold for money, guns, armor, ammo and medicine are bought with it.
+ * The hub trader: artifacts, valuables and found gear are sold for money, guns, armor, ammo and medicine are bought with it.
  * Trading works only outside raids. Money lives in the player's data ({@link PlayerRaidData#getMoney}),
  * so nothing is kept in memory and nothing about it can be dropped or looted.
  */
@@ -105,7 +105,7 @@ public final class ShopService {
         ItemStack name = ItemStack.EMPTY;
         for (int i = 0; i < inventory.getContainerSize() && (all || sold == 0); i++) {
             ItemStack stack = inventory.getItem(i);
-            if (stack.is(price.item())) {
+            if (price.matches(stack)) {
                 if (name.isEmpty()) {
                     name = stack.copyWithCount(1);
                 }
@@ -165,17 +165,20 @@ public final class ShopService {
         List<ShopDataPacket.SellEntry> sell = new ArrayList<>();
         for (ShopCatalog.SellPrice price : ShopCatalog.sellPrices()) {
             int owned = 0;
-            ItemStack icon = new ItemStack(price.item());
+            ItemStack icon = price.icon();
             for (int i = 0; i < inventory.getContainerSize(); i++) {
                 ItemStack stack = inventory.getItem(i);
-                if (stack.is(price.item())) {
+                if (price.matches(stack)) {
                     if (owned == 0) {
                         icon = stack.copyWithCount(1);
                     }
                     owned += stack.getCount();
                 }
             }
-            sell.add(new ShopDataPacket.SellEntry(price.id(), price.price(), owned, icon));
+            // Buy-backs would bury the artifacts under dozens of rows: only what the player actually carries.
+            if (price.always() || owned > 0) {
+                sell.add(new ShopDataPacket.SellEntry(price.id(), price.price(), owned, icon));
+            }
         }
         return new ShopDataPacket(open, PlayerRaidData.getMoney(player), RaidConfig.SHOP.get() && canTrade(player), offers, sell);
     }

@@ -104,8 +104,28 @@ final class Spectators {
         if (own != session) {
             return true;
         }
+        if (session.type == RoundType.DEATHMATCH) {
+            return false;
+        }
         Integer group = session.groupOf.get(viewer.getUUID());
-        return session.type != RoundType.DEATHMATCH && group != null && group.equals(session.groupOf.get(target.getUUID()));
+        if (group != null && group.equals(session.groupOf.get(target.getUUID()))) {
+            return true;
+        }
+        // Nobody of the viewer's group is left on the map (or they play alone): anyone in the round, rather than
+        // twenty minutes of staring at the timer.
+        return !groupOnMap(session, group);
+    }
+
+    private boolean groupOnMap(RaidSession session, @Nullable Integer group) {
+        if (group == null) {
+            return false;
+        }
+        for (UUID id : session.participants.keySet()) {
+            if (group.equals(session.groupOf.get(id)) && server.getPlayerList().getPlayer(id) != null) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** Terminal "watch" button. Starts watching, or switches to another raider while already watching. */
