@@ -38,6 +38,17 @@ public final class RaidConfig {
     public static final ForgeConfigSpec.DoubleValue ANOMALY_DAMAGE;
     public static final ForgeConfigSpec.DoubleValue ARTIFACT_CHANCE;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> ARTIFACT_ITEMS;
+    public static final ForgeConfigSpec.BooleanValue ROUNDS;
+    public static final ForgeConfigSpec.IntValue INTERMISSION_SECONDS;
+    public static final ForgeConfigSpec.IntValue SECOND_ROUND_MINUTES;
+    public static final ForgeConfigSpec.IntValue DEATHMATCH_MINUTES;
+    public static final ForgeConfigSpec.ConfigValue<List<? extends String>> SECOND_ROUND_MODES;
+    public static final ForgeConfigSpec.IntValue DROP_CAPTURE_SECONDS;
+    public static final ForgeConfigSpec.IntValue DROP_RADIUS;
+    public static final ForgeConfigSpec.ConfigValue<String> DROP_LOOT_TABLE;
+    public static final ForgeConfigSpec.IntValue DROP_LOOT_ROLLS;
+    public static final ForgeConfigSpec.DoubleValue ZONE_DAMAGE;
+    public static final ForgeConfigSpec.ConfigValue<List<? extends String>> STARTER_KIT;
 
     static {
         ForgeConfigSpec.Builder b = new ForgeConfigSpec.Builder();
@@ -130,6 +141,29 @@ public final class RaidConfig {
                         "anomalyzone:bubble", "anomalyzone:flash", "anomalyzone:hedgehog", "anomalyzone:spiral", "anomalyzone:prism",
                         "anomalyzone:snake_eye", "anomalyzone:sun", "anomalyzone:thunder", "anomalyzone:polyhedron", "anomalyzone:hoop",
                         "anomalyzone:magma_pearl", "anomalyzone:heat_stone", "anomalyzone:crust", "anomalyzone:atom"), o -> o instanceof String);
+        b.pop();
+
+        b.push("session");
+        ROUNDS = b.comment("A session is three rounds on the same map with the same players: 1) extraction raid,",
+                        "2) a random mode from secondRoundModes, 3) deathmatch in a shrinking zone. When the session ends,",
+                        "inventory, ender chest and stash are wiped; perks and stats stay. If false, every raid is a single round and nothing is wiped.")
+                .define("rounds", true);
+        INTERMISSION_SECONDS = b.comment("Time in the hub between rounds (stash is available).")
+                .defineInRange("intermissionSeconds", 60, 10, 600);
+        SECOND_ROUND_MINUTES = b.defineInRange("secondRoundMinutes", 12, 2, 120);
+        DEATHMATCH_MINUTES = b.defineInRange("deathmatchMinutes", 8, 2, 60);
+        SECOND_ROUND_MODES = b.comment("Modes the second round is picked from at random: supply_drop, emission, documents.")
+                .defineListAllowEmpty(List.of("secondRoundModes"), List.of("supply_drop", "emission", "documents"),
+                        o -> o instanceof String);
+        DROP_CAPTURE_SECONDS = b.comment("Supply drop: seconds a group must hold the drop zone with no rivals inside.")
+                .defineInRange("dropCaptureSeconds", 30, 5, 600);
+        DROP_RADIUS = b.defineInRange("dropRadius", 5, 2, 32);
+        DROP_LOOT_TABLE = b.define("dropLootTable", "zoneraids:crates/military");
+        DROP_LOOT_ROLLS = b.defineInRange("dropLootRolls", 3, 1, 20);
+        ZONE_DAMAGE = b.comment("Damage per second outside the safe zone (emission, deathmatch); grows the longer a player stays outside.")
+                .defineInRange("zoneDamage", 1.0, 0.0, 100.0);
+        STARTER_KIT = b.comment("Items every player gets when a session starts, as \"namespace:item count\". Unknown ids are skipped.")
+                .defineListAllowEmpty(List.of("starterKit"), List.of("minecraft:bread 4"), o -> o instanceof String);
         b.pop();
 
         SPEC = b.build();

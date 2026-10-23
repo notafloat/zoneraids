@@ -10,7 +10,8 @@ import java.util.function.Supplier;
 
 /** Server -> client: everything the raid terminal screen shows. */
 public record TerminalDataPacket(boolean open, List<MapEntry> maps, String queuedMap, boolean inRaid, int[] stats,
-                                 List<String> party, boolean partyLeader, String pendingInvite, boolean canStash) {
+                                 List<String> party, boolean partyLeader, String pendingInvite, boolean canStash,
+                                 int perkPoints, int[] perks) {
     public static final byte STATE_IDLE = 0;
     public static final byte STATE_COUNTDOWN = 1;
     public static final byte STATE_RUNNING = 2;
@@ -49,11 +50,14 @@ public record TerminalDataPacket(boolean open, List<MapEntry> maps, String queue
         buf.writeBoolean(partyLeader);
         buf.writeUtf(pendingInvite);
         buf.writeBoolean(canStash);
+        buf.writeVarInt(perkPoints);
+        buf.writeVarIntArray(perks);
     }
 
     public static TerminalDataPacket decode(FriendlyByteBuf buf) {
         return new TerminalDataPacket(buf.readBoolean(), buf.readList(MapEntry::decode), buf.readUtf(), buf.readBoolean(),
-                buf.readVarIntArray(16), buf.readList(FriendlyByteBuf::readUtf), buf.readBoolean(), buf.readUtf(), buf.readBoolean());
+                buf.readVarIntArray(16), buf.readList(FriendlyByteBuf::readUtf), buf.readBoolean(), buf.readUtf(), buf.readBoolean(),
+                buf.readVarInt(), buf.readVarIntArray(32));
     }
 
     public void handle(Supplier<NetworkEvent.Context> ctx) {

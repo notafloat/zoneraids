@@ -104,6 +104,8 @@ public final class RaidTerminalScreen extends Screen {
             addRenderableWidget(Button.builder(Component.translatable("zoneraids.terminal.leave_party"),
                     b -> send(Action.LEAVE_PARTY, "")).bounds(left + 92, by, 130, 18).build());
         }
+        addRenderableWidget(Button.builder(Component.translatable("zoneraids.terminal.perks", data.perkPoints()),
+                b -> minecraft.setScreen(new PerksScreen(this))).bounds(left + 226, by, 52, 18).build());
         addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose())
                 .bounds(left + PANEL_W - 78, by, 70, 18).build());
     }

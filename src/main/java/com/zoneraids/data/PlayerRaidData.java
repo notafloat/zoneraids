@@ -1,6 +1,7 @@
 package com.zoneraids.data;
 
 import com.zoneraids.ZoneRaids;
+import com.zoneraids.perk.Perk;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.entity.player.Player;
@@ -22,6 +23,9 @@ public final class PlayerRaidData {
     private static final String SESSION = "Session";
     private static final String RETURN_TO_HUB = "ReturnToHub";
     private static final String STATS = "Stats";
+    private static final String MATCH = "Match";
+    private static final String PERKS = "Perks";
+    private static final String PERK_POINTS = "PerkPoints";
     public static final String STASH = "Stash";
 
     private PlayerRaidData() {
@@ -75,5 +79,52 @@ public final class PlayerRaidData {
         CompoundTag stats = root.getCompound(STATS);
         stats.putInt(stat.key, stats.getInt(stat.key) + 1);
         root.put(STATS, stats);
+    }
+
+    /** The multi-round session the player belongs to, kept until the session ends and its progress is reset. */
+    @Nullable
+    public static UUID getMatch(Player player) {
+        CompoundTag root = root(player);
+        return root.hasUUID(MATCH) ? root.getUUID(MATCH) : null;
+    }
+
+    public static void setMatch(Player player, @Nullable UUID match) {
+        CompoundTag root = root(player);
+        if (match == null) {
+            root.remove(MATCH);
+        } else {
+            root.putUUID(MATCH, match);
+        }
+    }
+
+    public static void clearStash(Player player) {
+        root(player).remove(STASH);
+    }
+
+    public static int getPerk(Player player, Perk perk) {
+        return Math.min(Perk.MAX_LEVEL, root(player).getCompound(PERKS).getInt(perk.id));
+    }
+
+    public static void setPerk(Player player, Perk perk, int level) {
+        CompoundTag root = root(player);
+        CompoundTag perks = root.getCompound(PERKS);
+        if (level <= 0) {
+            perks.remove(perk.id);
+        } else {
+            perks.putInt(perk.id, Math.min(level, Perk.MAX_LEVEL));
+        }
+        root.put(PERKS, perks);
+    }
+
+    public static int getPerkPoints(Player player) {
+        return root(player).getInt(PERK_POINTS);
+    }
+
+    public static void setPerkPoints(Player player, int points) {
+        root(player).putInt(PERK_POINTS, Math.max(0, points));
+    }
+
+    public static void addPerkPoints(Player player, int points) {
+        setPerkPoints(player, getPerkPoints(player) + points);
     }
 }

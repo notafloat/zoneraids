@@ -16,6 +16,8 @@ import com.zoneraids.data.PlayerRaidData;
 import com.zoneraids.data.RaidMap;
 import com.zoneraids.data.RaidWorldData;
 import com.zoneraids.data.SpawnPoint;
+import com.zoneraids.perk.Perk;
+import com.zoneraids.perk.PerkService;
 import com.zoneraids.raid.EnemySpawner;
 import com.zoneraids.raid.RaidManager;
 import com.zoneraids.raid.RaidSession;
@@ -37,6 +39,7 @@ import net.minecraft.world.entity.Entity;
 
 import org.slf4j.Logger;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -46,6 +49,9 @@ public final class RaidCommands {
             SharedSuggestionProvider.suggest(RaidWorldData.get(ctx.getSource().getServer()).maps().stream().map(m -> m.id), builder);
     private static final SuggestionProvider<CommandSourceStack> ENEMY_KINDS = (ctx, builder) ->
             SharedSuggestionProvider.suggest(EnemySpawner.types().keySet(), builder);
+
+    private static final SuggestionProvider<CommandSourceStack> PERKS = (ctx, builder) ->
+            SharedSuggestionProvider.suggest(Arrays.stream(Perk.values()).map(p -> p.id), builder);
 
     private RaidCommands() {
     }
@@ -62,6 +68,19 @@ public final class RaidCommands {
                 .then(Commands.literal("extracts")
                         .executes(ctx -> withManager(ctx, m -> m.showExtracts(ctx.getSource().getPlayerOrException()))))
                 .then(Commands.literal("stats").executes(RaidCommands::stats))
+                .then(Commands.literal("perks").executes(ctx -> {
+                    PerkService.showList(ctx.getSource().getPlayerOrException());
+                    return 1;
+                }))
+                .then(Commands.literal("perk").then(Commands.argument("perk", StringArgumentType.word()).suggests(PERKS)
+                        .executes(ctx -> {
+                            Perk perk = Perk.byId(StringArgumentType.getString(ctx, "perk"));
+                            if (perk == null) {
+                                ctx.getSource().sendFailure(Component.translatable("zoneraids.admin.not_found", StringArgumentType.getString(ctx, "perk")));
+                                return 0;
+                            }
+                            return PerkService.buy(ctx.getSource().getPlayerOrException(), perk) ? 1 : 0;
+                        })))
                 .then(Commands.literal("party")
                         .then(Commands.literal("invite").then(Commands.argument("player", EntityArgument.player())
                                 .executes(ctx -> withManager(ctx, m -> m.invite(ctx.getSource().getPlayerOrException(), EntityArgument.getPlayer(ctx, "player"))))))
@@ -102,6 +121,24 @@ public final class RaidCommands {
                         }))
                         .then(Commands.literal("hub").executes(ctx -> build(ctx, WorldSetup.buildHub(), WorldSetup.HUB)))
                         .then(Commands.literal("cordon").executes(ctx -> build(ctx, WorldSetup.buildCordon(ctx.getSource().getServer()), WorldSetup.CORDON))))
+                .then(Commands.literal("perks").then(Commands.argument("player", EntityArgument.player())
+                        .then(Commands.literal("points").then(Commands.argument("points", IntegerArgumentType.integer(0, 10000))
+                                .executes(ctx -> {
+                                    ServerPlayer target = EntityArgument.getPlayer(ctx, "player");
+                                    int points = IntegerArgumentType.getInteger(ctx, "points");
+                                    PlayerRaidData.setPerkPoints(target, points);
+                                    ctx.getSource().sendSuccess(() -> Component.translatable("zoneraids.admin.perk_points", target.getDisplayName(), points), true);
+                                    return 1;
+                                })))
+                        .then(Commands.literal("reset").executes(ctx -> {
+                            ServerPlayer target = EntityArgument.getPlayer(ctx, "player");
+                            for (Perk perk : Perk.values()) {
+                                PlayerRaidData.setPerk(target, perk, 0);
+                            }
+                            PerkService.apply(target);
+                            ctx.getSource().sendSuccess(() -> Component.translatable("zoneraids.admin.perks_reset", target.getDisplayName()), true);
+                            return 1;
+                        }))))
                 .then(Commands.literal("enemy")
                         .then(Commands.literal("types").executes(RaidCommands::enemyTypes))
                         .then(Commands.literal("spawn").then(Commands.argument("kind", StringArgumentType.word()).suggests(ENEMY_KINDS)
