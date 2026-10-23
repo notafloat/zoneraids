@@ -1,6 +1,7 @@
 package com.zoneraids;
 
 import com.zoneraids.network.RaidNetwork;
+import com.zoneraids.registry.ModEntities;
 import com.zoneraids.registry.ModRegistry;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.ModLoadingContext;
@@ -16,6 +17,7 @@ public final class ZoneRaids {
     public ZoneRaids() {
         IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
         ModRegistry.register(modBus);
+        ModEntities.register(modBus);
         modBus.addListener(this::commonSetup);
         ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, RaidConfig.SPEC);
     }

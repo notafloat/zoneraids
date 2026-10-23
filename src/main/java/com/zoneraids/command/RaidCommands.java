@@ -7,13 +7,16 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
+import com.mojang.logging.LogUtils;
 import com.zoneraids.block.LootCrateBlockEntity;
+import com.zoneraids.data.EnemyPoint;
 import com.zoneraids.data.ExtractPoint;
 import com.zoneraids.data.HubPoint;
 import com.zoneraids.data.PlayerRaidData;
 import com.zoneraids.data.RaidMap;
 import com.zoneraids.data.RaidWorldData;
 import com.zoneraids.data.SpawnPoint;
+import com.zoneraids.raid.EnemySpawner;
 import com.zoneraids.raid.RaidManager;
 import com.zoneraids.raid.RaidSession;
 import com.zoneraids.world.WorldBuilder;
@@ -28,13 +31,21 @@ import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
 
+import org.slf4j.Logger;
+
+import java.util.List;
 import java.util.function.Consumer;
 
 public final class RaidCommands {
+    private static final Logger LOGGER = LogUtils.getLogger();
     private static final SuggestionProvider<CommandSourceStack> MAPS = (ctx, builder) ->
             SharedSuggestionProvider.suggest(RaidWorldData.get(ctx.getSource().getServer()).maps().stream().map(m -> m.id), builder);
+    private static final SuggestionProvider<CommandSourceStack> ENEMY_KINDS = (ctx, builder) ->
+            SharedSuggestionProvider.suggest(EnemySpawner.types().keySet(), builder);
 
     private RaidCommands() {
     }
@@ -91,6 +102,12 @@ public final class RaidCommands {
                         }))
                         .then(Commands.literal("hub").executes(ctx -> build(ctx, WorldSetup.buildHub(), WorldSetup.HUB)))
                         .then(Commands.literal("cordon").executes(ctx -> build(ctx, WorldSetup.buildCordon(ctx.getSource().getServer()), WorldSetup.CORDON))))
+                .then(Commands.literal("enemy")
+                        .then(Commands.literal("types").executes(RaidCommands::enemyTypes))
+                        .then(Commands.literal("spawn").then(Commands.argument("kind", StringArgumentType.word()).suggests(ENEMY_KINDS)
+                                .executes(ctx -> spawnEnemies(ctx, 1))
+                                .then(Commands.argument("count", IntegerArgumentType.integer(1, 16))
+                                        .executes(ctx -> spawnEnemies(ctx, IntegerArgumentType.getInteger(ctx, "count")))))))
                 .then(Commands.literal("crate").then(Commands.argument("pos", BlockPosArgument.blockPos())
                         .then(Commands.argument("lootTable", ResourceLocationArgument.id()).executes(RaidCommands::setCrate))))
                 .then(Commands.literal("map")
@@ -149,6 +166,15 @@ public final class RaidCommands {
                                         throw new IllegalArgumentException(name);
                                     }
                                 })))))
+                        .then(Commands.literal("addenemy").then(mapArg()
+                                .then(Commands.argument("kind", StringArgumentType.word()).suggests(ENEMY_KINDS)
+                                        .then(Commands.argument("min", IntegerArgumentType.integer(0, 16))
+                                                .then(Commands.argument("max", IntegerArgumentType.integer(0, 16))
+                                                        .then(Commands.argument("chance", DoubleArgumentType.doubleArg(0, 1))
+                                                                .executes(ctx -> addEnemy(ctx, 40))
+                                                                .then(Commands.argument("trigger", IntegerArgumentType.integer(4, 128))
+                                                                        .executes(ctx -> addEnemy(ctx, IntegerArgumentType.getInteger(ctx, "trigger"))))))))))
+                        .then(Commands.literal("clearenemies").then(mapArg().executes(ctx -> editMap(ctx, map -> map.enemies.clear()))))
                         .then(Commands.literal("clearextracts").then(mapArg().executes(ctx -> editMap(ctx, map -> map.extracts.clear()))))
                         .then(Commands.literal("bounds").then(mapArg()
                                 .then(Commands.argument("x1", IntegerArgumentType.integer()).then(Commands.argument("z1", IntegerArgumentType.integer())
@@ -267,7 +293,65 @@ public final class RaidCommands {
             src.sendSuccess(() -> Component.literal(String.format("  extract \"%s\" %s r=%.1f chance=%.2f",
                     point.name(), point.pos().toShortString(), point.radius(), point.chance())), false);
         }
+        for (EnemyPoint point : map.enemies) {
+            src.sendSuccess(() -> Component.literal(String.format("  enemy %s x%d-%d %s chance=%.2f trigger=%d",
+                    point.kind(), point.min(), point.max(), point.pos().toShortString(), point.chance(), point.trigger())), false);
+        }
         return 1;
+    }
+
+    private static int addEnemy(CommandContext<CommandSourceStack> ctx, int trigger) throws CommandSyntaxException {
+        ServerPlayer player = ctx.getSource().getPlayerOrException();
+        String kind = StringArgumentType.getString(ctx, "kind");
+        if (!EnemySpawner.types().containsKey(kind)) {
+            ctx.getSource().sendFailure(Component.translatable("zoneraids.admin.unknown_enemy", kind));
+            return 0;
+        }
+        int min = IntegerArgumentType.getInteger(ctx, "min");
+        int max = IntegerArgumentType.getInteger(ctx, "max");
+        double chance = DoubleArgumentType.getDouble(ctx, "chance");
+        return editMap(ctx, map -> {
+            requireSameDimension(map, player);
+            map.enemies.add(new EnemyPoint(kind, player.blockPosition(), Math.min(min, max), Math.max(min, max), chance, trigger));
+        });
+    }
+
+    private static int enemyTypes(CommandContext<CommandSourceStack> ctx) {
+        for (EnemySpawner.EnemyType type : EnemySpawner.types().values()) {
+            boolean ok = type.isInstalled();
+            Component line = Component.literal(String.format("%s = %s%s %s", type.kind(), type.entity(),
+                    type.nbt().isEmpty() ? "" : type.nbt().toString(), ok ? "OK" : "MISSING"))
+                    .withStyle(ok ? ChatFormatting.GREEN : ChatFormatting.RED);
+            ctx.getSource().sendSuccess(() -> line, false);
+        }
+        return EnemySpawner.types().size();
+    }
+
+    /** Test spawn at the command position. These enemies belong to no raid, so raid cleanup does not touch them. */
+    private static int spawnEnemies(CommandContext<CommandSourceStack> ctx, int count) {
+        String kind = StringArgumentType.getString(ctx, "kind");
+        EnemySpawner.EnemyType type = EnemySpawner.types().get(kind);
+        if (type == null || !type.isInstalled()) {
+            ctx.getSource().sendFailure(Component.translatable("zoneraids.admin.unknown_enemy", kind));
+            return 0;
+        }
+        ServerLevel level = ctx.getSource().getLevel();
+        BlockPos pos = BlockPos.containing(ctx.getSource().getPosition());
+        int spawned = 0;
+        for (int i = 0; i < count; i++) {
+            Entity entity = EnemySpawner.spawn(level, type, pos, List.of(), 0, level.getRandom(), null);
+            if (entity != null) {
+                spawned++;
+            }
+        }
+        int n = spawned;
+        LOGGER.info("Zone Raids: test spawn of {} x{} at {}", kind, n, pos.toShortString());
+        if (n == 0) {
+            ctx.getSource().sendFailure(Component.translatable("zoneraids.admin.enemy_no_room", kind));
+            return 0;
+        }
+        ctx.getSource().sendSuccess(() -> Component.translatable("zoneraids.admin.enemy_spawned", n, kind), true);
+        return n;
     }
 
     private static int build(CommandContext<CommandSourceStack> ctx, boolean queued, String name) {

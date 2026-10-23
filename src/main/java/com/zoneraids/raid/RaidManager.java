@@ -128,6 +128,16 @@ public final class RaidManager {
     }
 
     @Nullable
+    public RaidSession sessionById(UUID id) {
+        for (RaidSession session : sessions.values()) {
+            if (session.id.equals(id)) {
+                return session;
+            }
+        }
+        return null;
+    }
+
+    @Nullable
     public String queuedMap(UUID player) {
         return playerQueue.get(player);
     }
@@ -227,6 +237,15 @@ public final class RaidManager {
             }
             anomalies.tick(session, level, sessionPlayers);
             sessionPlayers.clear();
+        }
+        if (level != null && tickCounter % 20 == 0) {
+            List<ServerPlayer> raiders = new ArrayList<>();
+            forEachOnline(session, p -> {
+                if (p.isAlive() && p.level() == level) {
+                    raiders.add(p);
+                }
+            });
+            EnemySpawner.tick(level, session, raiders, level.getRandom());
         }
         return session.ticksLeft <= 0 || session.participants.isEmpty();
     }
@@ -431,6 +450,7 @@ public final class RaidManager {
         data().nextGeneration(map.dimension);
         clearDroppedItems(level);
         Anomalies.rollArtifacts(session, random);
+        EnemySpawner.sweep(level);
 
         List<ExtractPoint> open = new ArrayList<>();
         for (ExtractPoint point : map.extracts) {
@@ -505,6 +525,7 @@ public final class RaidManager {
         ServerLevel level = server.getLevel(session.map.dimension);
         if (level != null) {
             Anomalies.clearArtifacts(session, level);
+            EnemySpawner.cleanup(level, session);
             clearDroppedItems(level);
         }
     }

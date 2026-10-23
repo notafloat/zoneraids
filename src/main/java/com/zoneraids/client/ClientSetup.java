@@ -2,8 +2,11 @@ package com.zoneraids.client;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import com.zoneraids.ZoneRaids;
+import com.zoneraids.client.render.MutantRenderers;
+import com.zoneraids.registry.ModEntities;
 import net.minecraft.client.KeyMapping;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.client.event.RegisterGuiOverlaysEvent;
 import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
 import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
@@ -28,5 +31,13 @@ public final class ClientSetup {
     @SubscribeEvent
     public static void onRegisterOverlays(RegisterGuiOverlaysEvent event) {
         event.registerAbove(VanillaGuiOverlay.HOTBAR.id(), "raid_hud", new RaidHudOverlay());
+    }
+
+    @SubscribeEvent
+    public static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
+        event.registerEntityRenderer(ModEntities.BLIND_DOG.get(), MutantRenderers.BlindDogRenderer::new);
+        event.registerEntityRenderer(ModEntities.FLESH.get(), MutantRenderers.FleshRenderer::new);
+        event.registerEntityRenderer(ModEntities.SNORK.get(), MutantRenderers::snork);
+        event.registerEntityRenderer(ModEntities.BLOODSUCKER.get(), MutantRenderers::bloodsucker);
     }
 }
