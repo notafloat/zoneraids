@@ -54,12 +54,17 @@ public class PitBike extends Entity {
     /** Slower than this the bike barely turns (steering needs rolling wheels). */
     private static final double TURN_FULL_SPEED = 0.15;
     private static final double WATER_SPEED = 0.06;
+    /** How fast the steering follows A/D, per tick (1 = instantly). */
+    private static final float STEER_EASE = 0.35F;
 
     /** Raid the bike was spawned for, or null for a free bike placed by an admin. */
     @Nullable
     private UUID raidSession;
     /** Forward speed in blocks per tick; only meaningful where the bike is simulated. */
     private double speed;
+    /** Smoothed steering input, -1..1, and the turn applied this tick (also to the riders). */
+    private float steer;
+    private float deltaRotation;
 
     private int lerpSteps;
     private double lerpX;
@@ -166,6 +171,12 @@ public class PitBike extends Entity {
         double z = getZ() - Mth.cos(yaw) * back;
         double y = getY() + getPassengersRidingOffset() + passenger.getMyRidingOffset();
         move.accept(passenger, x, y, z);
+        // Turning riders here (after their own tick saved last rotation) lets the camera interpolate the
+        // turn between frames, like a boat; turning them during the bike's tick made first person jerk.
+        if (deltaRotation != 0.0F) {
+            passenger.setYRot(passenger.getYRot() + deltaRotation);
+            passenger.setYHeadRot(passenger.getYHeadRot() + deltaRotation);
+        }
     }
 
     @Override
@@ -231,6 +242,8 @@ public class PitBike extends Entity {
             }
         } else {
             speed = 0.0;
+            steer = 0.0F;
+            deltaRotation = 0.0F;
             setDeltaMovement(Vec3.ZERO);
         }
         tickLerp();
@@ -253,6 +266,7 @@ public class PitBike extends Entity {
 
     /** Throttle, brake, steering and gravity for the side that simulates the bike. */
     private void drive() {
+        deltaRotation = 0.0F;
         Vec3 motion = getDeltaMovement();
         float forward = 0.0F;
         float strafe = 0.0F;
@@ -276,14 +290,13 @@ public class PitBike extends Entity {
                 speed = Math.max(max, speed * 0.9);
             }
             float grip = (float) Mth.clamp(Math.abs(speed) / TURN_FULL_SPEED, 0.0, 1.0);
-            float turn = -strafe * TURN_DEGREES * grip * (speed < 0 ? -1.0F : 1.0F);
-            if (turn != 0.0F) {
-                setYRot(getYRot() + turn);
-                for (Entity passenger : getPassengers()) {
-                    passenger.setYRot(passenger.getYRot() + turn);
-                    passenger.setYHeadRot(passenger.getYHeadRot() + turn);
-                }
+            // The handlebar eases towards the key instead of snapping, so turns start and end smoothly.
+            steer += (strafe - steer) * STEER_EASE;
+            if (Math.abs(steer) < 0.01F) {
+                steer = 0.0F;
             }
+            deltaRotation = -steer * TURN_DEGREES * grip * (speed < 0 ? -1.0F : 1.0F);
+            setYRot(getYRot() + deltaRotation);
         } else {
             speed *= 0.99;
         }
