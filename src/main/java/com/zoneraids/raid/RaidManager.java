@@ -43,6 +43,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -82,10 +83,12 @@ public final class RaidManager {
     private final Random random = new Random();
     private final Anomalies anomalies = new Anomalies();
     private final List<ServerPlayer> sessionPlayers = new ArrayList<>();
+    private final Spectators spectators;
     private long tickCounter;
 
     private RaidManager(MinecraftServer server) {
         this.server = server;
+        this.spectators = new Spectators(this, server);
     }
 
     @Nullable
@@ -107,6 +110,7 @@ public final class RaidManager {
             instance.countdowns.clear();
             instance.lastAction.clear();
             instance.parties.clear();
+            instance.spectators.clear();
         }
         instance = null;
     }
@@ -157,6 +161,20 @@ public final class RaidManager {
         return playerQueue.get(player);
     }
 
+    Collection<RaidSession> runningSessions() {
+        return sessions.values();
+    }
+
+    @Nullable
+    RaidSession rosterSessionOf(UUID player) {
+        return rosterSessions.get(player);
+    }
+
+    /** Watching a raider from the hub terminal (spectator mode on the raid map). */
+    public boolean isWatching(UUID player) {
+        return spectators.isWatching(player);
+    }
+
     // ------------------------------------------------------------------ ticking
 
     public void tick() {
@@ -168,6 +186,7 @@ public final class RaidManager {
             tickQueues();
             parties.tick(tickCounter);
         }
+        spectators.tick();
     }
 
     private void tickSessions(int dt) {
@@ -197,7 +216,7 @@ public final class RaidManager {
         if (tickCounter % 20 == 0) {
             for (UUID id : session.roster.keySet()) {
                 ServerPlayer player = server.getPlayerList().getPlayer(id);
-                if (player != null && !playerSessions.containsKey(id)) {
+                if (player != null && !playerSessions.containsKey(id) && !spectators.isWatching(id)) {
                     sendIntermissionHud(player, session);
                 }
             }
@@ -280,7 +299,7 @@ public final class RaidManager {
         if (session.rounds > 1 && tickCounter % 20 == 0) {
             for (UUID id : session.roster.keySet()) {
                 ServerPlayer player = server.getPlayerList().getPlayer(id);
-                if (player != null && !session.participants.containsKey(id)) {
+                if (player != null && !session.participants.containsKey(id) && !spectators.isWatching(id)) {
                     sendIntermissionHud(player, session);
                 }
             }
@@ -583,6 +602,7 @@ public final class RaidManager {
                 PlayerRaidData.setSession(player, session.id);
                 PlayerRaidData.incrementStat(player, Stat.RAIDS);
 
+                spectators.release(player);
                 BlockPos pos = spawn.pos();
                 Teleports.teleport(player, level, pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, spawn.yaw(), 0.0F);
                 if (protection > 0) {
@@ -901,6 +921,7 @@ public final class RaidManager {
 
     public void onLogin(ServerPlayer player) {
         UUID id = player.getUUID();
+        spectators.onLogin(player);
         UUID match = PlayerRaidData.getMatch(player);
         RaidSession rosterSession = rosterSessions.get(id);
         if (match != null && (rosterSession == null || !rosterSession.id.equals(match))) {
@@ -956,6 +977,7 @@ public final class RaidManager {
         removeFromQueue(id);
         parties.onLogout(id);
         lastAction.remove(id);
+        spectators.onLogout(player);
         RaidSession session = playerSessions.get(id);
         if (session != null) {
             RaidSession.Participant part = session.participants.get(id);
@@ -1045,6 +1067,7 @@ public final class RaidManager {
     }
 
     public void sendToHub(ServerPlayer player) {
+        spectators.release(player);
         HubPoint hub = data().getHub();
         ServerLevel level = hub == null ? null : server.getLevel(hub.dimension());
         if (hub != null && level != null) {
@@ -1095,6 +1118,8 @@ public final class RaidManager {
                 }
             }
             case ACCEPT_INVITE -> acceptInvite(player);
+            case WATCH -> spectators.watch(player, arg);
+            case STOP_WATCH -> spectators.stop(player);
         }
         RaidNetwork.sendTo(player, buildTerminal(player, false));
     }
@@ -1140,9 +1165,11 @@ public final class RaidManager {
         for (Perk perk : Perk.values()) {
             perks[perk.ordinal()] = PerkService.level(player, perk);
         }
+        String watching = spectators.targetName(id);
         return new TerminalDataPacket(open, entries, playerQueue.getOrDefault(id, ""), isInRaid(id), stats, party,
                 parties.isLeaderOrSolo(id), inviterPlayer == null ? "" : inviterPlayer.getGameProfile().getName(),
-                RaidConfig.REMOTE_STASH.get() && !isInRaid(id), PlayerRaidData.getPerkPoints(player), perks);
+                RaidConfig.REMOTE_STASH.get() && !isInRaid(id), PlayerRaidData.getPerkPoints(player), perks,
+                spectators.entries(player), watching == null ? "" : watching);
     }
 
     // ------------------------------------------------------------------ parties
@@ -1226,6 +1253,11 @@ public final class RaidManager {
     }
 
     private void sendHud(ServerPlayer player, RaidSession session, RaidSession.Participant part) {
+        sendHud(player, player, session, part);
+    }
+
+    /** The raid HUD of {@code subject}, sent to {@code to} (the raider, or someone watching them). */
+    private void sendHud(ServerPlayer to, ServerPlayer player, RaidSession session, RaidSession.Participant part) {
         boolean showPos = RaidConfig.SHOW_EXTRACT_DISTANCE.get();
         List<RaidHudPacket.ExtractEntry> extracts = new ArrayList<>(part.extracts.size());
         for (ExtractPoint point : part.extracts) {
@@ -1237,8 +1269,30 @@ public final class RaidManager {
         RoundObjectives.Objective objective = RoundObjectives.objective(session, player);
         RaidHudPacket.Round round = new RaidHudPacket.Round(session.round, session.rounds, session.type.id, false,
                 objective.hasTarget(), objective.x(), objective.z(), objective.label(), objective.status(), objective.progress());
-        RaidNetwork.sendTo(player, new RaidHudPacket(true, session.map.displayName, session.secondsLeft(), extracts,
+        RaidNetwork.sendTo(to, new RaidHudPacket(true, session.map.displayName, session.secondsLeft(), extracts,
                 part.extracting == null ? "" : part.extracting.name(), progress, round));
+    }
+
+    /** Someone watching a raider sees the raider's HUD. */
+    void mirrorHud(ServerPlayer viewer, ServerPlayer target) {
+        RaidSession session = playerSessions.get(target.getUUID());
+        RaidSession.Participant part = session == null ? null : session.participants.get(target.getUUID());
+        if (part != null) {
+            sendHud(viewer, target, session, part);
+        }
+    }
+
+    /** Back from watching: the player's own HUD again, if they are waiting for the next round of a session. */
+    void afterWatch(ServerPlayer player) {
+        RaidSession rosterSession = rosterSessions.get(player.getUUID());
+        if (isInRaid(player.getUUID())) {
+            return;
+        }
+        if (rosterSession != null) {
+            sendIntermissionHud(player, rosterSession);
+        } else {
+            clearHud(player);
+        }
     }
 
     /** HUD for session members in the hub: the break before the next round, or the current round still running. */

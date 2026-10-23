@@ -180,6 +180,33 @@ public final class RaidEvents {
         return manager != null && manager.isInRaid(player.getUUID());
     }
 
+    /** Someone watching a raid only looks: no opening crates, doors or chests on the raid map. */
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onWatcherUseBlock(PlayerInteractEvent.RightClickBlock event) {
+        if (isWatching(event.getEntity())) {
+            event.setCanceled(true);
+        }
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onWatcherUseEntity(PlayerInteractEvent.EntityInteract event) {
+        if (isWatching(event.getEntity())) {
+            event.setCanceled(true);
+        }
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onWatcherUseEntityAt(PlayerInteractEvent.EntityInteractSpecific event) {
+        if (isWatching(event.getEntity())) {
+            event.setCanceled(true);
+        }
+    }
+
+    private static boolean isWatching(Player player) {
+        RaidManager manager = RaidManager.get();
+        return manager != null && !player.level().isClientSide() && manager.isWatching(player.getUUID());
+    }
+
     @SubscribeEvent
     public static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
         if (!RaidConfig.BLOCK_ENDER_CHEST_IN_RAID.get() || event.getLevel().isClientSide()) {

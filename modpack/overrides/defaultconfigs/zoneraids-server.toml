@@ -21,3 +21,4 @@
 [hub]
 	hubPvp = false
 	remoteStash = true
+	spectating = true

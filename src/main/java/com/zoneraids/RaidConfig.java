@@ -19,6 +19,7 @@ public final class RaidConfig {
     public static final ForgeConfigSpec.BooleanValue FORCE_DROP_ON_RAID_DEATH;
     public static final ForgeConfigSpec.BooleanValue CLEAR_DROPPED_ITEMS_ON_END;
     public static final ForgeConfigSpec.BooleanValue REMOTE_STASH;
+    public static final ForgeConfigSpec.BooleanValue SPECTATING;
     public static final ForgeConfigSpec.BooleanValue RETURN_GEAR_AFTER_RESTART;
     public static final ForgeConfigSpec.BooleanValue SHOW_EXTRACT_DISTANCE;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> BLOCKED_COMMANDS_IN_RAID;
@@ -89,6 +90,9 @@ public final class RaidConfig {
         b.push("hub");
         HUB_PVP = b.comment("Allow PvP between players that are not in a raid.").define("hubPvp", false);
         REMOTE_STASH = b.comment("Allow opening the stash from the terminal menu (outside of raids).").define("remoteStash", true);
+        SPECTATING = b.comment("Allow watching players in raids from the terminal (spectator camera on the raider). Members of a",
+                        "running session can only watch their own group, and nobody in the deathmatch.")
+                .define("spectating", true);
         b.pop();
 
         b.push("world");
