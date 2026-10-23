@@ -16,12 +16,14 @@ import com.zoneraids.network.TerminalDataPacket;
 import com.zoneraids.perk.Perk;
 import com.zoneraids.perk.PerkService;
 import com.zoneraids.registry.ModRegistry;
+import com.zoneraids.shop.ShopCatalog;
 import com.zoneraids.shop.ShopService;
 import com.zoneraids.util.CuriosCompat;
 import com.zoneraids.util.FirstAidCompat;
 import com.zoneraids.util.Teleports;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket;
 import net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket;
@@ -39,6 +41,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameRules;
@@ -94,7 +97,15 @@ public final class RaidManager {
     private final Anomalies anomalies = new Anomalies();
     private final List<ServerPlayer> sessionPlayers = new ArrayList<>();
     private final Spectators spectators;
+    /** Raiders hurt by a player or a raid enemy: when, and by which player (null for enemies). */
+    private final Map<UUID, CombatTag> combat = new HashMap<>();
     private long tickCounter;
+
+    private record CombatTag(long tick, @Nullable UUID attacker) {
+    }
+
+    /** Entity data key on items a session member drops: the session they belong to. */
+    private static final String SESSION_ITEM = "zoneraids.session";
 
     private RaidManager(MinecraftServer server) {
         this.server = server;
@@ -119,6 +130,7 @@ public final class RaidManager {
             instance.playerQueue.clear();
             instance.countdowns.clear();
             instance.lastAction.clear();
+            instance.combat.clear();
             instance.parties.clear();
             instance.spectators.clear();
         }
@@ -261,8 +273,22 @@ public final class RaidManager {
 
         ServerLevel level = server.getLevel(session.map.dimension);
         int baseNeeded = RaidConfig.EXTRACT_SECONDS.get() * 20;
+        int offlineLimit = RaidConfig.OFFLINE_MIA_SECONDS.get() * 20;
         for (RaidSession.Participant part : new ArrayList<>(session.participants.values())) {
             ServerPlayer player = server.getPlayerList().getPlayer(part.id);
+            if (player == null) {
+                part.offlineTicks += dt;
+                if (offlineLimit > 0 && part.offlineTicks >= offlineLimit) {
+                    // Gone for good, as far as the round is concerned: missing in action, and nobody waits for them.
+                    session.participants.remove(part.id);
+                    playerSessions.remove(part.id);
+                    data().addPendingMia(part.id);
+                    Component msg = Component.translatable("zoneraids.raid.offline_mia", part.name).withStyle(ChatFormatting.GRAY);
+                    forEachOnline(session, p -> p.sendSystemMessage(msg));
+                }
+            } else {
+                part.offlineTicks = 0;
+            }
             if (player == null || !player.isAlive() || player.level() != level) {
                 part.extracting = null;
                 part.extractTicks = 0;
@@ -770,7 +796,8 @@ public final class RaidManager {
             return;
         }
         session.intermission = true;
-        session.nextType = session.round + 1 >= session.rounds ? RoundType.DEATHMATCH : pickSecondRound();
+        session.nextType = session.round + 1 >= session.rounds
+                ? (session.roster.size() >= 2 ? RoundType.DEATHMATCH : soloFinal(session)) : pickSecondRound();
         session.totalTicks = RaidConfig.INTERMISSION_SECONDS.get() * 20;
         session.ticksLeft = session.totalTicks;
         Component msg = Component.translatable("zoneraids.round.intermission", session.round, session.round + 1,
@@ -795,8 +822,30 @@ public final class RaidManager {
         return modes.isEmpty() ? RoundType.EXTRACTION : modes.get(random.nextInt(modes.size()));
     }
 
+    /**
+     * The last round when there is nobody to fight: a deathmatch needs two players. A lone player (or the only one
+     * left online) gets the emission instead, or an extraction raid if the second round already was the emission.
+     */
+    private static RoundType soloFinal(RaidSession session) {
+        return session.type == RoundType.EMISSION ? RoundType.EXTRACTION : RoundType.EMISSION;
+    }
+
     private void startNextRound(RaidSession session) {
         ServerLevel level = server.getLevel(session.map.dimension);
+        if (session.nextType == RoundType.DEATHMATCH) {
+            int available = 0;
+            for (UUID id : session.roster.keySet()) {
+                if (server.getPlayerList().getPlayer(id) != null && !playerSessions.containsKey(id)) {
+                    available++;
+                }
+            }
+            if (available == 1) {
+                session.nextType = soloFinal(session);
+                Component msg = Component.translatable("zoneraids.round.no_deathmatch",
+                        Component.translatable("zoneraids.round." + session.nextType.id)).withStyle(ChatFormatting.YELLOW);
+                session.roster.keySet().forEach(id -> message(id, msg));
+            }
+        }
         List<List<UUID>> groups = new ArrayList<>();
         int players = 0;
         for (List<UUID> group : session.groups) {
@@ -881,6 +930,9 @@ public final class RaidManager {
                 resetProgress(player);
             }
         }
+        if (!abort) {
+            clearSessionItems(session);
+        }
         session.roster.clear();
         session.groups.clear();
         session.groupOf.clear();
@@ -908,6 +960,12 @@ public final class RaidManager {
         PlayerRaidData.clearStash(player);
         if (!RaidConfig.KEEP_MONEY_AFTER_SESSION.get()) {
             PlayerRaidData.setMoney(player, 0);
+        } else {
+            int cap = RaidConfig.MONEY_CAP_AFTER_SESSION.get();
+            if (cap > 0 && PlayerRaidData.getMoney(player) > cap) {
+                PlayerRaidData.setMoney(player, cap);
+                player.sendSystemMessage(Component.translatable("zoneraids.session.money_capped", cap).withStyle(ChatFormatting.YELLOW));
+            }
         }
         PlayerRaidData.setMatch(player, null);
         if (player.isAlive()) {
@@ -946,6 +1004,9 @@ public final class RaidManager {
                 int n = Math.min(count, item.getMaxStackSize());
                 count -= n;
                 ItemStack stack = new ItemStack(item, n);
+                if (!stack.isStackable()) {
+                    ShopCatalog.markIssued(stack);
+                }
                 if (!player.getInventory().add(stack)) {
                     player.drop(stack, false);
                 }
@@ -962,6 +1023,7 @@ public final class RaidManager {
             return;
         }
         ItemStack stack = new ItemStack(item);
+        ShopCatalog.markIssued(stack);
         if (!player.getInventory().add(stack)) {
             player.drop(stack, false);
         }
@@ -983,6 +1045,10 @@ public final class RaidManager {
             return;
         }
         for (ItemStack stack : table.getRandomItems(new LootParams.Builder(level).create(LootContextParamSets.EMPTY))) {
+            // Free gear is not for sale: otherwise every round would pay for a pistol and a helmet.
+            if (!stack.isStackable()) {
+                ShopCatalog.markIssued(stack);
+            }
             EquipmentSlot slot = Mob.getEquipmentSlotForItem(stack);
             if (slot.getType() == EquipmentSlot.Type.ARMOR) {
                 if (player.getItemBySlot(slot).isEmpty()) {
@@ -1000,6 +1066,7 @@ public final class RaidManager {
     }
 
     private void extract(ServerPlayer player, RaidSession session, RaidSession.Participant part) {
+        combat.remove(part.id);
         session.participants.remove(part.id);
         playerSessions.remove(part.id);
         PlayerRaidData.setSession(player, null);
@@ -1073,6 +1140,10 @@ public final class RaidManager {
             resetProgress(player);
             return;
         }
+        if (PlayerRaidData.consumeCombatLogged(player)) {
+            player.sendSystemMessage(Component.translatable("zoneraids.raid.combat_logged_self").withStyle(ChatFormatting.RED));
+            sendToHub(player);
+        }
         if (!isInRaid(id)) {
             RoundObjectives.stripDocuments(player);
         }
@@ -1118,8 +1189,14 @@ public final class RaidManager {
         parties.onLogout(id);
         lastAction.remove(id);
         spectators.onLogout(player);
+        CombatTag tag = combat.remove(id);
         RaidSession session = playerSessions.get(id);
         if (session != null) {
+            int window = RaidConfig.COMBAT_LOG_SECONDS.get() * 20;
+            if (tag != null && window > 0 && tickCounter - tag.tick() <= window && player.isAlive()) {
+                combatLogout(player, session, tag.attacker());
+                return;
+            }
             RaidSession.Participant part = session.participants.get(id);
             if (part != null) {
                 part.extracting = null;
@@ -1128,21 +1205,109 @@ public final class RaidManager {
         }
     }
 
+    /** A raider was hurt by another player or a raid enemy; leaving the game soon after counts as dying. */
+    public void markCombat(ServerPlayer player, Entity attacker) {
+        if (attacker != player && isInRaid(player.getUUID())) {
+            combat.put(player.getUUID(), new CombatTag(tickCounter, attacker instanceof ServerPlayer p ? p.getUUID() : null));
+        }
+    }
+
+    /**
+     * Leaving mid-fight is dying: everything the player carries and wears drops where they stood, the last attacker
+     * gets the kill, and the player is out of the round. They come back in the hub.
+     */
+    private void combatLogout(ServerPlayer player, RaidSession session, @Nullable UUID attackerId) {
+        UUID id = player.getUUID();
+        ServerPlayer attacker = attackerId == null ? null : server.getPlayerList().getPlayer(attackerId);
+        if (attacker != null && isInRaid(attacker.getUUID())) {
+            creditKill(attacker, player);
+        }
+        playerSessions.remove(id);
+        session.participants.remove(id);
+        player.getInventory().dropAll();
+        for (ItemStack stack : CuriosCompat.takeAll(player)) {
+            player.drop(stack, true, false);
+        }
+        PlayerRaidData.setSession(player, null);
+        PlayerRaidData.incrementStat(player, Stat.KIA);
+        PlayerRaidData.markCombatLogged(player);
+        Component msg = Component.translatable("zoneraids.raid.combat_logged", player.getDisplayName()).withStyle(ChatFormatting.RED);
+        forEachOnline(session, p -> p.sendSystemMessage(msg));
+    }
+
+    private void creditKill(ServerPlayer killer, ServerPlayer victim) {
+        PlayerRaidData.incrementStat(killer, Stat.KILLS);
+        RaidSession killerSession = playerSessions.get(killer.getUUID());
+        Integer killerGroup = killerSession.groupOf.get(killer.getUUID());
+        boolean teammate = killerSession.type != RoundType.DEATHMATCH && killerGroup != null
+                && killerGroup.equals(killerSession.groupOf.get(victim.getUUID()));
+        if (!teammate) {
+            PerkService.award(killer, 1, "zoneraids.perk.reason.kill");
+        }
+    }
+
+    // ------------------------------------------------------------------ session items
+
+    /** Items a session member drops remember the session, so nobody outside it can keep them past the wipe. */
+    public void onToss(Player player, ItemEntity item) {
+        RaidSession session = rosterSessions.get(player.getUUID());
+        if (session != null) {
+            item.getPersistentData().putUUID(SESSION_ITEM, session.id);
+        }
+    }
+
+    /** Only members of the session an item was dropped in may pick it up. Items of an ended session are wiped like the rest. */
+    public boolean mayPickUp(Player player, ItemEntity item) {
+        CompoundTag data = item.getPersistentData();
+        if (!data.hasUUID(SESSION_ITEM)) {
+            return true;
+        }
+        UUID owner = data.getUUID(SESSION_ITEM);
+        RaidSession own = rosterSessions.get(player.getUUID());
+        if (own != null && own.id.equals(owner)) {
+            return true;
+        }
+        if (sessionById(owner) == null) {
+            item.discard();
+        } else {
+            player.displayClientMessage(Component.translatable("zoneraids.session.foreign_item").withStyle(ChatFormatting.RED), true);
+        }
+        return false;
+    }
+
+    /**
+     * False when an item handed from {@code from} to {@code to} would leave a running session for someone outside it,
+     * which would carry it past the session's wipe. For anything that moves items between players.
+     */
+    public boolean mayHandOver(UUID from, UUID to) {
+        RaidSession session = rosterSessions.get(from);
+        return session == null || session == rosterSessions.get(to);
+    }
+
+    private void clearSessionItems(RaidSession session) {
+        ServerLevel hub = server.getLevel(hubDimension());
+        if (hub == null) {
+            return;
+        }
+        List<Entity> items = new ArrayList<>();
+        for (Entity entity : hub.getAllEntities()) {
+            if (entity instanceof ItemEntity item && item.getPersistentData().hasUUID(SESSION_ITEM)
+                    && session.id.equals(item.getPersistentData().getUUID(SESSION_ITEM))) {
+                items.add(entity);
+            }
+        }
+        items.forEach(Entity::discard);
+    }
+
     public void onDeath(ServerPlayer player, DamageSource source) {
         if (player.containerMenu != player.inventoryMenu) {
             player.doCloseContainer();
         }
         if (source.getEntity() instanceof ServerPlayer killer && killer != player && isInRaid(killer.getUUID())) {
-            PlayerRaidData.incrementStat(killer, Stat.KILLS);
-            RaidSession killerSession = playerSessions.get(killer.getUUID());
-            Integer killerGroup = killerSession.groupOf.get(killer.getUUID());
-            boolean teammate = killerSession.type != RoundType.DEATHMATCH && killerGroup != null
-                    && killerGroup.equals(killerSession.groupOf.get(player.getUUID()));
-            if (!teammate) {
-                PerkService.award(killer, 1, "zoneraids.perk.reason.kill");
-            }
+            creditKill(killer, player);
         }
         UUID id = player.getUUID();
+        combat.remove(id);
         RaidSession session = playerSessions.remove(id);
         if (session == null) {
             return;

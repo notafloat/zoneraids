@@ -14,6 +14,8 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Reads and empties Curios slots (backpacks, rigs, artifact containers) without a compile-time dependency on Curios,
@@ -31,6 +33,22 @@ public final class CuriosCompat {
         if (items != null) {
             empty(items);
         }
+    }
+
+    /** Empties the Curios slots and returns what was in them. */
+    public static List<ItemStack> takeAll(LivingEntity entity) {
+        List<ItemStack> taken = new ArrayList<>();
+        IItemHandlerModifiable items = equipped(entity);
+        if (items != null) {
+            for (int i = 0; i < items.getSlots(); i++) {
+                ItemStack stack = items.getStackInSlot(i);
+                if (!stack.isEmpty()) {
+                    taken.add(stack.copy());
+                    items.setStackInSlot(i, ItemStack.EMPTY);
+                }
+            }
+        }
+        return taken;
     }
 
     /** True if the entity wears the item in a Curios slot. */

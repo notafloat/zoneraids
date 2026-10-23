@@ -22,6 +22,8 @@ public final class RaidConfig {
     public static final ForgeConfigSpec.BooleanValue SPECTATING;
     public static final ForgeConfigSpec.BooleanValue RETURN_GEAR_AFTER_RESTART;
     public static final ForgeConfigSpec.BooleanValue SHOW_EXTRACT_DISTANCE;
+    public static final ForgeConfigSpec.IntValue COMBAT_LOG_SECONDS;
+    public static final ForgeConfigSpec.IntValue OFFLINE_MIA_SECONDS;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> BLOCKED_COMMANDS_IN_RAID;
     public static final ForgeConfigSpec.BooleanValue AUTO_SETUP;
     public static final ForgeConfigSpec.IntValue BUILD_MILLIS_PER_TICK;
@@ -62,6 +64,8 @@ public final class RaidConfig {
     public static final ForgeConfigSpec.BooleanValue SHOP;
     public static final ForgeConfigSpec.BooleanValue REMOTE_SHOP;
     public static final ForgeConfigSpec.BooleanValue KEEP_MONEY_AFTER_SESSION;
+    public static final ForgeConfigSpec.IntValue MONEY_CAP_AFTER_SESSION;
+    public static final ForgeConfigSpec.IntValue SELLBACK_PERCENT;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> SHOP_SELL;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> SHOP_BUY;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> ENTITY_UPDATE_INTERVALS;
@@ -93,6 +97,12 @@ public final class RaidConfig {
         RETURN_GEAR_AFTER_RESTART = b.comment("Players whose raid was interrupted by a server restart keep their gear. If false they are treated as MIA.")
                 .define("returnGearAfterRestart", true);
         SHOW_EXTRACT_DISTANCE = b.define("showExtractDistance", true);
+        COMBAT_LOG_SECONDS = b.comment("A raider who leaves the game this many seconds after being hurt by a player or a raid enemy",
+                        "dies on the spot: the gear drops where they stood and the attacker gets the kill. 0 = off.")
+                .defineInRange("combatLogSeconds", 15, 0, 300);
+        OFFLINE_MIA_SECONDS = b.comment("A raider who stays offline this long is missing in action and leaves the round, so the round",
+                        "can end early for everyone else. Coming back sooner continues the raid. 0 = wait for the timer.")
+                .defineInRange("offlineMiaSeconds", 90, 0, 3600);
         BLOCKED_COMMANDS_IN_RAID = b.comment("Root commands that non-operators cannot use while in a raid.")
                 .defineListAllowEmpty(List.of("blockedCommandsInRaid"),
                         List.of("home", "homes", "spawn", "tpa", "tpahere", "tpaccept", "back", "warp", "rtp", "enderchest", "ec"),
@@ -221,7 +231,14 @@ public final class RaidConfig {
         KEEP_MONEY_AFTER_SESSION = b.comment("Money is not an item: it is never lost in a raid. If true it also survives the end of a session",
                         "(like perks); if false it is wiped together with the inventory and the stash.")
                 .define("keepMoneyAfterSession", true);
-        SHOP_SELL = b.comment("What the trader buys from players, as \"item_id price\". Any NBT of the item is accepted. Ids that are not installed are skipped.")
+        MONEY_CAP_AFTER_SESSION = b.comment("With keepMoneyAfterSession, at most this much money is carried into the next session; the rest is lost",
+                        "with the gear, so veterans cannot hoard and the last break of a session is the time to spend. 0 = no cap.")
+                .defineInRange("moneyCapAfterSession", 40000, 0, Integer.MAX_VALUE);
+        SELLBACK_PERCENT = b.comment("The trader also buys back what he sells (guns, armor, ammo, containers, medicine), found or bought,",
+                        "for this share of his price. Gear issued by the round kit is not bought. 0 = only the sell list.")
+                .defineInRange("sellbackPercent", 25, 0, 100);
+        SHOP_SELL = b.comment("What the trader buys from players, as \"item_id price\": artifacts and valuables. Any NBT of the item is accepted.",
+                        "Ids that are not installed are skipped. What he sells is bought back too, see sellbackPercent.")
                 .defineListAllowEmpty(List.of("sell"), List.of(
                         "anomalyzone:bubble 1500",
                         "anomalyzone:flash 1500",
@@ -236,7 +253,13 @@ public final class RaidConfig {
                         "anomalyzone:sun 5000",
                         "anomalyzone:thunder 5000",
                         "anomalyzone:polyhedron 5000",
-                        "anomalyzone:atom 12000"), o -> o instanceof String);
+                        "anomalyzone:atom 12000",
+                        "minecraft:gold_nugget 15",
+                        "minecraft:iron_nugget 5",
+                        "minecraft:iron_ingot 60",
+                        "minecraft:gold_ingot 120",
+                        "minecraft:emerald 250",
+                        "minecraft:diamond 800"), o -> o instanceof String);
         SHOP_BUY = b.comment("What the trader sells, as \"category price count item_id{nbt}\" (the NBT part is optional).",
                         "Categories: weapons, armor, ammo, containers, medicine (other names get their own tab). Ids that are not installed are skipped.")
                 .defineListAllowEmpty(List.of("buy"), List.of(

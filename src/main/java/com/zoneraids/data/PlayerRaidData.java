@@ -22,6 +22,7 @@ public final class PlayerRaidData {
 
     private static final String SESSION = "Session";
     private static final String RETURN_TO_HUB = "ReturnToHub";
+    private static final String COMBAT_LOGGED = "CombatLogged";
     private static final String STATS = "Stats";
     private static final String MATCH = "Match";
     private static final String PERKS = "Perks";
@@ -69,6 +70,18 @@ public final class PlayerRaidData {
 
     public static void markReturnToHub(Player player) {
         root(player).putBoolean(RETURN_TO_HUB, true);
+    }
+
+    /** Left the game mid-fight in a raid: told on the next login, which takes them to the hub. */
+    public static void markCombatLogged(Player player) {
+        root(player).putBoolean(COMBAT_LOGGED, true);
+    }
+
+    public static boolean consumeCombatLogged(Player player) {
+        CompoundTag root = root(player);
+        boolean flag = root.getBoolean(COMBAT_LOGGED);
+        root.remove(COMBAT_LOGGED);
+        return flag;
     }
 
     public static int getStat(Player player, Stat stat) {
