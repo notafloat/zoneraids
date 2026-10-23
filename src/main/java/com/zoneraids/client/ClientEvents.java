@@ -6,6 +6,7 @@ import com.zoneraids.network.TerminalActionPacket;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
+import net.minecraftforge.client.event.RenderGuiOverlayEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -23,6 +24,11 @@ public final class ClientEvents {
         while (ClientSetup.OPEN_TERMINAL.consumeClick()) {
             RaidNetwork.sendToServer(new TerminalActionPacket(TerminalActionPacket.Action.OPEN, ""));
         }
+    }
+
+    @SubscribeEvent
+    public static void onOverlayPre(RenderGuiOverlayEvent.Pre event) {
+        PdaHudOverlay.onOverlayPre(event);
     }
 
     @SubscribeEvent

@@ -15,11 +15,11 @@ import java.util.List;
  * Raid terminal: map list with matchmaking state, join/leave, stash shortcut, party and stats, the
  * way to watching players in raids and to the trader.
  * Widgets are rebuilt whenever new data arrives; while open it asks for a refresh every 2 seconds.
- * The terminal key closes it again, the mouse wheel turns map pages.
+ * The terminal key closes it again, the mouse wheel turns map pages. It is the first tab of the PDA.
  */
 public final class RaidTerminalScreen extends Screen {
-    private static final int PANEL_W = 380;
-    private static final int PANEL_H = 236;
+    private static final int PANEL_W = PdaTabs.PANEL_W;
+    private static final int PANEL_H = PdaTabs.PANEL_H;
     private static final int ROWS_PER_PAGE = 5;
     private static final int ROW_H = 24;
     private static final int LIST_Y = 22;
@@ -39,11 +39,11 @@ public final class RaidTerminalScreen extends Screen {
     }
 
     private int left() {
-        return (width - PANEL_W) / 2;
+        return PdaTabs.left(width);
     }
 
     private int top() {
-        return (height - PANEL_H) / 2;
+        return PdaTabs.top(height);
     }
 
     private int pages() {
@@ -53,12 +53,13 @@ public final class RaidTerminalScreen extends Screen {
 
     @Override
     protected void init() {
+        int left = left();
+        int top = top();
+        PdaTabs.buttons(left, top, PdaTabs.Tab.RAIDS).forEach(this::addRenderableWidget);
         TerminalDataPacket data = ClientRaidState.terminal;
         if (data == null) {
             return;
         }
-        int left = left();
-        int top = top();
         List<TerminalDataPacket.MapEntry> maps = data.maps();
         int pages = pages();
         page = Math.min(page, pages - 1);
