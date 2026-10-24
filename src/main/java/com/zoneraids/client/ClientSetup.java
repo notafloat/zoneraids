@@ -64,6 +64,8 @@ public final class ClientSetup {
     public static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(ModEntities.BLIND_DOG.get(), MutantRenderers.BlindDogRenderer::new);
         event.registerEntityRenderer(ModEntities.FLESH.get(), MutantRenderers.FleshRenderer::new);
+        event.registerEntityRenderer(ModEntities.PSEUDOGIANT.get(), MutantRenderers::pseudogiant);
+        event.registerEntityRenderer(ModEntities.CONTROLLER.get(), MutantRenderers::controller);
         event.registerEntityRenderer(ModEntities.SNORK.get(), MutantRenderers::snork);
         event.registerEntityRenderer(ModEntities.BLOODSUCKER.get(), MutantRenderers::bloodsucker);
     }

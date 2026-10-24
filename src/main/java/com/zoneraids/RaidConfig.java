@@ -85,6 +85,10 @@ public final class RaidConfig {
     public static final ForgeConfigSpec.ConfigValue<String> SURVIVAL_STARTER_LOOT_TABLE;
     public static final ForgeConfigSpec.IntValue SURVIVAL_KILLS_PER_PERK_POINT;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> SURVIVAL_EXTRA_BUY;
+    public static final ForgeConfigSpec.BooleanValue SURVIVAL_LAIRS;
+    public static final ForgeConfigSpec.IntValue SURVIVAL_LAIR_REGION;
+    public static final ForgeConfigSpec.DoubleValue SURVIVAL_LAIR_CHANCE;
+    public static final ForgeConfigSpec.IntValue SURVIVAL_LAIR_MIN_SPAWN_DISTANCE;
 
     static {
         ForgeConfigSpec.Builder b = new ForgeConfigSpec.Builder();
@@ -377,6 +381,15 @@ public final class RaidConfig {
                 .defineInRange("killsPerPerkPoint", 10, 0, 1000);
         SURVIVAL_EXTRA_BUY = b.comment("Extra lines for the trader's [shop] buy list in survival mode, same format.")
                 .defineListAllowEmpty(List.of("extraBuy"), List.of("vehicles 15000 1 zoneraids:pit_bike"), o -> o instanceof String);
+        SURVIVAL_LAIRS = b.comment("Lairs with a boss: a bandit base (gang leader), a ruined collective farm (pseudogiant) and an underground",
+                        "laboratory (controller). At most one per region of the overworld, built when a player first comes near.")
+                .define("lairs", true);
+        SURVIVAL_LAIR_REGION = b.comment("Size of a lair region in blocks.")
+                .defineInRange("lairRegionSize", 512, 128, 8192);
+        SURVIVAL_LAIR_CHANCE = b.comment("Chance that a region has a lair.")
+                .defineInRange("lairChance", 0.6, 0.0, 1.0);
+        SURVIVAL_LAIR_MIN_SPAWN_DISTANCE = b.comment("No lair closer than this many blocks to the world spawn.")
+                .defineInRange("lairMinSpawnDistance", 300, 0, 100000);
         b.pop();
 
         SPEC = b.build();

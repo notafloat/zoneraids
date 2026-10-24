@@ -1,0 +1,139 @@
+{
+  "pools": [
+    {
+      "rolls": {
+        "type": "minecraft:uniform",
+        "min": 1,
+        "max": 2
+      },
+      "bonus_rolls": 0,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "anomalyzone:sun",
+          "weight": 3
+        },
+        {
+          "type": "minecraft:item",
+          "name": "anomalyzone:thunder",
+          "weight": 3
+        },
+        {
+          "type": "minecraft:item",
+          "name": "anomalyzone:polyhedron",
+          "weight": 3
+        },
+        {
+          "type": "minecraft:item",
+          "name": "anomalyzone:atom",
+          "weight": 1
+        },
+        {
+          "type": "minecraft:item",
+          "name": "anomalyzone:prism",
+          "weight": 4
+        },
+        {
+          "type": "minecraft:item",
+          "name": "anomalyzone:snake_eye",
+          "weight": 4
+        },
+        {
+          "type": "minecraft:item",
+          "name": "anomalyzone:hoop",
+          "weight": 4
+        }
+      ]
+    },
+    {
+      "rolls": {
+        "type": "minecraft:uniform",
+        "min": 1,
+        "max": 2
+      },
+      "bonus_rolls": 0,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:diamond",
+          "weight": 3,
+          "functions": [
+            {
+              "function": "minecraft:set_count",
+              "count": {
+                "type": "minecraft:uniform",
+                "min": 1,
+                "max": 3
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:emerald",
+          "weight": 4,
+          "functions": [
+            {
+              "function": "minecraft:set_count",
+              "count": {
+                "type": "minecraft:uniform",
+                "min": 2,
+                "max": 6
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:gold_ingot",
+          "weight": 4,
+          "functions": [
+            {
+              "function": "minecraft:set_count",
+              "count": {
+                "type": "minecraft:uniform",
+                "min": 2,
+                "max": 5
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rolls": {
+        "type": "minecraft:uniform",
+        "min": 1,
+        "max": 1
+      },
+      "bonus_rolls": 0,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "anomalyzone:legend_zone",
+          "weight": 1
+        },
+        {
+          "type": "minecraft:item",
+          "name": "anomalyzone:hive",
+          "weight": 3
+        },
+        {
+          "type": "minecraft:item",
+          "name": "firstaid:morphine",
+          "weight": 4,
+          "functions": [
+            {
+              "function": "minecraft:set_count",
+              "count": {
+                "type": "minecraft:uniform",
+                "min": 1,
+                "max": 2
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
