@@ -26,11 +26,14 @@ function Say($text, $color = 'Gray') { Write-Host $text -ForegroundColor $color 
 function Fail($text) { throw $text }
 
 function Download($url, $dest) {
-    $tmp = "$dest.part"
+    # Mod file names can contain [ ], which PowerShell cmdlets read as wildcards: download to a plain
+    # temp name and move with .NET.
+    $tmp = Join-Path $Root ("download-" + [guid]::NewGuid().ToString('N') + ".part")
     for ($i = 1; $i -le 4; $i++) {
         try {
             Invoke-WebRequest -UseBasicParsing -Uri $url -OutFile $tmp
-            Move-Item -Force $tmp $dest
+            if ([IO.File]::Exists($dest)) { [IO.File]::Delete($dest) }
+            [IO.File]::Move($tmp, $dest)
             return
         } catch {
             if ($i -eq 4) { throw "Не удалось скачать $url : $($_.Exception.Message)" }
@@ -51,7 +54,7 @@ function Expand-Zip($zip, $dest, $strip = '', $only = '') {
             if (-not $name -or $name.EndsWith('/')) { continue }
             $out = [IO.Path]::GetFullPath((Join-Path $full $name))
             if (-not $out.StartsWith($full)) { continue }
-            New-Item -ItemType Directory -Force (Split-Path $out) | Out-Null
+            [IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($out)) | Out-Null
             [IO.Compression.ZipFileExtensions]::ExtractToFile($e, $out, $true)
         }
     } finally { $z.Dispose() }
@@ -296,9 +299,9 @@ try {
             $dest = [IO.Path]::GetFullPath((Join-Path $mc $f.path))
             if (-not $dest.StartsWith([IO.Path]::GetFullPath($mc))) { continue }
             $keep[$dest.ToLower()] = $true
-            if ((Test-Path $dest) -and (Get-FileHash -Algorithm SHA1 $dest).Hash -eq $f.hashes.sha1.ToUpper()) { continue }
+            if ((Test-Path -LiteralPath $dest) -and (Get-FileHash -Algorithm SHA1 -LiteralPath $dest).Hash -eq $f.hashes.sha1.ToUpper()) { continue }
             Say ("  [{0}/{1}] {2}" -f $n, $files.Count, (Split-Path -Leaf $f.path))
-            New-Item -ItemType Directory -Force (Split-Path $dest) | Out-Null
+            [IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($dest)) | Out-Null
             Download $f.downloads[0] $dest
         }
         # Our jars and configs come as overrides; mods that left the pack are removed.
@@ -310,7 +313,7 @@ try {
         } finally { $z.Dispose() }
         Get-ChildItem "$mc\mods" -Filter *.jar | Where-Object { -not $keep[$_.FullName.ToLower()] } | ForEach-Object {
             Say "  убираю $($_.Name)"
-            Remove-Item -Force $_.FullName
+            Remove-Item -Force -LiteralPath $_.FullName
         }
         Expand-Zip $mrpack $mc 'overrides/' 'overrides/'
         Expand-Zip $mrpack $mc 'client-overrides/' 'client-overrides/'
