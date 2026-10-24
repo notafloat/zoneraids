@@ -14,6 +14,7 @@ import net.minecraftforge.client.event.ScreenEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.common.Mod;
 
 @Mod.EventBusSubscriber(modid = ZoneRaids.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
@@ -55,7 +56,13 @@ public final class ClientEvents {
             return;
         }
         if (event.getNewScreen().getClass() == InventoryScreen.class && mc.gameMode != null && !mc.gameMode.hasInfiniteItems()) {
-            event.setNewScreen(new PdaInventoryScreen(mc.player));
+            if (ModList.get().isLoaded("curios")) {
+                // One window for inventory, equipment and artifacts: Curios' menu, which the server opens.
+                event.setCanceled(true);
+                PdaTabs.openCurios();
+            } else {
+                event.setNewScreen(new PdaInventoryScreen(mc.player));
+            }
         } else if (event.getNewScreen() instanceof AbstractContainerScreen<?> curios && PdaTabs.isCuriosScreen(curios)) {
             event.setNewScreen(new PdaCuriosScreen(curios.getMenu(), mc.player.getInventory(), curios.getTitle()));
         } else if (event.getNewScreen() instanceof ContainerScreen chest

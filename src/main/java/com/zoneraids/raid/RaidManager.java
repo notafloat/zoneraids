@@ -8,7 +8,7 @@ import com.zoneraids.data.PlayerRaidData.Stat;
 import com.zoneraids.data.RaidMap;
 import com.zoneraids.data.RaidWorldData;
 import com.zoneraids.data.SpawnPoint;
-import com.zoneraids.menu.ArtifactContainerMenu;
+import com.zoneraids.menu.ArtifactContainers;
 import com.zoneraids.network.RaidHudPacket;
 import com.zoneraids.network.RaidNetwork;
 import com.zoneraids.network.TerminalActionPacket;
@@ -1459,7 +1459,9 @@ public final class RaidManager {
 
     public void handleAction(ServerPlayer player, TerminalActionPacket.Action action, String arg) {
         long last = lastAction.getOrDefault(player.getUUID(), Long.MIN_VALUE);
-        if (tickCounter - last < ACTION_COOLDOWN_TICKS && action != TerminalActionPacket.Action.OPEN) {
+        // Artifact clicks are as cheap as slot clicks and come as fast; they skip the cooldown.
+        boolean artifact = action == TerminalActionPacket.Action.ARTIFACT || action == TerminalActionPacket.Action.ARTIFACT_STORE;
+        if (tickCounter - last < ACTION_COOLDOWN_TICKS && action != TerminalActionPacket.Action.OPEN && !artifact) {
             return;
         }
         lastAction.put(player.getUUID(), tickCounter);
@@ -1506,8 +1508,18 @@ public final class RaidManager {
                 ShopService.sell(player, arg, true);
                 return;
             }
-            case CONTAINER -> {
-                ArtifactContainerMenu.open(player);
+            case ARTIFACT, ARTIFACT_STORE -> {
+                String[] parts = arg.split(" ");
+                try {
+                    int slot = Integer.parseInt(parts[0]);
+                    if (action == TerminalActionPacket.Action.ARTIFACT) {
+                        ArtifactContainers.click(player, slot, parts.length > 1);
+                    } else {
+                        ArtifactContainers.store(player, slot);
+                    }
+                } catch (NumberFormatException ignored) {
+                    // Malformed request: nothing to do.
+                }
                 return;
             }
             case READY -> toggleReady(player);
