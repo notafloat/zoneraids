@@ -93,6 +93,16 @@ if [ "$status" = up ]; then
   say "kill @e[type=zoneraids:bloodsucker]" 3
   say "execute in $ENEMY_DIM positioned 24 $ITEM_Y 24 as @e[type=item,distance=..40] run data get entity @s Item" 2
   say "say ENEMY_CHECK_END" 2
+  if [ "$VARIANT" = survival ]; then
+    # Boss mods of the survival variant: every boss must exist; each one is removed right after.
+    say "say BOSS_CHECK_START" 1
+    for boss in cataclysm:ignis cataclysm:netherite_monstrosity cataclysm:ender_guardian cataclysm:the_harbinger \
+        mowziesmobs:ferrous_wroughtnaut mowziesmobs:frostmaw; do
+      say "execute in minecraft:overworld run summon $boss 24 201 24" 2
+      say "kill @e[type=$boss]" 1
+    done
+    say "say BOSS_CHECK_END" 2
+  fi
   say "spark health --memory" 10
   say "stop" 1
   wait "$PID"
@@ -164,6 +174,11 @@ if [ "$VARIANT" = survival ]; then
   echo "===== Survival ====="
   grep -E 'Zone Raids: survival mode' "$REPORT/console.log" || { echo "Survival mode is not on"; fail=1; }
   grep -qiE 'Zone Raids: .*build' "$REPORT/console.log" && { echo "Survival world built the hub or the Cordon"; fail=1; }
+  echo "===== Bosses ====="
+  BOSS_LOG="$(sed -n '/BOSS_CHECK_START/,/BOSS_CHECK_END/p' "$REPORT/console.log")"
+  echo "$BOSS_LOG" | grep -E 'Summoned|summon|Unknown|Unable' | cut -c1-300
+  SUMMONED="$(grep -c 'Summoned new' <<< "$BOSS_LOG")"
+  [ "$SUMMONED" -ge 6 ] || { echo "Only $SUMMONED of 6 bosses could be summoned"; fail=1; }
 fi
 echo "===== Memory ====="
 grep -A12 -iE 'Memory usage|Memory Usage' "$REPORT/console.log" | head -30

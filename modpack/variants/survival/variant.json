@@ -1,6 +1,18 @@
 {
-  "_comment": "Survival variant of the pack: same mods, configs from modpack/overrides with the files in this folder on top. Built with build_pack.py --variant survival.",
+  "_comment": "Survival variant of the pack: the mods of pack.json plus \"mods\" below, configs from modpack/overrides with the files in this folder on top. Built with build_pack.py --variant survival.",
   "name": "Zone Raids Survival",
   "file_prefix": "ZoneRaids-Survival",
-  "summary": "S.T.A.L.K.E.R. survival in an open world: mutants, bandits and soldiers roam, anomalies and artifacts in Zone biomes, guns, limb damage, a trader in the PDA. No raids, no wipes."
+  "summary": "S.T.A.L.K.E.R. survival in an open world: mutants, bandits and soldiers roam, anomalies and artifacts in Zone biomes, guns, limb damage, a trader in the PDA. No raids, no wipes.",
+  "mods": [
+    {
+      "slug": "l_enders-cataclysm",
+      "side": "both",
+      "why": "Boss structures: Ignis in the Burning Arena, Netherite Monstrosity in the Soul Black Smith, Ender Guardian in the Ruined Citadel, Harbinger in the Ancient Factory, Leviathan in the Sunken City, Maledictus in the Frosted Prison, Ancient Remnant in the Cursed Pyramid, Scylla in the Acropolis"
+    },
+    {
+      "slug": "mowzies-mobs",
+      "side": "both",
+      "why": "Bosses with their own lairs: Ferrous Wroughtnaut in its underground chamber, Frostmaw in the snow, Umvuthi in the savanna village, Sculptor on its mountain"
+    }
+  ]
 }
