@@ -2,6 +2,9 @@ package com.zoneraids.entity;
 
 import com.zoneraids.registry.ModEntities;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerBossEvent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -39,6 +42,8 @@ public class Controller extends Monster {
     private static final double PSI_RANGE = 28.0;
     private static final int SUMMON_COOLDOWN = 360;
     private static final int MAX_MINIONS = 3;
+    /** Gathering a psi wave, for the model. */
+    private static final EntityDataAccessor<Boolean> CHARGING = SynchedEntityData.defineId(Controller.class, EntityDataSerializers.BOOLEAN);
     private final ServerBossEvent bossBar = new ServerBossEvent(getDisplayName(), BossEvent.BossBarColor.PURPLE,
             BossEvent.BossBarOverlay.NOTCHED_10);
     private int psiCooldown = PSI_COOLDOWN;
@@ -49,6 +54,16 @@ public class Controller extends Monster {
         super(type, level);
         xpReward = 80;
         setPersistenceRequired();
+    }
+
+    @Override
+    protected void defineSynchedData() {
+        super.defineSynchedData();
+        entityData.define(CHARGING, false);
+    }
+
+    public boolean isCharging() {
+        return entityData.get(CHARGING);
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -80,6 +95,7 @@ public class Controller extends Monster {
             return;
         }
         LivingEntity target = getTarget();
+        entityData.set(CHARGING, psiWindup > 0);
         if (psiWindup > 0) {
             level.sendParticles(ParticleTypes.WITCH, getX(), getEyeY(), getZ(), 3, 0.4, 0.3, 0.4, 0.0);
             if (--psiWindup == 0 && target instanceof Player player && canPsi(player)) {

@@ -119,5 +119,24 @@
     "skin": {
       "id": "tacznpcs:entity/default.png"
     }
+  },
+  "zr_bandit_boss": {
+    "aligned": [
+      "zr_bandit",
+      "zr_military",
+      "monster"
+    ],
+    "opposed": [
+      "players"
+    ],
+    "equipment": {
+      "table": "zoneraids:enemies/bandit_boss_gear",
+      "dropChances": {
+        "mainhand": 1
+      }
+    },
+    "skin": {
+      "id": "zoneraids:entity/borov.png"
+    }
   }
 }
