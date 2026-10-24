@@ -1051,7 +1051,12 @@ public final class RaidManager {
     }
 
     private static void giveStarterKit(ServerPlayer player) {
-        for (String entry : RaidConfig.STARTER_KIT.get()) {
+        giveItems(player, RaidConfig.STARTER_KIT.get());
+    }
+
+    /** Hands out {@code "namespace:item count"} entries; unknown ids are skipped. */
+    public static void giveItems(ServerPlayer player, List<? extends String> entries) {
+        for (String entry : entries) {
             String[] parts = entry.trim().split("\\s+");
             ResourceLocation id = ResourceLocation.tryParse(parts[0]);
             Item item = id == null ? null : ForgeRegistries.ITEMS.getValue(id);
@@ -1080,7 +1085,7 @@ public final class RaidManager {
     }
 
     /** An artifact container (config {@code starterContainer}), unless the player has one in the inventory or a Curios slot. */
-    private static void giveStarterContainer(ServerPlayer player) {
+    public static void giveStarterContainer(ServerPlayer player) {
         ResourceLocation id = ResourceLocation.tryParse(RaidConfig.STARTER_CONTAINER.get().trim());
         Item item = id == null ? null : ForgeRegistries.ITEMS.getValue(id);
         if (item == null || item == net.minecraft.world.item.Items.AIR || player.getInventory().hasAnyOf(Set.of(item))
@@ -1100,7 +1105,12 @@ public final class RaidManager {
      * player lacks instead of piling up over the rounds; stackable items are always handed out.
      */
     private static void giveRoundKit(ServerPlayer player, ServerLevel level) {
-        String name = RaidConfig.ROUND_KIT_LOOT_TABLE.get().trim();
+        giveLootKit(player, level, RaidConfig.ROUND_KIT_LOOT_TABLE.get());
+    }
+
+    /** Rolls a kit loot table for the player the way {@link #giveRoundKit} does. Empty name = nothing. */
+    public static void giveLootKit(ServerPlayer player, ServerLevel level, String tableName) {
+        String name = tableName.trim();
         ResourceLocation id = name.isEmpty() ? null : ResourceLocation.tryParse(name);
         if (id == null) {
             return;
@@ -1411,7 +1421,7 @@ public final class RaidManager {
 
     /** With {@code forceHubOnLogin}, moves a player who is not in a raid into the hub dimension. */
     public void sendToHubIfOutside(ServerPlayer player) {
-        if (!RaidConfig.FORCE_HUB_ON_LOGIN.get() || isInRaid(player.getUUID()) || player.isCreative() || player.isSpectator()) {
+        if (!RaidConfig.FORCE_HUB_ON_LOGIN.get() || RaidConfig.SURVIVAL.get() || isInRaid(player.getUUID()) || player.isCreative() || player.isSpectator()) {
             return;
         }
         HubPoint hub = data().getHub();
@@ -1584,7 +1594,8 @@ public final class RaidManager {
                 parties.isLeaderOrSolo(id), inviterPlayer == null ? "" : inviterPlayer.getGameProfile().getName(),
                 RaidConfig.REMOTE_STASH.get() && !isInRaid(id), PlayerRaidData.getPerkPoints(player), perks,
                 spectators.entries(player), watching == null ? "" : watching,
-                RaidConfig.SHOP.get() && RaidConfig.REMOTE_SHOP.get() && !isInRaid(id), readyState(player));
+                RaidConfig.SHOP.get() && RaidConfig.REMOTE_SHOP.get() && !isInRaid(id), readyState(player),
+                RaidConfig.SURVIVAL.get());
     }
 
     // ------------------------------------------------------------------ parties

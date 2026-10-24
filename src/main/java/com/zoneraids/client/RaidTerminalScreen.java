@@ -25,6 +25,8 @@ public final class RaidTerminalScreen extends Screen {
     private static final int LIST_Y = 22;
     /** Ticks after opening during which the terminal key does not close the screen (key repeat from opening it). */
     private static final int KEY_GRACE = 6;
+    /** Lines of zoneraids.terminal.survival.N shown in survival mode instead of the map list. */
+    private static final int SURVIVAL_LINES = 5;
 
     private int page;
     private int refreshTicks;
@@ -163,15 +165,26 @@ public final class RaidTerminalScreen extends Screen {
             return;
         }
         Component status = data.inRaid() ? Component.translatable("zoneraids.terminal.status_raid")
+                : data.survival() && data.queuedMap().isEmpty() ? Component.translatable("zoneraids.terminal.status_survival")
                 : !data.watching().isEmpty() ? Component.translatable("zoneraids.watch.current", data.watching())
                 : data.queuedMap().isEmpty() ? Component.translatable("zoneraids.terminal.status_hub")
                 : Component.translatable("zoneraids.terminal.status_queue", data.queuedMap());
-        int statusColor = data.inRaid() ? ZoneUi.RED : !data.watching().isEmpty() ? ZoneUi.GREEN
+        int statusColor = data.inRaid() ? ZoneUi.RED : !data.watching().isEmpty() || (data.survival() && data.queuedMap().isEmpty()) ? ZoneUi.GREEN
                 : data.queuedMap().isEmpty() ? ZoneUi.DIM : ZoneUi.AMBER;
         ZoneUi.header(g, font, left, top, right, title, ZoneUi.AMBER, status, statusColor);
 
         List<TerminalDataPacket.MapEntry> maps = data.maps();
-        if (maps.isEmpty()) {
+        if (maps.isEmpty() && data.survival()) {
+            // Survival mode has no raid maps: the first tab tells how the open world plays instead.
+            int y = top + LIST_Y + 6;
+            for (int i = 1; i <= SURVIVAL_LINES; i++) {
+                for (var line : font.split(Component.translatable("zoneraids.terminal.survival." + i), PANEL_W - 20)) {
+                    g.drawString(font, line, left + 10, y, i == 1 ? ZoneUi.AMBER : ZoneUi.TEXT);
+                    y += 10;
+                }
+                y += 4;
+            }
+        } else if (maps.isEmpty()) {
             g.drawString(font, Component.translatable("zoneraids.terminal.no_maps"), left + 10, top + LIST_Y + 6, ZoneUi.DIM);
         }
         int start = page * ROWS_PER_PAGE;

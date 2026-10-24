@@ -69,6 +69,22 @@ public final class RaidConfig {
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> SHOP_SELL;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> SHOP_BUY;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> ENTITY_UPDATE_INTERVALS;
+    public static final ForgeConfigSpec.BooleanValue SURVIVAL;
+    public static final ForgeConfigSpec.ConfigValue<List<? extends String>> SURVIVAL_DIMENSIONS;
+    public static final ForgeConfigSpec.IntValue SURVIVAL_SPAWN_INTERVAL;
+    public static final ForgeConfigSpec.DoubleValue SURVIVAL_SPAWN_CHANCE;
+    public static final ForgeConfigSpec.DoubleValue SURVIVAL_ZONE_BIOME_MULTIPLIER;
+    public static final ForgeConfigSpec.DoubleValue SURVIVAL_NIGHT_MULTIPLIER;
+    public static final ForgeConfigSpec.IntValue SURVIVAL_MAX_NEAR_PLAYER;
+    public static final ForgeConfigSpec.IntValue SURVIVAL_MIN_DISTANCE;
+    public static final ForgeConfigSpec.IntValue SURVIVAL_MAX_DISTANCE;
+    public static final ForgeConfigSpec.IntValue SURVIVAL_DESPAWN_DISTANCE;
+    public static final ForgeConfigSpec.IntValue SURVIVAL_SAFE_RADIUS;
+    public static final ForgeConfigSpec.ConfigValue<List<? extends String>> SURVIVAL_SPAWNS;
+    public static final ForgeConfigSpec.ConfigValue<List<? extends String>> SURVIVAL_STARTER_KIT;
+    public static final ForgeConfigSpec.ConfigValue<String> SURVIVAL_STARTER_LOOT_TABLE;
+    public static final ForgeConfigSpec.IntValue SURVIVAL_KILLS_PER_PERK_POINT;
+    public static final ForgeConfigSpec.ConfigValue<List<? extends String>> SURVIVAL_EXTRA_BUY;
 
     static {
         ForgeConfigSpec.Builder b = new ForgeConfigSpec.Builder();
@@ -314,6 +330,53 @@ public final class RaidConfig {
                         "minecraft:player=1",
                         "tacznpcs:npc=1",
                         "tacz:bullet=1"), o -> o instanceof String s && s.contains("="));
+        b.pop();
+
+        b.push("survival");
+        SURVIVAL = b.comment("Survival mode: an open world instead of raids. The hub and the Cordon are not built and nobody is sent",
+                        "to a hub; mutants, bandits and soldiers roam near players, a newcomer gets a starter kit once, the trader is",
+                        "in the PDA, and killing enemies earns perk points. Nothing is wiped. Raids still work on maps an admin adds.")
+                .define("enabled", false);
+        SURVIVAL_DIMENSIONS = b.comment("Dimensions where enemies roam in survival mode.")
+                .defineListAllowEmpty(List.of("dimensions"), List.of("minecraft:overworld"), o -> o instanceof String);
+        SURVIVAL_SPAWN_INTERVAL = b.comment("Seconds between spawn attempts near each player.")
+                .defineInRange("spawnIntervalSeconds", 40, 5, 3600);
+        SURVIVAL_SPAWN_CHANCE = b.comment("Chance that an attempt spawns a group.")
+                .defineInRange("spawnChance", 0.3, 0.0, 1.0);
+        SURVIVAL_ZONE_BIOME_MULTIPLIER = b.comment("Spawn chance multiplier in Anomaly Zone biomes (Red Forest, psi, thermal and bio zones).")
+                .defineInRange("zoneBiomeMultiplier", 2.0, 0.0, 10.0);
+        SURVIVAL_NIGHT_MULTIPLIER = b.comment("Spawn chance multiplier at night.")
+                .defineInRange("nightMultiplier", 1.5, 0.0, 10.0);
+        SURVIVAL_MAX_NEAR_PLAYER = b.comment("No new group while this many roaming enemies are within maxDistance * 2 of the player.")
+                .defineInRange("maxNearPlayer", 6, 0, 100);
+        SURVIVAL_MIN_DISTANCE = b.comment("Groups appear between minDistance and maxDistance blocks from the player.")
+                .defineInRange("minDistance", 24, 8, 128);
+        SURVIVAL_MAX_DISTANCE = b.defineInRange("maxDistance", 44, 8, 128);
+        SURVIVAL_DESPAWN_DISTANCE = b.comment("Roaming enemies with no player this close are removed.")
+                .defineInRange("despawnDistance", 112, 32, 512);
+        SURVIVAL_SAFE_RADIUS = b.comment("No enemies spawn this close to the world spawn point.")
+                .defineInRange("safeRadius", 64, 0, 10000);
+        SURVIVAL_SPAWNS = b.comment("Groups that roam, as \"kind weight min max\" with an optional \"night\" (only at night) or \"zone\"",
+                        "(only in Anomaly Zone biomes). Kinds are those of [enemies] types.")
+                .defineListAllowEmpty(List.of("spawns"), List.of(
+                        "blind_dog 30 2 4",
+                        "flesh 20 1 3",
+                        "bandit 16 1 3",
+                        "snork 10 1 2 night",
+                        "snork 8 1 2 zone",
+                        "military 6 2 3",
+                        "bloodsucker 5 1 1 night",
+                        "bloodsucker 4 1 1 zone"), o -> o instanceof String);
+        SURVIVAL_STARTER_KIT = b.comment("Items a player gets once, on the first login, as \"namespace:item count\". Unknown ids are skipped.",
+                        "The artifact container from [anomalies] starterContainer comes with it.")
+                .defineListAllowEmpty(List.of("starterKit"), List.of("minecraft:bread 8", "minecraft:torch 16", "firstaid:bandage 2"),
+                        o -> o instanceof String);
+        SURVIVAL_STARTER_LOOT_TABLE = b.comment("Loot table rolled once on the first login (a basic gun and armor). Empty string = none.")
+                .define("starterLootTable", "zoneraids:kits/round_start");
+        SURVIVAL_KILLS_PER_PERK_POINT = b.comment("Every this many roaming enemies a player kills give one perk point. 0 = off.")
+                .defineInRange("killsPerPerkPoint", 10, 0, 1000);
+        SURVIVAL_EXTRA_BUY = b.comment("Extra lines for the trader's [shop] buy list in survival mode, same format.")
+                .defineListAllowEmpty(List.of("extraBuy"), List.of("vehicles 15000 1 zoneraids:pit_bike"), o -> o instanceof String);
         b.pop();
 
         SPEC = b.build();

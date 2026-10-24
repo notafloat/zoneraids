@@ -4,6 +4,7 @@
 Outputs (in --out):
   ZoneRaids-<version>.mrpack        client pack for Prism Launcher / Modrinth App / ATLauncher
   ZoneRaids-<version>-server.zip    ready-to-run Forge server (mods, configs, start scripts)
+  (with --variant: <file_prefix>-<version>... from modpack/variants/<name>/variant.json)
   mods.lock.json                    exact files that went into this build (mods and shader packs)
   server/                           unpacked server (used by the smoke test)
 
@@ -222,12 +223,20 @@ def copy_tree(src, dst):
         shutil.copytree(src, dst, dirs_exist_ok=True)
 
 
-def add_dir_to_zip(z, src, prefix):
-    for root, _, files in os.walk(src):
-        for name in sorted(files):
-            full = os.path.join(root, name)
-            rel = os.path.relpath(full, src).replace(os.sep, "/")
-            z.write(full, f"{prefix}{rel}")
+def layered(dirs):
+    """Files of several folders by relative path; a later folder's file replaces an earlier one's."""
+    files = {}
+    for src in dirs:
+        for root, _, names in os.walk(src):
+            for name in sorted(names):
+                full = os.path.join(root, name)
+                files[os.path.relpath(full, src).replace(os.sep, "/")] = full
+    return files
+
+
+def add_dirs_to_zip(z, dirs, prefix):
+    for rel, full in sorted(layered(dirs).items()):
+        z.write(full, f"{prefix}{rel}")
 
 
 def main():
@@ -235,10 +244,21 @@ def main():
     ap.add_argument("--zoneraids-jar", required=True, help="built Zone Raids mod jar")
     ap.add_argument("--out", default="build/modpack")
     ap.add_argument("--cache", default=os.path.expanduser("~/.cache/zoneraids-pack"))
+    ap.add_argument("--variant", default="", help="modpack/variants/<name>: same mods, its configs on top of the pack's")
     args = ap.parse_args()
 
     with open(os.path.join(PACK_DIR, "pack.json"), encoding="utf-8") as fh:
         pack = json.load(fh)
+    prefix = "ZoneRaids"
+    variant_dir = None
+    if args.variant:
+        variant_dir = os.path.join(PACK_DIR, "variants", args.variant)
+        with open(os.path.join(variant_dir, "variant.json"), encoding="utf-8") as fh:
+            variant = json.load(fh)
+        pack["name"] = variant.get("name", pack["name"])
+        pack["summary"] = variant.get("summary", pack["summary"])
+        prefix = variant["file_prefix"]
+        print(f"Variant {args.variant}: {pack['name']}", flush=True)
     version = pack["version"]
     out = os.path.abspath(args.out)
     shutil.rmtree(out, ignore_errors=True)
@@ -263,9 +283,10 @@ def main():
     with open(os.path.join(out, "mods.lock.json"), "w", encoding="utf-8") as fh:
         json.dump(lock, fh, indent=2, ensure_ascii=False)
 
-    common = os.path.join(PACK_DIR, "overrides")
-    client_only = os.path.join(PACK_DIR, "client-overrides")
-    server_only = os.path.join(PACK_DIR, "server-overrides")
+    layers = [PACK_DIR] + ([variant_dir] if variant_dir else [])
+    common = [os.path.join(d, "overrides") for d in layers]
+    client_only = [os.path.join(d, "client-overrides") for d in layers]
+    server_only = [os.path.join(d, "server-overrides") for d in layers]
 
     # Client .mrpack: Modrinth files by URL, everything else (our jars, forgecdn jars, configs) as overrides.
     index = {
@@ -289,7 +310,7 @@ def main():
             "path": f"shaderpacks/{s['file']}", "hashes": {"sha1": s["sha1"], "sha512": s["sha512"]},
             "env": side_env("client"), "downloads": [s["url"]], "fileSize": s["size"],
         })
-    mrpack = os.path.join(out, f"ZoneRaids-{version}.mrpack")
+    mrpack = os.path.join(out, f"{prefix}-{version}.mrpack")
     with zipfile.ZipFile(mrpack, "w", zipfile.ZIP_DEFLATED) as z:
         z.writestr("modrinth.index.json", json.dumps(index, indent=2, ensure_ascii=False))
         z.write(args.zoneraids_jar, f"overrides/mods/{zr_name}")
@@ -297,8 +318,8 @@ def main():
         for m in url_jars:
             if m["side"] in ("both", "client"):
                 z.write(os.path.join(args.cache, m["file"]), f"overrides/mods/{m['file']}")
-        add_dir_to_zip(z, common, "overrides/")
-        add_dir_to_zip(z, client_only, "client-overrides/")
+        add_dirs_to_zip(z, common, "overrides/")
+        add_dirs_to_zip(z, client_only, "client-overrides/")
         for path, text in oculus_files(shaderpacks).items():
             z.writestr(f"client-overrides/{path}", text)
 
@@ -310,21 +331,21 @@ def main():
             shutil.copy2(os.path.join(args.cache, m["file"]), os.path.join(server, "mods", m["file"]))
     shutil.copy2(args.zoneraids_jar, os.path.join(server, "mods", zr_name))
     shutil.copy2(glue_path, os.path.join(server, "mods", glue_name))
-    copy_tree(common, server)
-    copy_tree(server_only, server)
+    for src in common + server_only:
+        copy_tree(src, server)
     with open(os.path.join(server, "forge-version.txt"), "w") as fh:
         fh.write(f"{pack['minecraft']}-{forge}\n")
     for script in ("start-linux.sh",):
         p = os.path.join(server, script)
         if os.path.exists(p):
             os.chmod(p, 0o755)
-    server_zip = os.path.join(out, f"ZoneRaids-{version}-server.zip")
+    server_zip = os.path.join(out, f"{prefix}-{version}-server.zip")
     with zipfile.ZipFile(server_zip, "w", zipfile.ZIP_DEFLATED) as z:
         for root, _, files in os.walk(server):
             for name in sorted(files):
                 full = os.path.join(root, name)
                 rel = os.path.relpath(full, server).replace(os.sep, "/")
-                info = zipfile.ZipInfo.from_file(full, f"ZoneRaids-server/{rel}")
+                info = zipfile.ZipInfo.from_file(full, f"{prefix}-server/{rel}")
                 with open(full, "rb") as fh:
                     z.writestr(info, fh.read(), zipfile.ZIP_DEFLATED)
 

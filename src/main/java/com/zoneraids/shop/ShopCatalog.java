@@ -65,9 +65,19 @@ public final class ShopCatalog {
     private ShopCatalog() {
     }
 
+    /** The {@code [shop] buy} list, plus {@code [survival] extraBuy} in survival mode. */
+    private static List<? extends String> buyLines() {
+        if (!RaidConfig.SURVIVAL.get() || RaidConfig.SURVIVAL_EXTRA_BUY.get().isEmpty()) {
+            return RaidConfig.SHOP_BUY.get();
+        }
+        List<String> lines = new ArrayList<>(RaidConfig.SHOP_BUY.get());
+        lines.addAll(RaidConfig.SURVIVAL_EXTRA_BUY.get());
+        return lines;
+    }
+
     public static List<Offer> offers() {
         List<Offer> offers = new ArrayList<>();
-        List<? extends String> lines = RaidConfig.SHOP_BUY.get();
+        List<? extends String> lines = buyLines();
         for (int i = 0; i < lines.size(); i++) {
             Offer offer = parseOffer(i, lines.get(i));
             if (offer != null) {
@@ -79,7 +89,7 @@ public final class ShopCatalog {
 
     @Nullable
     public static Offer offer(int index) {
-        List<? extends String> lines = RaidConfig.SHOP_BUY.get();
+        List<? extends String> lines = buyLines();
         return index < 0 || index >= lines.size() ? null : parseOffer(index, lines.get(index));
     }
 
@@ -166,7 +176,7 @@ public final class ShopCatalog {
         for (String line : RaidConfig.SHOP_SELL.get()) {
             specs.add(line.trim().split("\\s+")[0]);
         }
-        for (String line : RaidConfig.SHOP_BUY.get()) {
+        for (String line : buyLines()) {
             String[] parts = line.trim().split("\\s+", 4);
             if (parts.length == 4) {
                 int brace = parts[3].indexOf('{');
