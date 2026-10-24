@@ -23,9 +23,9 @@ import java.util.List;
 /**
  * The PDA: every window of the mod is one of its tabs. Raids, perks and watching read the terminal
  * data from the server; the trader and the stash are opened by the server; the map, health and
- * status and inventory are purely client-side. Curios' slots (backpack, rig, artifact container) and the
- * worn container open from the inventory tab as views inside it ({@link PdaCuriosScreen},
- * {@link PdaContainerScreen}). Every PDA tab shares the panel size and position, with the tab row on top.
+ * status are purely client-side. The inventory tab is Curios' menu ({@link PdaCuriosScreen}: inventory,
+ * equipment slots and the worn artifact container in one window), or the vanilla inventory menu without
+ * Curios. Every PDA tab shares the panel size and position, with the tab row on top.
  */
 public final class PdaTabs {
     public static final int PANEL_W = 424;
@@ -101,16 +101,6 @@ public final class PdaTabs {
         return buttons(left, top, PANEL_W, current);
     }
 
-    /**
-     * Tab row for a view inside a tab (Curios' slots, the artifact container): the {@code parent} tab is lit
-     * but still clickable, and takes the player back to it.
-     */
-    public static List<ZoneButton> subview(int left, int top, int panelW, Tab parent) {
-        List<ZoneButton> list = buttons(left, top, panelW, null);
-        list.get(parent.ordinal()).selected = true;
-        return list;
-    }
-
     /** Opens a tab from outside the PDA or from another tab. */
     public static void open(Tab tab, @Nullable Tab current) {
         Minecraft mc = Minecraft.getInstance();
@@ -136,7 +126,17 @@ public final class PdaTabs {
             case MAP -> mc.setScreen(new CordonMapScreen());
             case HEALTH -> mc.setScreen(new HealthScreen());
             case STATUS -> mc.setScreen(new StatusScreen());
-            case INVENTORY -> mc.setScreen(new PdaInventoryScreen(mc.player));
+            case INVENTORY -> openInventory();
+        }
+    }
+
+    /** The inventory tab: Curios' menu when Curios is there (the server opens it), else the vanilla inventory menu. */
+    static void openInventory() {
+        Minecraft mc = Minecraft.getInstance();
+        if (ModList.get().isLoaded("curios")) {
+            openCurios();
+        } else if (mc.player != null) {
+            mc.setScreen(new PdaInventoryScreen(mc.player));
         }
     }
 

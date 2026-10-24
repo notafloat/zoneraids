@@ -12,8 +12,10 @@ public record TerminalActionPacket(Action action, String arg) {
     public enum Action {
         OPEN, REFRESH, JOIN, LEAVE_QUEUE, STASH, LEAVE_PARTY, ACCEPT_INVITE, BUY_PERK, WATCH, STOP_WATCH,
         SHOP, SHOP_BUY, SHOP_SELL, SHOP_SELL_ALL,
-        /** Open the worn artifact container. */
-        CONTAINER,
+        /** Artifact slot of the worn container clicked in the PDA inventory: {@code "slot"}, or {@code "slot shift"}. */
+        ARTIFACT,
+        /** Shift-click on an artifact in the inventory: {@code "menuSlot"}, into the worn container. */
+        ARTIFACT_STORE,
         /** First Aid healing item from an inventory slot on a body part: {@code "slot part"}. */
         HEAL
     }

@@ -1,29 +1,43 @@
 package com.zoneraids.client;
 
 import com.mojang.logging.LogUtils;
+import com.zoneraids.menu.ArtifactContainers;
+import com.zoneraids.network.RaidNetwork;
+import com.zoneraids.network.TerminalActionPacket;
+import com.zoneraids.util.CuriosCompat;
+import com.zoneraids.util.FirstAidCompat;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
 import java.lang.reflect.Field;
+import java.util.List;
 
 /**
- * Curios' screen drawn inside the PDA: the same menu (equipment slots, armor, inventory, crafting grid)
- * with PDA slot frames, the slot column on the left and the tab row on top. {@link ClientEvents} swaps it
- * in for Curios' own screen. Items move exactly as there; pages of slots turn with the buttons or the
- * mouse wheel through Curios' own page packet. No compile-time dependency on Curios.
+ * PDA inventory tab with Curios: Curios' menu (equipment slots, armor, inventory, crafting grid) with PDA
+ * slot frames, the equipment column on the left and the tab row on top, and beside it the player's health
+ * and the worn artifact container. The container's artifact slots work like any other slot: click to take
+ * or put an artifact, shift-click to move one between the container and the inventory; the server edits
+ * the worn container in place ({@link ArtifactContainers}). {@link ClientEvents} opens this screen for the
+ * inventory key and swaps it in for Curios' own screen. Pages of equipment slots turn with the buttons or
+ * the mouse wheel through Curios' own page packet. No compile-time dependency on Curios.
  */
 public final class PdaCuriosScreen extends AbstractContainerScreen<AbstractContainerMenu> {
     private static final Logger LOGGER = LogUtils.getLogger();
     private static final int MENU_Y = 22;
+    /** How often the worn container and its tooltip are read again, in ticks. */
+    private static final int CONTAINER_REFRESH = 10;
     private static boolean warned;
 
     /** Left edge of the leftmost slot, relative to the menu (Curios puts its slots at negative x). */
@@ -31,8 +45,17 @@ public final class PdaCuriosScreen extends AbstractContainerScreen<AbstractConta
     private int lastPages = -1;
     private int lastPage = -1;
 
+    private ItemStack container = ItemStack.EMPTY;
+    private ItemStack[] artifacts = new ItemStack[0];
+    private List<Component> containerLines = List.of();
+    private int refreshTicks;
+    /** Top-left corner of the first artifact slot, and slots per row; set while drawing. */
+    private int artifactX;
+    private int artifactY;
+    private int artifactColumns = 1;
+
     public PdaCuriosScreen(AbstractContainerMenu menu, Inventory inventory, Component title) {
-        super(menu, inventory, Component.translatable("zoneraids.pda.gear.title"));
+        super(menu, inventory, Component.translatable("zoneraids.pda.inventory.title"));
     }
 
     @Override
@@ -44,7 +67,8 @@ public final class PdaCuriosScreen extends AbstractContainerScreen<AbstractConta
         }
         leftPos = PdaTabs.left(width) + 12 - minSlotX;
         topPos = PdaTabs.top(height) + MENU_Y;
-        PdaTabs.subview(PdaTabs.left(width), PdaTabs.top(height), PdaTabs.PANEL_W, PdaTabs.Tab.INVENTORY).forEach(this::addRenderableWidget);
+        PdaTabs.buttons(PdaTabs.left(width), PdaTabs.top(height), PdaTabs.Tab.INVENTORY).forEach(this::addRenderableWidget);
+        readContainer();
         int pages = intField("totalPages");
         lastPages = pages;
         lastPage = intField("currentPage");
@@ -80,9 +104,62 @@ public final class PdaCuriosScreen extends AbstractContainerScreen<AbstractConta
         }
     }
 
+    private void readContainer() {
+        container = minecraft == null || minecraft.player == null ? ItemStack.EMPTY : CuriosCompat.wornContainer(minecraft.player);
+        artifacts = container.isEmpty() ? new ItemStack[0] : ArtifactContainers.read(container);
+        // The tooltip lists the artifacts and the total bonuses; the first line is the name.
+        List<Component> lines = container.isEmpty() ? List.of() : Screen.getTooltipFromItem(minecraft, container);
+        containerLines = lines.size() > 1 ? lines.subList(1, lines.size()) : List.of();
+    }
+
+    /** Index of the artifact slot under the mouse, or -1. */
+    private int artifactAt(double mouseX, double mouseY) {
+        for (int i = 0; i < artifacts.length; i++) {
+            int x = artifactX + (i % artifactColumns) * 18;
+            int y = artifactY + (i / artifactColumns) * 18;
+            if (mouseX >= x - 1 && mouseX < x + 17 && mouseY >= y - 1 && mouseY < y + 17) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private boolean hasFreeArtifactSlot() {
+        for (ItemStack artifact : artifacts) {
+            if (artifact.isEmpty()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        int artifact = artifactAt(mouseX, mouseY);
+        if (artifact >= 0 && button == 0) {
+            String arg = hasShiftDown() ? artifact + " shift" : String.valueOf(artifact);
+            RaidNetwork.sendToServer(new TerminalActionPacket(TerminalActionPacket.Action.ARTIFACT, arg));
+            refreshTicks = CONTAINER_REFRESH - 2;
+            return true;
+        }
+        // Shift-click on an artifact in the inventory puts it into the container, as a chest would.
+        Slot slot = hoveredSlot;
+        if (button == 0 && hasShiftDown() && slot != null && minecraft != null && slot.container == minecraft.player.getInventory()
+                && ArtifactContainers.isArtifact(slot.getItem()) && hasFreeArtifactSlot()) {
+            RaidNetwork.sendToServer(new TerminalActionPacket(TerminalActionPacket.Action.ARTIFACT_STORE, String.valueOf(slot.index)));
+            refreshTicks = CONTAINER_REFRESH - 2;
+            return true;
+        }
+        return super.mouseClicked(mouseX, mouseY, button);
+    }
+
     @Override
     protected void containerTick() {
         super.containerTick();
+        if (++refreshTicks >= CONTAINER_REFRESH) {
+            refreshTicks = 0;
+            readContainer();
+        }
         // Slots are rebuilt when the page changes; the layout follows.
         if (intField("totalPages") != lastPages || intField("currentPage") != lastPage) {
             rebuildWidgets();
@@ -113,7 +190,14 @@ public final class PdaCuriosScreen extends AbstractContainerScreen<AbstractConta
         super.render(g, mouseX, mouseY, partialTick);
         Slot hovered = hoveredSlot;
         String name = hovered == null || hovered.hasItem() ? null : slotName(hovered);
-        if (name != null) {
+        int artifact = artifactAt(mouseX, mouseY);
+        if (artifact >= 0 && menu.getCarried().isEmpty()) {
+            if (artifacts[artifact].isEmpty()) {
+                g.renderTooltip(font, Component.translatable("zoneraids.pda.container.empty_slot"), mouseX, mouseY);
+            } else {
+                g.renderTooltip(font, artifacts[artifact], mouseX, mouseY);
+            }
+        } else if (name != null) {
             g.renderTooltip(font, Component.literal(name), mouseX, mouseY);
         } else {
             renderTooltip(g, mouseX, mouseY);
@@ -150,7 +234,16 @@ public final class PdaCuriosScreen extends AbstractContainerScreen<AbstractConta
                 }
             }
         }
-        ZoneUi.header(g, font, left, top, right, title, ZoneUi.AMBER, Component.translatable("zoneraids.pda.slots", worn, curios), ZoneUi.DIM);
+        Inventory inventory = minecraft.player.getInventory();
+        int used = 0;
+        for (ItemStack stack : inventory.items) {
+            if (!stack.isEmpty()) {
+                used++;
+            }
+        }
+        ZoneUi.header(g, font, left, top, right, title, ZoneUi.AMBER,
+                Component.translatable("zoneraids.pda.inventory.load", used, inventory.items.size(), worn, curios),
+                used >= inventory.items.size() ? ZoneUi.RED : ZoneUi.DIM);
 
         // Player model in the window the menu leaves for it, as in the vanilla inventory.
         g.fill(leftPos + 26, topPos + 8, leftPos + 75, topPos + 78, 0xC0000000);
@@ -168,12 +261,85 @@ public final class PdaCuriosScreen extends AbstractContainerScreen<AbstractConta
                 ZoneUi.outline(g, leftPos + slot.x - 1, topPos + slot.y - 1, leftPos + slot.x + 17, topPos + slot.y + 17, 0x80D9A441);
             }
         }
+        // Hotbar: the selected slot is marked like on the HUD.
+        for (Slot slot : menu.slots) {
+            if (slot.container == inventory && slot.getContainerSlot() == inventory.selected) {
+                ZoneUi.outline(g, leftPos + slot.x - 1, topPos + slot.y - 1, leftPos + slot.x + 17, topPos + slot.y + 17, ZoneUi.AMBER);
+            }
+        }
         if (lastPages > 1) {
             String page = (intField("currentPage") + 1) + " / " + lastPages;
             g.drawCenteredString(font, page, left + 10 + 39, top + PdaTabs.PANEL_H - 19, ZoneUi.DIM);
         }
         int x = leftPos + imageWidth + 12;
-        g.drawWordWrap(font, Component.translatable("zoneraids.pda.gear.hint"), x, top + 26, right - 10 - x, ZoneUi.DIM);
+        int w = right - 10 - x;
+        int y = drawHealth(g, x, top + 24, w);
+        drawContainer(g, x, y, w, mouseX, mouseY);
+    }
+
+    /** Health and the body diagram, as on the health tab; returns the y below them. */
+    private int drawHealth(GuiGraphics g, int x, int y, int w) {
+        Player player = minecraft.player;
+        FirstAidCompat.Snapshot limbs = FirstAidCompat.read(player);
+        float hpFraction = player.getMaxHealth() <= 0 ? 0 : player.getHealth() / player.getMaxHealth();
+        g.fill(x - 4, y - 2, x + w + 2, y + ZoneUi.bodyHeight(3) + 4, ZoneUi.ROW);
+        ZoneUi.body(g, x + 12, y + 1, 3, limbs, hpFraction);
+        g.drawString(font, Component.translatable("zoneraids.pda.hp", HealthScreen.fmt(player.getHealth()), HealthScreen.fmt(player.getMaxHealth())),
+                x + 30, y + 2, ZoneUi.healthColor(hpFraction));
+        ZoneUi.bar(g, x + 30, y + 13, w - 34, 4, hpFraction, ZoneUi.healthColor(hpFraction));
+        int food = player.getFoodData().getFoodLevel();
+        g.drawString(font, Component.translatable("zoneraids.pda.food", food), x + 30, y + 22, ZoneUi.TEXT);
+        ZoneUi.bar(g, x + 100, y + 24, w - 104, 4, food / 20.0F, ZoneUi.AMBER);
+        return y + ZoneUi.bodyHeight(3) + 10;
+    }
+
+    /** The worn artifact container: its artifact slots, then the bonuses from its tooltip, as far as they fit. */
+    private void drawContainer(GuiGraphics g, int x, int y, int w, int mouseX, int mouseY) {
+        int bottom = PdaTabs.top(height) + PdaTabs.PANEL_H - 8;
+        g.fill(x - 4, y - 2, x + w + 2, y + 9, ZoneUi.ROW);
+        Component name = container.isEmpty() ? Component.translatable("zoneraids.pda.inventory.container") : container.getHoverName();
+        g.drawString(font, ZoneUi.clip(font, name.getString(), w - 40), x, y, ZoneUi.AMBER);
+        if (!container.isEmpty()) {
+            int used = 0;
+            for (ItemStack artifact : artifacts) {
+                if (!artifact.isEmpty()) {
+                    used++;
+                }
+            }
+            Component count = Component.translatable("zoneraids.pda.slots", used, artifacts.length);
+            g.drawString(font, count, x + w - font.width(count), y, used == 0 ? ZoneUi.RED : ZoneUi.DIM);
+        }
+        y += 14;
+        if (container.isEmpty()) {
+            artifactColumns = 1;
+            g.drawWordWrap(font, Component.translatable("zoneraids.pda.inventory.no_container"), x, y, w, ZoneUi.RED);
+            return;
+        }
+        artifactColumns = Math.max(1, Math.min(artifacts.length, (w + 2) / 18));
+        artifactX = x + 1;
+        artifactY = y + 1;
+        int hovered = artifactAt(mouseX, mouseY);
+        for (int i = 0; i < artifacts.length; i++) {
+            int sx = artifactX + (i % artifactColumns) * 18;
+            int sy = artifactY + (i / artifactColumns) * 18;
+            ZoneUi.slotFrame(g, sx, sy);
+            ZoneUi.outline(g, sx - 1, sy - 1, sx + 17, sy + 17, i == hovered ? ZoneUi.AMBER : 0x80D9A441);
+            if (!artifacts[i].isEmpty()) {
+                g.renderItem(artifacts[i], sx, sy);
+            }
+            if (i == hovered) {
+                g.fill(sx, sy, sx + 16, sy + 16, 0x50FFFFFF);
+            }
+        }
+        y += ((artifacts.length + artifactColumns - 1) / artifactColumns) * 18 + 6;
+        for (Component line : containerLines) {
+            if (y + 9 > bottom) {
+                break;
+            }
+            // Clipped as a plain string keeps the colour codes Anomaly Zone writes into its lines.
+            g.drawString(font, ZoneUi.clip(font, line.getString(), w), x, y, ZoneUi.TEXT);
+            y += 10;
+        }
     }
 
     @Override
