@@ -257,6 +257,7 @@ def main():
             variant = json.load(fh)
         pack["name"] = variant.get("name", pack["name"])
         pack["summary"] = variant.get("summary", pack["summary"])
+        pack["mods"] = pack["mods"] + variant.get("mods", [])
         prefix = variant["file_prefix"]
         print(f"Variant {args.variant}: {pack['name']}", flush=True)
     version = pack["version"]

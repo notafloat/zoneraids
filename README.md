@@ -232,6 +232,9 @@
 * новичок один раз получает стартовый набор (`starterKit`, контейнер для артефактов, `starterLootTable`: пистолет и броня);
 * торговец во вкладке КПК, к его товарам добавляется `extraBuy` (по умолчанию питбайк);
 * каждые `killsPerPerkPoint` убитых врагов дают очко перка; вайпов нет, деньги и перки копятся;
+* логова с боссами (`lairs`, `lairRegionSize`, `lairChance`, `lairMinSpawnDistance`): база бандитов с главарём Боровом,
+  разрушенный колхоз с псевдогигантом, подземная Лаборатория X с контролёром. Строятся из ванильных блоков, когда
+  игрок подходит, КПК сообщает направление; лут боссов в `loot_tables/bosses/<босс>`, за босса 3 очка перков;
 * первая вкладка КПК вместо списка карт объясняет правила, вкладки «Камеры» и «Карта» (Кордона) серые.
 
 Рейды при этом не выключены: если администратор добавит карту командами `/raidadmin`, в неё можно ходить.
@@ -251,7 +254,7 @@
 `containers`, `medicine`; NBT как в таблицах лута, например `tacz:ammo{AmmoId:\"tacz:9mm\"}`).
 Секция `[survival]`: режим выживания (см. выше), `enabled`, `dimensions`, `spawnIntervalSeconds`, `spawnChance`, `zoneBiomeMultiplier`,
 `nightMultiplier`, `maxNearPlayer`, `minDistance`, `maxDistance`, `despawnDistance`, `safeRadius`, `spawns`, `starterKit`, `starterLootTable`,
-`killsPerPerkPoint`, `extraBuy`.
+`killsPerPerkPoint`, `extraBuy`, `lairs`, `lairRegionSize`, `lairChance`, `lairMinSpawnDistance`.
 Секция `[network]`: `entityUpdateIntervals` (`"id=тики"`), как часто сервер шлёт клиентам позицию сущности. По умолчанию
 игроки, NPC TaCZ и пули TaCZ каждый тик (в ваниле игроки раз в 2, мобы раз в 3 тика), чтобы враг на экране стоял там же,
 где сервер считает попадание. Мутанты и питбайк Zone Raids и так синхронизируются каждый тик. Тикрейт сервера остаётся 20.

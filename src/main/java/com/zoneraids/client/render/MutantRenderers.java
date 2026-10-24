@@ -3,6 +3,7 @@ package com.zoneraids.client.render;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.zoneraids.entity.BlindDog;
 import com.zoneraids.entity.Flesh;
+import com.zoneraids.entity.Pseudogiant;
 import net.minecraft.client.model.HoglinModel;
 import net.minecraft.client.model.geom.ModelLayers;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
@@ -19,6 +20,7 @@ public final class MutantRenderers {
     private static final ResourceLocation FLESH = new ResourceLocation("textures/entity/hoglin/zoglin.png");
     private static final ResourceLocation SNORK = new ResourceLocation("textures/entity/zombie/husk.png");
     private static final ResourceLocation BLOODSUCKER = new ResourceLocation("textures/entity/zombie/drowned.png");
+    private static final ResourceLocation CONTROLLER = new ResourceLocation("textures/entity/zombie/zombie.png");
 
     private MutantRenderers() {
     }
@@ -41,20 +43,36 @@ public final class MutantRenderers {
         }
     }
 
-    public static class FleshRenderer extends MobRenderer<Flesh, HoglinModel<Flesh>> {
+    public static class FleshRenderer<T extends Flesh> extends MobRenderer<T, HoglinModel<T>> {
+        private final float size;
+
+        FleshRenderer(EntityRendererProvider.Context ctx, float size) {
+            super(ctx, new HoglinModel<>(ctx.bakeLayer(ModelLayers.ZOGLIN)), 0.8F * size);
+            this.size = size;
+        }
+
         public FleshRenderer(EntityRendererProvider.Context ctx) {
-            super(ctx, new HoglinModel<>(ctx.bakeLayer(ModelLayers.ZOGLIN)), 0.6F);
+            this(ctx, 0.75F);
         }
 
         @Override
-        public ResourceLocation getTextureLocation(Flesh entity) {
+        public ResourceLocation getTextureLocation(T entity) {
             return FLESH;
         }
 
         @Override
-        protected void scale(Flesh entity, PoseStack pose, float partialTick) {
-            pose.scale(0.75F, 0.75F, 0.75F);
+        protected void scale(T entity, PoseStack pose, float partialTick) {
+            pose.scale(size, size, size);
         }
+    }
+
+    /** The pseudogiant is a flesh grown to twice a man's height. */
+    public static FleshRenderer<Pseudogiant> pseudogiant(EntityRendererProvider.Context ctx) {
+        return new FleshRenderer<>(ctx, 1.6F);
+    }
+
+    public static <T extends Monster> HumanoidMutantRenderer<T> controller(EntityRendererProvider.Context ctx) {
+        return new HumanoidMutantRenderer<>(ctx, CONTROLLER, 1.05F);
     }
 
     public static class HumanoidMutantRenderer<T extends Monster> extends HumanoidMobRenderer<T, MutantHumanoidModel<T>> {

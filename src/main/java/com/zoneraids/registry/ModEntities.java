@@ -3,7 +3,9 @@ package com.zoneraids.registry;
 import com.zoneraids.ZoneRaids;
 import com.zoneraids.entity.BlindDog;
 import com.zoneraids.entity.Bloodsucker;
+import com.zoneraids.entity.Controller;
 import com.zoneraids.entity.Flesh;
+import com.zoneraids.entity.Pseudogiant;
 import com.zoneraids.entity.Snork;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
@@ -29,6 +31,12 @@ public final class ModEntities {
     public static final RegistryObject<EntityType<Bloodsucker>> BLOODSUCKER = ENTITIES.register("bloodsucker",
             () -> EntityType.Builder.<Bloodsucker>of(Bloodsucker::new, MobCategory.MONSTER).sized(0.7F, 2.1F).clientTrackingRange(8).updateInterval(1).build("bloodsucker"));
 
+    /** Bosses of the survival lairs (see {@code Lairs}). */
+    public static final RegistryObject<EntityType<Pseudogiant>> PSEUDOGIANT = ENTITIES.register("pseudogiant",
+            () -> EntityType.Builder.<Pseudogiant>of(Pseudogiant::new, MobCategory.MONSTER).sized(2.0F, 2.2F).clientTrackingRange(10).updateInterval(1).build("pseudogiant"));
+    public static final RegistryObject<EntityType<Controller>> CONTROLLER = ENTITIES.register("controller",
+            () -> EntityType.Builder.<Controller>of(Controller::new, MobCategory.MONSTER).sized(0.7F, 2.05F).clientTrackingRange(10).updateInterval(1).build("controller"));
+
     private ModEntities() {
     }
 
@@ -42,5 +50,7 @@ public final class ModEntities {
         event.put(FLESH.get(), Flesh.createAttributes().build());
         event.put(SNORK.get(), Snork.createAttributes().build());
         event.put(BLOODSUCKER.get(), Bloodsucker.createAttributes().build());
+        event.put(PSEUDOGIANT.get(), Pseudogiant.createAttributes().build());
+        event.put(CONTROLLER.get(), Controller.createAttributes().build());
     }
 }
