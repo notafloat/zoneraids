@@ -1,0 +1,14 @@
+{
+  "required": false,
+  "minVersion": "0.8",
+  "package": "com.zoneraids.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "zoneraids.refmap.json",
+  "client": [
+    "AbstractButtonMixin",
+    "AbstractSliderButtonMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 0
+  }
+}
