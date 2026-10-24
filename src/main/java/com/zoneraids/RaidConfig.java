@@ -197,8 +197,8 @@ public final class RaidConfig {
                         "2) a random mode from secondRoundModes, 3) deathmatch in a shrinking zone. When the session ends,",
                         "inventory, ender chest and stash are wiped; perks and stats stay. If false, every raid is a single round and nothing is wiped.")
                 .define("rounds", true);
-        INTERMISSION_SECONDS = b.comment("Time in the hub between rounds (stash is available).")
-                .defineInRange("intermissionSeconds", 60, 10, 600);
+        INTERMISSION_SECONDS = b.comment("Time in the hub between rounds (stash is available). Starts early once every session member in the hub is ready.")
+                .defineInRange("intermissionSeconds", 180, 10, 600);
         LATE_JOIN_SECONDS = b.comment("Session members who were dead or offline when a round started join it automatically",
                         "when they respawn or log in during its first seconds. 0 = off.")
                 .defineInRange("lateJoinSeconds", 60, 0, 600);

@@ -65,6 +65,8 @@ public final class RaidSession {
     int round;
     RoundType type = RoundType.EXTRACTION;
     boolean intermission;
+    /** Session members who pressed "ready" during the current break. */
+    final Set<UUID> ready = new HashSet<>();
     /** The round that starts after the current break, picked when the break begins so players know what is coming. */
     RoundType nextType = RoundType.EXTRACTION;
     /** Everyone who started the session, with the group they queued in; kept until the session ends. */

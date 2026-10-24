@@ -14,6 +14,8 @@ public record TerminalActionPacket(Action action, String arg) {
         SHOP, SHOP_BUY, SHOP_SELL, SHOP_SELL_ALL,
         /** Open the worn artifact container. */
         CONTAINER,
+        /** Toggle "ready" for the next round of the player's session. */
+        READY,
         /** First Aid healing item from an inventory slot on a body part: {@code "slot part"}. */
         HEAL
     }

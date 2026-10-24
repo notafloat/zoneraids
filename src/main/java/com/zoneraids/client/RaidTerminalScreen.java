@@ -99,6 +99,13 @@ public final class RaidTerminalScreen extends Screen {
             addRenderableWidget(new ZoneButton(left + 10, by, 130, 17,
                     Component.translatable("zoneraids.terminal.leave_party"), b -> send(Action.LEAVE_PARTY, "")));
         }
+        TerminalDataPacket.Ready ready = data.ready();
+        if (ready.available()) {
+            // Between rounds: start the next round early once everyone in the hub is ready.
+            addRenderableWidget(new ZoneButton(left + 146, by, 150, 17, Component.translatable(ready.mine()
+                    ? "zoneraids.terminal.unready" : "zoneraids.terminal.ready", ready.count(), ready.total()),
+                    b -> send(Action.READY, "")));
+        }
         addRenderableWidget(new ZoneButton(left + PANEL_W - 84, by, 74, 17, Component.translatable("gui.done"), b -> onClose()));
     }
 
