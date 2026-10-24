@@ -141,7 +141,8 @@ try {
     Say "Ищу последнюю зелёную сборку ($branch)..." Cyan
     if ($branch -eq 'main') {
         $rel = "https://github.com/$Repo/releases/download/latest-build"
-        try { $info = @((Invoke-WebRequest -UseBasicParsing "$rel/$prefix-build.txt").Content.Trim() -split '\s+') }
+        # Release assets come as application/octet-stream, so read the file instead of .Content (bytes).
+        try { Download "$rel/$prefix-build.txt" "$dir\latest-build.txt"; $info = @((Get-Content "$dir\latest-build.txt" -Raw).Trim() -split '\s+') }
         catch { Fail "Сборка latest-build пока не опубликована, дождитесь зелёного запуска Modpack в main. ($($_.Exception.Message))" }
         $buildId = $info[0]
         Say ("Сборка #{0}, коммит {1}" -f $info[1], $info[2].Substring(0, 7))
