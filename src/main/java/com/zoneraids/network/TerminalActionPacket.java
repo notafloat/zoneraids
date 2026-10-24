@@ -16,6 +16,8 @@ public record TerminalActionPacket(Action action, String arg) {
         ARTIFACT,
         /** Shift-click on an artifact in the inventory: {@code "menuSlot"}, into the worn container. */
         ARTIFACT_STORE,
+        /** Toggle "ready" for the next round of the player's session. */
+        READY,
         /** First Aid healing item from an inventory slot on a body part: {@code "slot part"}. */
         HEAL
     }

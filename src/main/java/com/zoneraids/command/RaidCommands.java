@@ -83,6 +83,8 @@ public final class RaidCommands {
                     ShopService.open(ctx.getSource().getPlayerOrException(), false);
                     return 1;
                 }))
+                .then(Commands.literal("ready")
+                        .executes(ctx -> withManager(ctx, m -> m.toggleReady(ctx.getSource().getPlayerOrException()))))
                 .then(Commands.literal("perks").executes(ctx -> {
                     PerkService.showList(ctx.getSource().getPlayerOrException());
                     return 1;

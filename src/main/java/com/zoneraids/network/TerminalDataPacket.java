@@ -12,7 +12,12 @@ import java.util.function.Supplier;
 public record TerminalDataPacket(boolean open, List<MapEntry> maps, String queuedMap, boolean inRaid, int[] stats,
                                  List<String> party, boolean partyLeader, String pendingInvite, boolean canStash,
                                  int perkPoints, int[] perks, List<WatchEntry> watchable, String watching,
-                                 boolean canShop) {
+                                 boolean canShop, Ready ready) {
+    /** "Ready" state between rounds: {@code count} of {@code total} session members in the hub are ready. */
+    public record Ready(boolean available, boolean mine, int count, int total) {
+        public static final Ready NONE = new Ready(false, false, 0, 0);
+    }
+
     public static final byte STATE_IDLE = 0;
     public static final byte STATE_COUNTDOWN = 1;
     public static final byte STATE_RUNNING = 2;
@@ -75,13 +80,17 @@ public record TerminalDataPacket(boolean open, List<MapEntry> maps, String queue
         buf.writeCollection(watchable.subList(0, Math.min(watchable.size(), MAX_WATCHABLE)), (b, e) -> e.encode(b));
         buf.writeUtf(watching);
         buf.writeBoolean(canShop);
+        buf.writeBoolean(ready.available());
+        buf.writeBoolean(ready.mine());
+        buf.writeVarInt(ready.count());
+        buf.writeVarInt(ready.total());
     }
 
     public static TerminalDataPacket decode(FriendlyByteBuf buf) {
         return new TerminalDataPacket(buf.readBoolean(), buf.readList(MapEntry::decode), buf.readUtf(), buf.readBoolean(),
                 buf.readVarIntArray(16), buf.readList(FriendlyByteBuf::readUtf), buf.readBoolean(), buf.readUtf(), buf.readBoolean(),
                 buf.readVarInt(), buf.readVarIntArray(32), buf.readList(WatchEntry::decode), buf.readUtf(),
-                buf.readBoolean());
+                buf.readBoolean(), new Ready(buf.readBoolean(), buf.readBoolean(), buf.readVarInt(), buf.readVarInt()));
     }
 
     public void handle(Supplier<NetworkEvent.Context> ctx) {

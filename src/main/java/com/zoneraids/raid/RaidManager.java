@@ -78,6 +78,8 @@ public final class RaidManager {
     private static final int ACTION_COOLDOWN_TICKS = 4;
     /** Seconds before the next round at which session members in the hub get a countdown title. */
     private static final int[] ROUND_COUNTDOWN = {10, 5, 3, 2, 1};
+    /** Break left once everyone is ready: just over 5 s, so the countdown titles from 5 still show. */
+    private static final int READY_START_TICKS = 6 * 20;
 
     @Nullable
     private static RaidManager instance;
@@ -258,6 +260,67 @@ public final class RaidManager {
             }
         }
         return session.ticksLeft <= 0;
+    }
+
+    private TerminalDataPacket.Ready readyState(ServerPlayer player) {
+        RaidSession session = rosterSessions.get(player.getUUID());
+        if (session == null || !session.intermission || playerSessions.containsKey(player.getUUID())) {
+            return TerminalDataPacket.Ready.NONE;
+        }
+        return new TerminalDataPacket.Ready(true, session.ready.contains(player.getUUID()), readyCount(session), readyTotal(session));
+    }
+
+    /** Session members in the hub who count for "everyone is ready": online and not on the map. */
+    private int readyTotal(RaidSession session) {
+        int total = 0;
+        for (UUID id : session.roster.keySet()) {
+            if (server.getPlayerList().getPlayer(id) != null && !playerSessions.containsKey(id)) {
+                total++;
+            }
+        }
+        return total;
+    }
+
+    private int readyCount(RaidSession session) {
+        int count = 0;
+        for (UUID id : session.ready) {
+            if (server.getPlayerList().getPlayer(id) != null && !playerSessions.containsKey(id)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    /** Toggles "ready" for the next round; once everyone in the hub is ready, the break ends in a few seconds. */
+    public void toggleReady(ServerPlayer player) {
+        UUID id = player.getUUID();
+        RaidSession session = rosterSessions.get(id);
+        if (session == null || !session.intermission || playerSessions.containsKey(id)) {
+            player.displayClientMessage(Component.translatable("zoneraids.round.ready.unavailable").withStyle(ChatFormatting.GRAY), true);
+            return;
+        }
+        boolean ready = session.ready.add(id);
+        if (!ready) {
+            session.ready.remove(id);
+        }
+        int count = readyCount(session);
+        int total = readyTotal(session);
+        Component msg = Component.translatable(ready ? "zoneraids.round.ready.on" : "zoneraids.round.ready.off",
+                player.getDisplayName(), count, total).withStyle(ready ? ChatFormatting.GREEN : ChatFormatting.GRAY);
+        for (UUID member : session.roster.keySet()) {
+            ServerPlayer p = server.getPlayerList().getPlayer(member);
+            if (p != null && !playerSessions.containsKey(member)) {
+                p.sendSystemMessage(msg);
+                sendIntermissionHud(p, session);
+            }
+        }
+        if (ready && count >= total && session.ticksLeft > READY_START_TICKS) {
+            session.ticksLeft = READY_START_TICKS;
+            Component all = Component.translatable("zoneraids.round.ready.all", READY_START_TICKS / 20 - 1).withStyle(ChatFormatting.GOLD);
+            for (UUID member : session.roster.keySet()) {
+                message(member, all);
+            }
+        }
     }
 
     /** @return true when the round should end. */
@@ -656,6 +719,7 @@ public final class RaidManager {
     private void beginRound(RaidSession session, ServerLevel level, List<List<UUID>> groups) {
         RaidMap map = session.map;
         session.intermission = false;
+        session.ready.clear();
         session.round++;
         session.type = session.nextType;
         session.totalTicks = switch (session.type) {
@@ -796,6 +860,7 @@ public final class RaidManager {
             return;
         }
         session.intermission = true;
+        session.ready.clear();
         session.nextType = session.round + 1 >= session.rounds
                 ? (session.roster.size() >= 2 ? RoundType.DEATHMATCH : soloFinal(session)) : pickSecondRound();
         session.totalTicks = RaidConfig.INTERMISSION_SECONDS.get() * 20;
@@ -1457,6 +1522,7 @@ public final class RaidManager {
                 }
                 return;
             }
+            case READY -> toggleReady(player);
             case HEAL -> {
                 String[] parts = arg.split(" ");
                 if (parts.length == 2) {
@@ -1518,7 +1584,7 @@ public final class RaidManager {
                 parties.isLeaderOrSolo(id), inviterPlayer == null ? "" : inviterPlayer.getGameProfile().getName(),
                 RaidConfig.REMOTE_STASH.get() && !isInRaid(id), PlayerRaidData.getPerkPoints(player), perks,
                 spectators.entries(player), watching == null ? "" : watching,
-                RaidConfig.SHOP.get() && RaidConfig.REMOTE_SHOP.get() && !isInRaid(id));
+                RaidConfig.SHOP.get() && RaidConfig.REMOTE_SHOP.get() && !isInRaid(id), readyState(player));
     }
 
     // ------------------------------------------------------------------ parties
@@ -1651,7 +1717,9 @@ public final class RaidManager {
         }
         RaidHudPacket.Round round = session.intermission
                 ? new RaidHudPacket.Round(session.round + 1, session.rounds, session.nextType.id, true, false, 0, 0,
-                Component.empty(), Component.translatable("zoneraids.hud.next_round"), -1.0F)
+                Component.empty(), Component.translatable(session.ready.contains(player.getUUID())
+                        ? "zoneraids.hud.next_round_ready" : "zoneraids.hud.next_round_not_ready",
+                        readyCount(session), readyTotal(session)), -1.0F)
                 : new RaidHudPacket.Round(session.round, session.rounds, session.type.id, true, false, 0, 0,
                 Component.empty(), Component.translatable("zoneraids.hud.wait_round"), -1.0F);
         RaidNetwork.sendTo(player, new RaidHudPacket(true, session.map.displayName, session.secondsLeft(), List.of(), "", -1.0F, round));
