@@ -185,7 +185,13 @@ public final class Lairs {
             if (bandit == null || !bandit.isInstalled()) {
                 return null;
             }
-            entity = EnemySpawner.spawn(level, bandit, pos, List.of(), 0, level.getRandom(), null);
+            // Borov is a bandit with his own look and guns: the zr_bandit_boss loadout (tacznpc_loadouts.json).
+            CompoundTag nbt = bandit.nbt().copy();
+            if (nbt.contains("template")) {
+                nbt.putString("template", "zr_bandit_boss");
+            }
+            EnemySpawner.EnemyType borov = new EnemySpawner.EnemyType("bandit_boss", bandit.entity(), nbt);
+            entity = EnemySpawner.spawn(level, borov, pos, List.of(), 0, level.getRandom(), null);
             if (entity instanceof Mob mob) {
                 // The gang leader: a bandit with a boss's health and armor.
                 setBase(mob, Attributes.MAX_HEALTH, 140.0);

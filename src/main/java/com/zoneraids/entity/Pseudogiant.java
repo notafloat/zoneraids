@@ -2,6 +2,9 @@ package com.zoneraids.entity;
 
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerBossEvent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -26,6 +29,8 @@ public class Pseudogiant extends Flesh {
     private static final int STOMP_COOLDOWN = 110;
     private static final int STOMP_WINDUP = 18;
     private static final double STOMP_RADIUS = 7.0;
+    /** Rearing up before a stamp, for the model. */
+    private static final EntityDataAccessor<Boolean> WINDUP = SynchedEntityData.defineId(Pseudogiant.class, EntityDataSerializers.BOOLEAN);
     private final ServerBossEvent bossBar = new ServerBossEvent(getDisplayName(), BossEvent.BossBarColor.RED,
             BossEvent.BossBarOverlay.NOTCHED_10);
     private int stompCooldown = STOMP_COOLDOWN;
@@ -35,6 +40,16 @@ public class Pseudogiant extends Flesh {
         super(type, level);
         xpReward = 80;
         setPersistenceRequired();
+    }
+
+    @Override
+    protected void defineSynchedData() {
+        super.defineSynchedData();
+        entityData.define(WINDUP, false);
+    }
+
+    public boolean isWindingUp() {
+        return entityData.get(WINDUP);
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -55,6 +70,7 @@ public class Pseudogiant extends Flesh {
         LivingEntity target = getTarget();
         if (windup > 0) {
             if (--windup == 0) {
+                entityData.set(WINDUP, false);
                 stomp();
             }
             return;
@@ -64,6 +80,7 @@ public class Pseudogiant extends Flesh {
         } else if (target != null && onGround() && distanceToSqr(target) < STOMP_RADIUS * STOMP_RADIUS) {
             // A roar warns of the stamp: players who back off in time take nothing.
             windup = STOMP_WINDUP;
+            entityData.set(WINDUP, true);
             stompCooldown = STOMP_COOLDOWN;
             playSound(SoundEvents.RAVAGER_ROAR, 2.0F, 0.6F);
         }

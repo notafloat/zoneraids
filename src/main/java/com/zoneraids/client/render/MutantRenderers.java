@@ -1,7 +1,9 @@
 package com.zoneraids.client.render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.zoneraids.ZoneRaids;
 import com.zoneraids.entity.BlindDog;
+import com.zoneraids.entity.Controller;
 import com.zoneraids.entity.Flesh;
 import com.zoneraids.entity.Pseudogiant;
 import net.minecraft.client.model.HoglinModel;
@@ -14,13 +16,17 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.animal.Wolf;
 import net.minecraft.world.entity.monster.Monster;
 
-/** Mutant renderers reuse vanilla models and textures, so the mod ships no entity art. */
+/**
+ * Mutant renderers. The common mutants reuse vanilla models and textures; the lair bosses have models
+ * and textures of their own (PseudogiantModel, ControllerModel, painted by modpack/tools/boss_art.py).
+ */
 public final class MutantRenderers {
     private static final ResourceLocation DOG = new ResourceLocation("textures/entity/wolf/wolf_angry.png");
     private static final ResourceLocation FLESH = new ResourceLocation("textures/entity/hoglin/zoglin.png");
     private static final ResourceLocation SNORK = new ResourceLocation("textures/entity/zombie/husk.png");
     private static final ResourceLocation BLOODSUCKER = new ResourceLocation("textures/entity/zombie/drowned.png");
-    private static final ResourceLocation CONTROLLER = new ResourceLocation("textures/entity/zombie/zombie.png");
+    private static final ResourceLocation PSEUDOGIANT = new ResourceLocation(ZoneRaids.MODID, "textures/entity/pseudogiant.png");
+    private static final ResourceLocation CONTROLLER = new ResourceLocation(ZoneRaids.MODID, "textures/entity/controller.png");
 
     private MutantRenderers() {
     }
@@ -66,13 +72,31 @@ public final class MutantRenderers {
         }
     }
 
-    /** The pseudogiant is a flesh grown to twice a man's height. */
-    public static FleshRenderer<Pseudogiant> pseudogiant(EntityRendererProvider.Context ctx) {
-        return new FleshRenderer<>(ctx, 1.6F);
+    public static class PseudogiantRenderer extends MobRenderer<Pseudogiant, PseudogiantModel> {
+        public PseudogiantRenderer(EntityRendererProvider.Context ctx) {
+            super(ctx, new PseudogiantModel(ctx.bakeLayer(PseudogiantModel.LAYER)), 1.3F);
+        }
+
+        @Override
+        public ResourceLocation getTextureLocation(Pseudogiant entity) {
+            return PSEUDOGIANT;
+        }
+
+        @Override
+        protected void scale(Pseudogiant entity, PoseStack pose, float partialTick) {
+            pose.scale(1.1F, 1.1F, 1.1F);
+        }
     }
 
-    public static <T extends Monster> HumanoidMutantRenderer<T> controller(EntityRendererProvider.Context ctx) {
-        return new HumanoidMutantRenderer<>(ctx, CONTROLLER, 1.05F);
+    public static class ControllerRenderer extends MobRenderer<Controller, ControllerModel> {
+        public ControllerRenderer(EntityRendererProvider.Context ctx) {
+            super(ctx, new ControllerModel(ctx.bakeLayer(ControllerModel.LAYER)), 0.5F);
+        }
+
+        @Override
+        public ResourceLocation getTextureLocation(Controller entity) {
+            return CONTROLLER;
+        }
     }
 
     public static class HumanoidMutantRenderer<T extends Monster> extends HumanoidMobRenderer<T, MutantHumanoidModel<T>> {

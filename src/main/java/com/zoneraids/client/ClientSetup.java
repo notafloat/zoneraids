@@ -2,7 +2,9 @@ package com.zoneraids.client;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import com.zoneraids.ZoneRaids;
+import com.zoneraids.client.render.ControllerModel;
 import com.zoneraids.client.render.MutantRenderers;
+import com.zoneraids.client.render.PseudogiantModel;
 import com.zoneraids.registry.ModEntities;
 import net.minecraft.client.KeyMapping;
 import net.minecraftforge.api.distmarker.Dist;
@@ -61,11 +63,17 @@ public final class ClientSetup {
     }
 
     @SubscribeEvent
+    public static void onRegisterLayers(EntityRenderersEvent.RegisterLayerDefinitions event) {
+        event.registerLayerDefinition(PseudogiantModel.LAYER, PseudogiantModel::createLayer);
+        event.registerLayerDefinition(ControllerModel.LAYER, ControllerModel::createLayer);
+    }
+
+    @SubscribeEvent
     public static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(ModEntities.BLIND_DOG.get(), MutantRenderers.BlindDogRenderer::new);
         event.registerEntityRenderer(ModEntities.FLESH.get(), MutantRenderers.FleshRenderer::new);
-        event.registerEntityRenderer(ModEntities.PSEUDOGIANT.get(), MutantRenderers::pseudogiant);
-        event.registerEntityRenderer(ModEntities.CONTROLLER.get(), MutantRenderers::controller);
+        event.registerEntityRenderer(ModEntities.PSEUDOGIANT.get(), MutantRenderers.PseudogiantRenderer::new);
+        event.registerEntityRenderer(ModEntities.CONTROLLER.get(), MutantRenderers.ControllerRenderer::new);
         event.registerEntityRenderer(ModEntities.SNORK.get(), MutantRenderers::snork);
         event.registerEntityRenderer(ModEntities.BLOODSUCKER.get(), MutantRenderers::bloodsucker);
     }
