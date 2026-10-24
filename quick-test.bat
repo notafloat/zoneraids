@@ -76,8 +76,11 @@ function Test-Port {
 }
 
 function Find-Prism {
+    $saved = "$Root\prism-path.txt"
     $candidates = @(
         $env:PRISM,
+        $(if (Test-Path $saved) { (Get-Content $saved -Raw).Trim() }),
+        $(Get-Process prismlauncher -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty Path),
         "$env:LOCALAPPDATA\Programs\PrismLauncher\prismlauncher.exe",
         "$env:ProgramFiles\PrismLauncher\prismlauncher.exe",
         "$env:USERPROFILE\scoop\apps\prismlauncher\current\prismlauncher.exe"
@@ -85,6 +88,25 @@ function Find-Prism {
     foreach ($p in $candidates) { if ($p -and (Test-Path $p)) { return $p } }
     $cmd = Get-Command prismlauncher.exe -ErrorAction SilentlyContinue
     if ($cmd) { return $cmd.Source }
+    return $null
+}
+
+function Test-Java17($exe) {
+    if (-not $exe -or -not (Test-Path $exe)) { return $false }
+    $v = cmd /c "`"$exe`" -version 2>&1"
+    return [bool]($v | Select-String -Quiet 'version "17\.')
+}
+
+# Java 17 already on the PC (JAVA, JAVA_HOME, PATH, usual install folders, Java that Prism downloaded).
+function Find-Java17($extraDirs) {
+    $exes = @($env:JAVA, "$env:JAVA_HOME\bin\java.exe")
+    $exes += @(Get-Command java.exe -All -ErrorAction SilentlyContinue | ForEach-Object Source)
+    $dirs = @("$env:ProgramFiles\Eclipse Adoptium", "$env:ProgramFiles\Java", "$env:ProgramFiles\Microsoft",
+        "$env:ProgramFiles\Zulu", "$env:ProgramFiles\BellSoft", "$env:LOCALAPPDATA\Programs\Eclipse Adoptium") + $extraDirs
+    foreach ($d in $dirs) {
+        if ($d -and (Test-Path $d)) { $exes += @(Get-ChildItem $d -Recurse -Depth 3 -Filter java.exe -ErrorAction SilentlyContinue | ForEach-Object FullName) }
+    }
+    foreach ($e in $exes) { if (Test-Java17 $e) { return $e } }
     return $null
 }
 
@@ -165,19 +187,6 @@ try {
         Say 'Эта сборка уже стоит, скачивать нечего.' Green
     }
 
-    # ---- Java 17 (own copy, used by the server and the client) -------------
-    $java = Get-ChildItem "$Root\java" -Recurse -Filter javaw.exe -ErrorAction SilentlyContinue | Select-Object -First 1
-    if (-not $java) {
-        Say 'Скачиваю Java 17 (один раз)...' Cyan
-        $jz = "$Root\downloads\java17.zip"
-        Download 'https://api.adoptium.net/v3/binary/latest/17/ga/windows/x64/jre/hotspot/normal/eclipse?project=jdk' $jz
-        Expand-Zip $jz "$Root\java"
-        Remove-Item $jz
-        $java = Get-ChildItem "$Root\java" -Recurse -Filter javaw.exe | Select-Object -First 1
-    }
-    $javaw = $java.FullName
-    $javaExe = Join-Path (Split-Path $javaw) 'java.exe'
-
     # ---- Server ------------------------------------------------------------
     $running = Test-Port
     if ($running) {
@@ -197,6 +206,16 @@ try {
             Remove-Item -Recurse -Force "$serverDir\world"
             Say 'Старый мир удалён, сервер построит хаб и карту заново.' Yellow
         }
+        # online-mode=false lets offline (non-Microsoft) launcher accounts join. The last answer is the default.
+        $modeFile = "$Root\online-mode.txt"
+        $online = if (Test-Path $modeFile) { (Get-Content $modeFile -Raw).Trim() } else { 'false' }
+        $hint = if ($online -eq 'true') { 'Y/n' } else { 'y/N' }
+        $ans = Read-Host "Online mode: только лицензионные аккаунты Microsoft? Для пиратского (offline) аккаунта ответьте n ($hint)"
+        if ($ans -eq 'y') { $online = 'true' } elseif ($ans -eq 'n') { $online = 'false' }
+        Set-Content $modeFile $online
+        Say "online-mode=$online"
+        $props = "$serverDir\server.properties"
+        if (Test-Path $props) { (Get-Content $props) -replace '^online-mode=.*', "online-mode=$online" | Set-Content -Encoding ASCII $props }
         $eula = "$serverDir\eula.txt"
         if (-not ((Test-Path $eula) -and (Select-String -Quiet -Path $eula -Pattern '^eula=true'))) {
             Say 'Нужно принять лицензию Minecraft: https://aka.ms/MinecraftEULA' White
@@ -208,7 +227,14 @@ try {
     # ---- Client: Prism Launcher instance ------------------------------------
     $prism = Find-Prism
     if (-not $prism) {
-        Say 'Prism Launcher не найден.' Yellow
+        Say 'Prism Launcher не найден там, где он обычно стоит.' Yellow
+        $p = (Read-Host 'Перетащите сюда prismlauncher.exe (или любой exe вашего Prism) и нажмите Enter. Пусто = поставить Prism через winget').Trim('"', ' ')
+        if ($p -and (Test-Path $p)) {
+            $prism = $p
+            Set-Content "$Root\prism-path.txt" $p
+        }
+    }
+    if (-not $prism) {
         if (Get-Command winget -ErrorAction SilentlyContinue) {
             Say 'Ставлю через winget...' Cyan
             winget install --id PrismLauncher.PrismLauncher -e --accept-source-agreements --accept-package-agreements | Out-Host
@@ -219,7 +245,23 @@ try {
             Fail 'Установите Prism Launcher с открывшейся страницы и запустите скрипт снова.'
         }
     }
-    $prismHome = if (Test-Path (Join-Path (Split-Path $prism) 'portable.txt')) { Split-Path $prism } else { "$env:APPDATA\PrismLauncher" }
+    # Portable builds (and many repacks) keep instances next to the exe.
+    $exeDir = Split-Path $prism
+    $prismHome = if ((Test-Path "$exeDir\portable.txt") -or (Test-Path "$exeDir\instances")) { $exeDir } else { "$env:APPDATA\PrismLauncher" }
+    Say "Prism: $prism (данные: $prismHome)"
+    # ---- Java 17: the one already installed, otherwise an own copy -------------
+    $javaExe = Find-Java17 @("$prismHome\java", "$Root\java")
+    if (-not $javaExe) {
+        Say 'Java 17 не найдена, скачиваю (один раз)...' Cyan
+        $jz = "$Root\downloads\java17.zip"
+        Download 'https://api.adoptium.net/v3/binary/latest/17/ga/windows/x64/jre/hotspot/normal/eclipse?project=jdk' $jz
+        Expand-Zip $jz "$Root\java"
+        Remove-Item $jz
+        $javaExe = (Get-ChildItem "$Root\java" -Recurse -Filter java.exe | Select-Object -First 1).FullName
+    }
+    Say "Java: $javaExe"
+    $javaw = Join-Path (Split-Path $javaExe) 'javaw.exe'
+    if (-not (Test-Path $javaw)) { $javaw = $javaExe }
     $instName = "$prefix-test"
     $inst = Join-Path $prismHome "instances\$instName"
     $mc = Join-Path $inst 'minecraft'
@@ -296,7 +338,7 @@ try {
     Say "Запускаю клиент ($instName) и захожу на localhost..." Cyan
     Start-Process -FilePath $prism -ArgumentList '--launch', $instName, '--server', "127.0.0.1:$Port" | Out-Null
     Say ''
-    Say 'Готово. Если Prism попросит войти в аккаунт Microsoft, войдите и запустите скрипт ещё раз.' Green
+    Say 'Готово. Если Prism попросит аккаунт, добавьте его (Microsoft или offline) и запустите скрипт ещё раз.' Green
     Say "Права админа: в окне сервера введите  op <ваш ник>. Остановить сервер: stop. Файлы теста: $Root" Green
 } catch {
     Say ''
