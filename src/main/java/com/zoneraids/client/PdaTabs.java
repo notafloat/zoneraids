@@ -22,10 +22,10 @@ import java.util.List;
 
 /**
  * The PDA: every window of the mod is one of its tabs. Raids, perks and watching read the terminal
- * data from the server; the trader and the stash are opened by the server; the map, health and
- * status are purely client-side. The inventory tab is Curios' menu ({@link PdaCuriosScreen}: inventory,
- * equipment slots and the worn artifact container in one window), or the vanilla inventory menu without
- * Curios. Every PDA tab shares the panel size and position, with the tab row on top.
+ * data from the server; the trader and the stash are opened by the server; the map (the explored terrain
+ * with the player's markers, {@link WorldMap}), health and status are purely client-side. The inventory
+ * tab is Curios' menu ({@link PdaCuriosScreen}: inventory, equipment slots and the worn artifact container
+ * in one window), or the vanilla inventory menu without Curios. Every PDA tab shares the panel size and position, with the tab row on top.
  */
 public final class PdaTabs {
     public static final int PANEL_W = 424;
@@ -88,8 +88,6 @@ public final class PdaTabs {
                     case SHOP -> data.canShop();
                     case STASH -> data.canStash();
                     case WATCH -> !data.inRaid() && !data.survival();
-                    // The map is the Cordon's, which survival mode does not build.
-                    case MAP -> !data.survival();
                     default -> true;
                 };
             }
@@ -125,7 +123,7 @@ public final class PdaTabs {
             }
             case SHOP -> send(Action.SHOP);
             case STASH -> send(Action.STASH);
-            case MAP -> mc.setScreen(new CordonMapScreen());
+            case MAP -> mc.setScreen(new WorldMapScreen());
             case HEALTH -> mc.setScreen(new HealthScreen());
             case STATUS -> mc.setScreen(new StatusScreen());
             case INVENTORY -> openInventory();

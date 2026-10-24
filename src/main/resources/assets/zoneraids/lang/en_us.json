@@ -393,5 +393,16 @@
   "zoneraids.watch.switched": "Now watching %s",
   "zoneraids.watch.teammate": "%s · your group",
   "zoneraids.watch.title": "WATCH RAIDS",
-  "zoneraids.watch.unavailable": "This player cannot be watched right now."
+  "zoneraids.watch.unavailable": "This player cannot be watched right now.",
+  "zoneraids.worldmap.center": "On me",
+  "zoneraids.worldmap.color": "Colour",
+  "zoneraids.worldmap.delete": "Delete",
+  "zoneraids.worldmap.hint": "LMB drag · wheel zoom · RMB add or remove a marker",
+  "zoneraids.worldmap.markers": "Markers (%s)",
+  "zoneraids.worldmap.name": "Marker name",
+  "zoneraids.worldmap.no_markers": "No markers. Right-click the map to add one.",
+  "zoneraids.worldmap.paper": "Cordon paper map",
+  "zoneraids.worldmap.select_hint": "Click a marker to rename it or change its colour.",
+  "zoneraids.worldmap.terrain": "Terrain map and markers",
+  "zoneraids.worldmap.title": "TERRAIN MAP"
 }
