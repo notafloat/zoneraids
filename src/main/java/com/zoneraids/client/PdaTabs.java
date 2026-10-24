@@ -87,7 +87,9 @@ public final class PdaTabs {
                 button.active = switch (tab) {
                     case SHOP -> data.canShop();
                     case STASH -> data.canStash();
-                    case WATCH -> !data.inRaid();
+                    case WATCH -> !data.inRaid() && !data.survival();
+                    // The map is the Cordon's, which survival mode does not build.
+                    case MAP -> !data.survival();
                     default -> true;
                 };
             }

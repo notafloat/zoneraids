@@ -33,7 +33,8 @@ public final class WorldSetup {
     }
 
     public static void onServerStarted(MinecraftServer server) {
-        if (!RaidConfig.AUTO_SETUP.get()) {
+        // Survival plays in the overworld: no hub and no Cordon to build.
+        if (!RaidConfig.AUTO_SETUP.get() || RaidConfig.SURVIVAL.get()) {
             return;
         }
         RaidWorldData data = RaidWorldData.get(server);

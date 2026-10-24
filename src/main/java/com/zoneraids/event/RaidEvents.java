@@ -6,6 +6,7 @@ import com.zoneraids.command.RaidCommands;
 import com.zoneraids.raid.EnemySpawner;
 import com.zoneraids.raid.RaidManager;
 import com.zoneraids.registry.ModRegistry;
+import com.zoneraids.survival.SurvivalMode;
 import com.zoneraids.util.Teleports;
 import com.zoneraids.world.WorldBuilder;
 import com.zoneraids.world.WorldSetup;
@@ -50,11 +51,13 @@ public final class RaidEvents {
     public static void onServerStarted(ServerStartedEvent event) {
         RaidManager.start(event.getServer());
         WorldSetup.onServerStarted(event.getServer());
+        SurvivalMode.onServerStarted();
     }
 
     @SubscribeEvent
     public static void onServerStopped(ServerStoppedEvent event) {
         RaidManager.stop();
+        SurvivalMode.stop();
         WorldBuilder.clear();
     }
 
@@ -73,6 +76,7 @@ public final class RaidEvents {
             manager.tick();
         }
         WorldBuilder.tick(ServerLifecycleHooks.getCurrentServer());
+        SurvivalMode.tick(ServerLifecycleHooks.getCurrentServer());
     }
 
     /**
@@ -97,6 +101,9 @@ public final class RaidEvents {
         if (manager != null && event.getEntity() instanceof ServerPlayer player) {
             manager.onLogin(player);
             manager.tryLateJoin(player);
+        }
+        if (event.getEntity() instanceof ServerPlayer player) {
+            SurvivalMode.onLogin(player);
         }
     }
 
@@ -124,6 +131,9 @@ public final class RaidEvents {
         RaidManager manager = RaidManager.get();
         if (manager != null && event.getEntity() instanceof ServerPlayer player) {
             manager.onDeath(player, event.getSource());
+        }
+        if (!event.isCanceled() && !event.getEntity().level().isClientSide()) {
+            SurvivalMode.onDeath(event.getEntity(), event.getSource().getEntity());
         }
     }
 

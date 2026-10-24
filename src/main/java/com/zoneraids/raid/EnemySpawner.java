@@ -200,13 +200,7 @@ public final class EnemySpawner {
             if (!(level.getEntity(id) instanceof Mob mob) || !mob.isAlive()) {
                 continue;
             }
-            if (mob.canPickUpLoot()) {
-                // TaCZ NPCs re-enable it when their loadout is applied on the first tick.
-                mob.setCanPickUpLoot(false);
-            }
-            if (RaidConfig.NPC_HIP_FIRE_ONLY.get()) {
-                stopAiming(mob);
-            }
+            keepInCheck(mob);
             if (mob.getTarget() != null) {
                 continue;
             }
@@ -222,6 +216,17 @@ public final class EnemySpawner {
             if (best != null) {
                 mob.setTarget(best);
             }
+        }
+    }
+
+    /** Run often on every live enemy: no picking up loot, no aiming down sights. */
+    public static void keepInCheck(Mob mob) {
+        if (mob.canPickUpLoot()) {
+            // TaCZ NPCs re-enable it when their loadout is applied on the first tick.
+            mob.setCanPickUpLoot(false);
+        }
+        if (RaidConfig.NPC_HIP_FIRE_ONLY.get()) {
+            stopAiming(mob);
         }
     }
 

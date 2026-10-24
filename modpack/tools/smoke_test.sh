@@ -1,9 +1,14 @@
 #!/usr/bin/env bash
 # Boots the built server once, checks that every mod loads, rolls the crate loot tables,
-# prints a memory report and stops. Usage: smoke_test.sh <server-dir> <report-dir>
+# prints a memory report and stops. Usage: smoke_test.sh <server-dir> <report-dir> [survival]
+# With "survival" (the survival variant) no hub or Cordon is built and enemies are test-spawned in the overworld.
 set -uo pipefail
 SERVER="$(cd "$1" && pwd)"
 REPORT="$(mkdir -p "$2" && cd "$2" && pwd)"
+VARIANT="${3:-raids}"
+# The overworld at 0,0 may be ocean or mountain, so survival test spawns stand on a stone platform in the sky.
+if [ "$VARIANT" = survival ]; then ENEMY_DIM=minecraft:overworld ENEMY_AT="positioned 24 201 24" ITEM_Y=201
+else ENEMY_DIM=zoneraids:cordon ENEMY_AT="positioned 24 0 24 positioned over motion_blocking_no_leaves" ITEM_Y=70; fi
 PACK_GLUE="$(cd "$(dirname "$0")/../glue" && pwd)"
 cd "$SERVER"
 
@@ -74,9 +79,10 @@ if [ "$status" = up ]; then
   done
   # Raid enemies: every kind must spawn; armed NPCs must hold a TaCZ gun and drop loot.
   say "raidadmin enemy types" 2
-  say "execute in zoneraids:cordon run forceload add 0 0 47 47" 8
+  say "execute in $ENEMY_DIM run forceload add 0 0 47 47" 8
+  [ "$VARIANT" = survival ] && say "execute in $ENEMY_DIM run fill 12 200 12 36 200 36 minecraft:stone" 2
   for kind in blind_dog flesh snork bloodsucker bandit military; do
-    say "execute in zoneraids:cordon positioned 24 0 24 positioned over motion_blocking_no_leaves run raidadmin enemy spawn $kind" 1
+    say "execute in $ENEMY_DIM $ENEMY_AT run raidadmin enemy spawn $kind" 1
   done
   say "say ENEMY_CHECK_START" 5
   say "data get entity @e[type=tacznpcs:npc,limit=1] HandItems" 1
@@ -85,7 +91,7 @@ if [ "$status" = up ]; then
   say "data get entity @e[type=zoneraids:bloodsucker,limit=1] Health" 1
   say "kill @e[type=tacznpcs:npc]" 1
   say "kill @e[type=zoneraids:bloodsucker]" 3
-  say "execute in zoneraids:cordon positioned 24 70 24 as @e[type=item,distance=..40] run data get entity @s Item" 2
+  say "execute in $ENEMY_DIM positioned 24 $ITEM_Y 24 as @e[type=item,distance=..40] run data get entity @s Item" 2
   say "say ENEMY_CHECK_END" 2
   say "spark health --memory" 10
   say "stop" 1
@@ -154,6 +160,11 @@ ENEMY_LOG="$(sed -n '/ENEMY_CHECK_START/,/ENEMY_CHECK_END/p' "$REPORT/console.lo
 grep -q 'tacz:modern_kinetic_gun' <<< "$ENEMY_LOG" || { echo "Armed NPC holds no TaCZ gun"; fail=1; }
 grep -q 'enemies fire from the hip' "$REPORT/console.log" || { echo "Armed NPCs can still aim down sights"; fail=1; }
 grep -qE 'has the following entity data: \{(Count|id):' <<< "$ENEMY_LOG" || { echo "Killed enemies dropped no loot"; fail=1; }
+if [ "$VARIANT" = survival ]; then
+  echo "===== Survival ====="
+  grep -E 'Zone Raids: survival mode' "$REPORT/console.log" || { echo "Survival mode is not on"; fail=1; }
+  grep -qiE 'Zone Raids: .*build' "$REPORT/console.log" && { echo "Survival world built the hub or the Cordon"; fail=1; }
+fi
 echo "===== Memory ====="
 grep -A12 -iE 'Memory usage|Memory Usage' "$REPORT/console.log" | head -30
 exit $fail

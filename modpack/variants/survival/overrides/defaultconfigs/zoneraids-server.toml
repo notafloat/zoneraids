@@ -1,0 +1,38 @@
+# Zone Raids, вариант «Выживание». Копируется в world/serverconfig/ при создании нового мира.
+# Ключи, которых здесь нет, Forge допишет со значениями по умолчанию.
+
+[survival]
+	# Открытый мир вместо рейдов: хаб и Кордон не строятся, никого не переносит в хаб.
+	enabled = true
+	dimensions = ["minecraft:overworld"]
+	spawnIntervalSeconds = 40
+	spawnChance = 0.3
+	zoneBiomeMultiplier = 2.0
+	nightMultiplier = 1.5
+	maxNearPlayer = 6
+	minDistance = 24
+	maxDistance = 44
+	despawnDistance = 112
+	safeRadius = 64
+	spawns = ["blind_dog 30 2 4", "flesh 20 1 3", "bandit 16 1 3", "snork 10 1 2 night", "snork 8 1 2 zone", "military 6 2 3", "bloodsucker 5 1 1 night", "bloodsucker 4 1 1 zone"]
+	starterKit = ["minecraft:bread 8", "minecraft:torch 16", "firstaid:bandage 2"]
+	starterLootTable = "zoneraids:kits/round_start"
+	killsPerPerkPoint = 10
+	extraBuy = ["vehicles 15000 1 zoneraids:pit_bike"]
+
+[world]
+	autoSetup = false
+	forceHubOnLogin = false
+	giveMapInHub = false
+
+[hub]
+	# Схрон и камеры наблюдения нужны только рейдам.
+	remoteStash = false
+	spectating = false
+
+[enemies]
+	# В выживании оружие с врагов один из главных источников стволов.
+	gearDropChance = 0.3
+
+[network]
+	entityUpdateIntervals = ["minecraft:player=1", "tacznpcs:npc=1", "tacz:bullet=1"]
