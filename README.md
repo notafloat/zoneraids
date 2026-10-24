@@ -235,6 +235,10 @@
 * логова с боссами (`lairs`, `lairRegionSize`, `lairChance`, `lairMinSpawnDistance`): база бандитов с главарём Боровом,
   разрушенный колхоз с псевдогигантом, подземная Лаборатория X с контролёром. Строятся из ванильных блоков, когда
   игрок подходит, КПК сообщает направление; лут боссов в `loot_tables/bosses/<босс>`, за босса 3 очка перков;
+* места без боссов (`places`, `placeRegionSize`, `placeChance`, `placeMinSpawnDistance`): лагерь сталкеров с торговцем
+  за прилавком и дружественной охраной (рядом не появляются бродячие враги), военная база с гарнизоном (за зачистку
+  2 очка перков), разрушенная деревня со слепыми псами и заброшенная база со снорками. Строятся так же, как логова,
+  и никогда на месте логова; в тайниках лут из `loot_tables/crates`;
 * первая вкладка КПК вместо списка карт объясняет правила, вкладки «Камеры» и «Карта» (Кордона) серые.
 
 Рейды при этом не выключены: если администратор добавит карту командами `/raidadmin`, в неё можно ходить.
@@ -254,7 +258,8 @@
 `containers`, `medicine`; NBT как в таблицах лута, например `tacz:ammo{AmmoId:\"tacz:9mm\"}`).
 Секция `[survival]`: режим выживания (см. выше), `enabled`, `dimensions`, `spawnIntervalSeconds`, `spawnChance`, `zoneBiomeMultiplier`,
 `nightMultiplier`, `maxNearPlayer`, `minDistance`, `maxDistance`, `despawnDistance`, `safeRadius`, `spawns`, `starterKit`, `starterLootTable`,
-`killsPerPerkPoint`, `extraBuy`, `lairs`, `lairRegionSize`, `lairChance`, `lairMinSpawnDistance`.
+`killsPerPerkPoint`, `extraBuy`, `lairs`, `lairRegionSize`, `lairChance`, `lairMinSpawnDistance`, `places`, `placeRegionSize`,
+`placeChance`, `placeMinSpawnDistance`.
 Секция `[network]`: `entityUpdateIntervals` (`"id=тики"`), как часто сервер шлёт клиентам позицию сущности. По умолчанию
 игроки, NPC TaCZ и пули TaCZ каждый тик (в ваниле игроки раз в 2, мобы раз в 3 тика), чтобы враг на экране стоял там же,
 где сервер считает попадание. Мутанты и питбайк Zone Raids и так синхронизируются каждый тик. Тикрейт сервера остаётся 20.

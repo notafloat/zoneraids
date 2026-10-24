@@ -25,6 +25,8 @@ import com.zoneraids.shop.ShopCatalog;
 import com.zoneraids.shop.ShopService;
 import com.zoneraids.survival.LairData;
 import com.zoneraids.survival.Lairs;
+import com.zoneraids.survival.PlaceData;
+import com.zoneraids.survival.Places;
 import com.zoneraids.world.WorldBuilder;
 import com.zoneraids.world.WorldSetup;
 import net.minecraft.ChatFormatting;
@@ -60,6 +62,9 @@ public final class RaidCommands {
     private static final SuggestionProvider<CommandSourceStack> LAIR_TYPES = (ctx, builder) ->
             SharedSuggestionProvider.suggest(Arrays.stream(Lairs.Type.values()).map(t -> t.name().toLowerCase()), builder);
 
+    private static final SuggestionProvider<CommandSourceStack> PLACE_TYPES = (ctx, builder) ->
+            SharedSuggestionProvider.suggest(Arrays.stream(Places.Type.values()).map(t -> t.name().toLowerCase()), builder);
+
     private RaidCommands() {
     }
 
@@ -90,6 +95,49 @@ public final class RaidCommands {
         }
         ctx.getSource().sendSuccess(() -> Component.literal("Nearest lair site: " + pos.getX() + " ~ " + pos.getZ()), false);
         return 1;
+    }
+
+    /** Builds a place where the command runs and sends out its crew or staff at once (not tied to a region). */
+    private static int spawnPlace(CommandContext<CommandSourceStack> ctx) {
+        Places.Type type = placeType(ctx);
+        if (type == null) {
+            return 0;
+        }
+        ServerLevel level = ctx.getSource().getLevel();
+        BlockPos pos = BlockPos.containing(ctx.getSource().getPosition());
+        PlaceData.Entry entry = Places.build(level, null, "admin", type, pos);
+        if (type.friendly) {
+            Places.staff(level, null, "admin", entry, true);
+        } else {
+            Places.wake(level, null, "admin", entry);
+        }
+        ctx.getSource().sendSuccess(() -> Component.literal("Place " + type.name().toLowerCase() + " at " + pos.toShortString()), true);
+        return 1;
+    }
+
+    private static int locatePlace(CommandContext<CommandSourceStack> ctx, boolean typed) {
+        Places.Type type = typed ? placeType(ctx) : null;
+        if (typed && type == null) {
+            return 0;
+        }
+        BlockPos from = BlockPos.containing(ctx.getSource().getPosition());
+        Places.Found found = Places.nearest(ctx.getSource().getServer().overworld(), from.getX(), from.getZ(), type);
+        if (found == null) {
+            ctx.getSource().sendFailure(Component.literal("No place nearby"));
+            return 0;
+        }
+        ctx.getSource().sendSuccess(() -> Component.literal("Nearest " + found.type().name().toLowerCase() + ": "
+                + found.pos().getX() + " ~ " + found.pos().getZ()), false);
+        return 1;
+    }
+
+    private static Places.Type placeType(CommandContext<CommandSourceStack> ctx) {
+        try {
+            return Places.Type.valueOf(StringArgumentType.getString(ctx, "type").toUpperCase());
+        } catch (IllegalArgumentException e) {
+            ctx.getSource().sendFailure(Component.literal("Unknown place type"));
+            return null;
+        }
     }
 
     private static int setMoney(CommandContext<CommandSourceStack> ctx, boolean add) throws CommandSyntaxException {
@@ -216,6 +264,12 @@ public final class RaidCommands {
                         .then(Commands.literal("spawn").then(Commands.argument("type", StringArgumentType.word()).suggests(LAIR_TYPES)
                                 .executes(RaidCommands::spawnLair)))
                         .then(Commands.literal("locate").executes(RaidCommands::locateLair)))
+                .then(Commands.literal("place")
+                        .then(Commands.literal("spawn").then(Commands.argument("type", StringArgumentType.word()).suggests(PLACE_TYPES)
+                                .executes(RaidCommands::spawnPlace)))
+                        .then(Commands.literal("locate").executes(ctx -> locatePlace(ctx, false))
+                                .then(Commands.argument("type", StringArgumentType.word()).suggests(PLACE_TYPES)
+                                        .executes(ctx -> locatePlace(ctx, true)))))
                 .then(Commands.literal("crate").then(Commands.argument("pos", BlockPosArgument.blockPos())
                         .then(Commands.argument("lootTable", ResourceLocationArgument.id()).executes(RaidCommands::setCrate))))
                 .then(Commands.literal("map")

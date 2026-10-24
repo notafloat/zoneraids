@@ -116,7 +116,7 @@ public final class Lairs {
                 return;
             }
         }
-        BlockPos origin = LairBuilder.ground(level, site.x(), site.z());
+        BlockPos origin = SiteBuilder.ground(level, site.x(), site.z());
         if (origin == null) {
             data.put(site.key(), LairData.State.SKIPPED, site.type(), new BlockPos(site.x(), 0, site.z()));
             return;
@@ -307,6 +307,19 @@ public final class Lairs {
 
     // ------------------------------------------------------------------ placement
 
+    /** True if a lair site lies within {@code distance} blocks of x/z (never with lairs off). */
+    static boolean siteNear(ServerLevel level, int x, int z, int distance) {
+        if (!enabled()) {
+            return false;
+        }
+        for (Planned site : sitesNear(level, x, z)) {
+            if (Math.pow(site.x() - x, 2) + Math.pow(site.z() - z, 2) < (double) distance * distance) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private static List<Planned> sitesNear(ServerLevel level, int x, int z) {
         int size = RaidConfig.SURVIVAL_LAIR_REGION.get();
         int rx = Math.floorDiv(x, size);
@@ -346,7 +359,7 @@ public final class Lairs {
         return Math.sqrt(Math.pow(player.getX() - x, 2) + Math.pow(player.getZ() - z, 2));
     }
 
-    private static Component direction(ServerPlayer player, int x, int z) {
+    static Component direction(ServerPlayer player, int x, int z) {
         double angle = Math.toDegrees(Math.atan2(x - player.getX(), -(z - player.getZ())));
         String[] names = {"n", "ne", "e", "se", "s", "sw", "w", "nw"};
         int index = (int) Math.floorMod(Math.round(angle / 45.0), 8L);
