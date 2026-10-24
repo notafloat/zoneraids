@@ -79,6 +79,9 @@ public final class SurvivalMode {
                 }
             });
         }
+        if (ticks % 100 == 0) {
+            Lairs.pass(server.overworld());
+        }
         if (ticks % (RaidConfig.SURVIVAL_SPAWN_INTERVAL.get() * 20) != 0) {
             return;
         }

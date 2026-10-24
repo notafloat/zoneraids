@@ -19,6 +19,11 @@
 	starterLootTable = "zoneraids:kits/round_start"
 	killsPerPerkPoint = 10
 	extraBuy = ["vehicles 15000 1 zoneraids:pit_bike"]
+	# Логова с боссами: база бандитов (Боров), разрушенный колхоз (псевдогигант), Лаборатория X (контролёр).
+	lairs = true
+	lairRegionSize = 512
+	lairChance = 0.6
+	lairMinSpawnDistance = 300
 
 [world]
 	autoSetup = false

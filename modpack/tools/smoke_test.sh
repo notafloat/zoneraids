@@ -94,14 +94,19 @@ if [ "$status" = up ]; then
   say "execute in $ENEMY_DIM positioned 24 $ITEM_Y 24 as @e[type=item,distance=..40] run data get entity @s Item" 2
   say "say ENEMY_CHECK_END" 2
   if [ "$VARIANT" = survival ]; then
-    # Boss mods of the survival variant: every boss must exist; each one is removed right after.
-    say "say BOSS_CHECK_START" 1
-    for boss in cataclysm:ignis cataclysm:netherite_monstrosity cataclysm:ender_guardian cataclysm:the_harbinger \
-        mowziesmobs:ferrous_wroughtnaut mowziesmobs:frostmaw; do
-      say "execute in minecraft:overworld run summon $boss 24 201 24" 2
-      say "kill @e[type=$boss]" 1
+    # Survival lairs: each one is built and its boss woken by the admin command.
+    say "forceload add 112 112 271 143" 10
+    say "say LAIR_CHECK_START" 1
+    x=120
+    for lair in bandit_base agroprom lab; do
+      say "execute in minecraft:overworld positioned $x 0 128 positioned over motion_blocking_no_leaves run raidadmin lair spawn $lair" 4
+      x=$((x + 64))
     done
-    say "say BOSS_CHECK_END" 2
+    say "data get entity @e[type=zoneraids:pseudogiant,limit=1] Health" 1
+    say "data get entity @e[type=zoneraids:controller,limit=1] Health" 1
+    say "kill @e[type=zoneraids:pseudogiant]" 1
+    say "kill @e[type=zoneraids:controller]" 2
+    say "say LAIR_CHECK_END" 2
   fi
   say "spark health --memory" 10
   say "stop" 1
@@ -140,7 +145,7 @@ grep -E 'has the following block data' "$REPORT/console.log" | sed 's/.*has the 
 fail=0
 grep -q 'tacz:' "$REPORT/console.log" || { echo "No TaCZ items rolled from crates"; fail=1; }
 grep -q 'firstaid:' "$REPORT/console.log" || { echo "No First Aid items rolled from crates"; fail=1; }
-grep -qE "Couldn't parse element.*zoneraids|zoneraids:(crates|kits).*(error|invalid)" "$REPORT/console.log" && { echo "Crate loot table failed to load"; fail=1; }
+grep -qE "Couldn't parse element.*zoneraids|zoneraids:(crates|kits|bosses).*(error|invalid)" "$REPORT/console.log" && { echo "Crate loot table failed to load"; fail=1; }
 LOOT_IDS="$(grep -rhoE '"name": "[a-z0-9_]+:[a-z0-9_/]+"' "$PACK_GLUE/data" | cut -d'"' -f4 | sort -u)"
 UNKNOWN="$(grep -oE "Unknown item '[^']*'" "$REPORT/console.log" | cut -d"'" -f2 | sort -u)"
 BAD="$(comm -12 <(echo "$LOOT_IDS") <(echo "$UNKNOWN"))"
@@ -173,12 +178,14 @@ grep -qE 'has the following entity data: \{(Count|id):' <<< "$ENEMY_LOG" || { ec
 if [ "$VARIANT" = survival ]; then
   echo "===== Survival ====="
   grep -E 'Zone Raids: survival mode' "$REPORT/console.log" || { echo "Survival mode is not on"; fail=1; }
-  grep -qiE 'Zone Raids: .*build' "$REPORT/console.log" && { echo "Survival world built the hub or the Cordon"; fail=1; }
-  echo "===== Bosses ====="
-  BOSS_LOG="$(sed -n '/BOSS_CHECK_START/,/BOSS_CHECK_END/p' "$REPORT/console.log")"
-  echo "$BOSS_LOG" | grep -E 'Summoned|summon|Unknown|Unable' | cut -c1-300
-  SUMMONED="$(grep -c 'Summoned new' <<< "$BOSS_LOG")"
-  [ "$SUMMONED" -ge 6 ] || { echo "Only $SUMMONED of 6 bosses could be summoned"; fail=1; }
+  grep -qiE 'Zone Raids: (building|finished building)' "$REPORT/console.log" && { echo "Survival world built the hub or the Cordon"; fail=1; }
+  echo "===== Lairs ====="
+  LAIR_LOG="$(sed -n '/LAIR_CHECK_START/,/LAIR_CHECK_END/p' "$REPORT/console.log")"
+  echo "$LAIR_LOG" | grep -E 'lair|Lair|has the following entity data|Unknown|Killed' | cut -c1-300
+  for lair in bandit_base agroprom lab; do
+    grep -q "Zone Raids: built lair $lair" <<< "$LAIR_LOG" || { echo "Lair $lair was not built"; fail=1; }
+  done
+  [ "$(grep -c 'has the following entity data' <<< "$LAIR_LOG")" -ge 2 ] || { echo "Pseudogiant or controller did not spawn"; fail=1; }
 fi
 echo "===== Memory ====="
 grep -A12 -iE 'Memory usage|Memory Usage' "$REPORT/console.log" | head -30

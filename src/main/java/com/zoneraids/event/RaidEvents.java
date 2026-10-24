@@ -6,6 +6,7 @@ import com.zoneraids.command.RaidCommands;
 import com.zoneraids.raid.EnemySpawner;
 import com.zoneraids.raid.RaidManager;
 import com.zoneraids.registry.ModRegistry;
+import com.zoneraids.survival.Lairs;
 import com.zoneraids.survival.SurvivalMode;
 import com.zoneraids.util.Teleports;
 import com.zoneraids.world.WorldBuilder;
@@ -134,6 +135,7 @@ public final class RaidEvents {
         }
         if (!event.isCanceled() && !event.getEntity().level().isClientSide()) {
             SurvivalMode.onDeath(event.getEntity(), event.getSource().getEntity());
+            Lairs.onDeath(event.getEntity(), event.getSource().getEntity());
         }
     }
 
@@ -188,6 +190,7 @@ public final class RaidEvents {
     @SubscribeEvent
     public static void onDrops(LivingDropsEvent event) {
         EnemySpawner.addDrops(event.getEntity(), event.getDrops());
+        Lairs.addDrops(event.getEntity(), event.getDrops());
     }
 
     @SubscribeEvent

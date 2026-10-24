@@ -23,6 +23,8 @@ import com.zoneraids.raid.RaidManager;
 import com.zoneraids.raid.RaidSession;
 import com.zoneraids.shop.ShopCatalog;
 import com.zoneraids.shop.ShopService;
+import com.zoneraids.survival.LairData;
+import com.zoneraids.survival.Lairs;
 import com.zoneraids.world.WorldBuilder;
 import com.zoneraids.world.WorldSetup;
 import net.minecraft.ChatFormatting;
@@ -55,7 +57,39 @@ public final class RaidCommands {
     private static final SuggestionProvider<CommandSourceStack> PERKS = (ctx, builder) ->
             SharedSuggestionProvider.suggest(Arrays.stream(Perk.values()).map(p -> p.id), builder);
 
+    private static final SuggestionProvider<CommandSourceStack> LAIR_TYPES = (ctx, builder) ->
+            SharedSuggestionProvider.suggest(Arrays.stream(Lairs.Type.values()).map(t -> t.name().toLowerCase()), builder);
+
     private RaidCommands() {
+    }
+
+    /** Builds a lair where the command runs and wakes its boss at once (not tied to a region). */
+    private static int spawnLair(CommandContext<CommandSourceStack> ctx) {
+        Lairs.Type type;
+        try {
+            type = Lairs.Type.valueOf(StringArgumentType.getString(ctx, "type").toUpperCase());
+        } catch (IllegalArgumentException e) {
+            ctx.getSource().sendFailure(Component.literal("Unknown lair type"));
+            return 0;
+        }
+        ServerLevel level = ctx.getSource().getLevel();
+        BlockPos pos = BlockPos.containing(ctx.getSource().getPosition());
+        LairData.Entry entry = Lairs.build(level, null, "admin", type, pos);
+        Lairs.wake(level, null, "admin", entry);
+        ctx.getSource().sendSuccess(() -> Component.literal("Lair " + type.name().toLowerCase() + " at " + pos.toShortString()
+                + ", boss at " + entry.boss.toShortString()), true);
+        return 1;
+    }
+
+    private static int locateLair(CommandContext<CommandSourceStack> ctx) {
+        BlockPos from = BlockPos.containing(ctx.getSource().getPosition());
+        BlockPos pos = Lairs.nearestOpen(ctx.getSource().getServer().overworld(), from.getX(), from.getZ());
+        if (pos == null) {
+            ctx.getSource().sendFailure(Component.literal("No lair nearby"));
+            return 0;
+        }
+        ctx.getSource().sendSuccess(() -> Component.literal("Nearest lair site: " + pos.getX() + " ~ " + pos.getZ()), false);
+        return 1;
     }
 
     private static int setMoney(CommandContext<CommandSourceStack> ctx, boolean add) throws CommandSyntaxException {
@@ -178,6 +212,10 @@ public final class RaidCommands {
                                 .executes(ctx -> spawnEnemies(ctx, 1))
                                 .then(Commands.argument("count", IntegerArgumentType.integer(1, 16))
                                         .executes(ctx -> spawnEnemies(ctx, IntegerArgumentType.getInteger(ctx, "count")))))))
+                .then(Commands.literal("lair")
+                        .then(Commands.literal("spawn").then(Commands.argument("type", StringArgumentType.word()).suggests(LAIR_TYPES)
+                                .executes(RaidCommands::spawnLair)))
+                        .then(Commands.literal("locate").executes(RaidCommands::locateLair)))
                 .then(Commands.literal("crate").then(Commands.argument("pos", BlockPosArgument.blockPos())
                         .then(Commands.argument("lootTable", ResourceLocationArgument.id()).executes(RaidCommands::setCrate))))
                 .then(Commands.literal("map")
