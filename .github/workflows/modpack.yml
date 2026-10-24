@@ -18,6 +18,8 @@ on:
 jobs:
   modpack:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  # latest-build pre-release
     timeout-minutes: 45
     strategy:
       fail-fast: false
@@ -120,3 +122,23 @@ jobs:
             build/modpack/mods.lock.json
             build/modpack/item-ids.txt
             build/modpack/report/
+
+      # quick-test.bat and players download main builds from here without a GitHub login.
+      - name: Publish to the latest-build pre-release (main only)
+        if: success() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          P="${{ matrix.prefix }}"
+          mkdir -p build/release
+          cp build/modpack/*-server.zip "build/release/$P-server.zip"
+          cp build/modpack/*.mrpack "build/release/$P.mrpack"
+          printf '%s %s %s\n' "${{ github.run_id }}" "${{ github.run_number }}" "$GITHUB_SHA" > "build/release/$P-build.txt"
+          gh release view latest-build >/dev/null 2>&1 || gh release create latest-build --prerelease --target "$GITHUB_SHA" \
+            --title "Latest build (main)" --notes "Last green Modpack build of main, refreshed by CI. Run quick-test.bat to test it locally." || true
+          for i in 1 2 3 4; do
+            gh release upload latest-build build/release/* --clobber && exit 0
+            sleep $((i * 5))
+          done
+          exit 1
