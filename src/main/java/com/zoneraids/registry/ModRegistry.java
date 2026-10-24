@@ -1,12 +1,15 @@
 package com.zoneraids.registry;
 
 import com.zoneraids.ZoneRaids;
+import com.zoneraids.block.HiddenStashBlock;
+import com.zoneraids.block.HiddenStashBlockEntity;
 import com.zoneraids.block.LootCrateBlock;
 import com.zoneraids.block.LootCrateBlockEntity;
 import com.zoneraids.block.RaidTerminalBlock;
 import com.zoneraids.block.StashBlock;
 import com.zoneraids.block.TraderBlock;
 import com.zoneraids.item.CordonMapItem;
+import com.zoneraids.item.StashDriveItem;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -48,12 +51,19 @@ public final class ModRegistry {
     public static final RegistryObject<Block> WEAPON_CRATE = block("weapon_crate",
             () -> new LootCrateBlock(adminProps(MapColor.COLOR_GRAY, SoundType.WOOD), crateLoot("weapons")));
 
+    public static final RegistryObject<Block> HIDDEN_STASH = block("hidden_stash",
+            () -> new HiddenStashBlock(adminProps(MapColor.COLOR_GREEN, SoundType.WOOD).noOcclusion()));
+
     public static final RegistryObject<Item> CORDON_MAP = ITEMS.register("cordon_map", () -> new CordonMapItem(new Item.Properties().stacksTo(1)));
+    public static final RegistryObject<Item> STASH_DRIVE = ITEMS.register("stash_drive", () -> new StashDriveItem(new Item.Properties().stacksTo(16)));
 
     @SuppressWarnings("ConstantConditions")
     public static final RegistryObject<BlockEntityType<LootCrateBlockEntity>> LOOT_CRATE_BE = BLOCK_ENTITIES.register("loot_crate",
             () -> BlockEntityType.Builder.of(LootCrateBlockEntity::new,
                     COMMON_CRATE.get(), MILITARY_CRATE.get(), MEDICAL_CRATE.get(), WEAPON_CRATE.get()).build(null));
+    @SuppressWarnings("ConstantConditions")
+    public static final RegistryObject<BlockEntityType<HiddenStashBlockEntity>> HIDDEN_STASH_BE = BLOCK_ENTITIES.register("hidden_stash",
+            () -> BlockEntityType.Builder.of(HiddenStashBlockEntity::new, HIDDEN_STASH.get()).build(null));
 
     public static final RegistryObject<CreativeModeTab> TAB = TABS.register("main", () -> CreativeModeTab.builder()
             .title(Component.translatable("itemGroup.zoneraids"))
@@ -66,7 +76,9 @@ public final class ModRegistry {
                 output.accept(MILITARY_CRATE.get());
                 output.accept(MEDICAL_CRATE.get());
                 output.accept(WEAPON_CRATE.get());
+                output.accept(HIDDEN_STASH.get());
                 output.accept(CORDON_MAP.get());
+                output.accept(STASH_DRIVE.get());
             })
             .build());
 
