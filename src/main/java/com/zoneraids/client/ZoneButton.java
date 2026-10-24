@@ -20,7 +20,7 @@ public class ZoneButton extends Button {
         draw(g, this, selected);
     }
 
-    /** Draws any widget as a PDA button (also vanilla's buttons, see {@link SkinnedButton}). */
+    /** Draws any widget as a PDA button (also vanilla's buttons, see {@link VanillaStyle}). */
     static void draw(GuiGraphics g, AbstractWidget widget, boolean selected) {
         Font font = Minecraft.getInstance().font;
         int x0 = widget.getX();
