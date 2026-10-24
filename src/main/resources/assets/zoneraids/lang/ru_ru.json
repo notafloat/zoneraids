@@ -375,5 +375,16 @@
   "zoneraids.watch.switched": "Наблюдение переключено на %s",
   "zoneraids.watch.teammate": "%s · своя группа",
   "zoneraids.watch.title": "НАБЛЮДЕНИЕ ЗА РЕЙДАМИ",
-  "zoneraids.watch.unavailable": "За этим игроком сейчас наблюдать нельзя."
+  "zoneraids.watch.unavailable": "За этим игроком сейчас наблюдать нельзя.",
+  "zoneraids.worldmap.center": "На себя",
+  "zoneraids.worldmap.color": "Цвет",
+  "zoneraids.worldmap.delete": "Удалить",
+  "zoneraids.worldmap.hint": "ЛКМ тянуть · колесо масштаб · ПКМ поставить или снять метку",
+  "zoneraids.worldmap.markers": "Метки (%s)",
+  "zoneraids.worldmap.name": "Название метки",
+  "zoneraids.worldmap.no_markers": "Меток нет. ПКМ по карте ставит метку.",
+  "zoneraids.worldmap.paper": "Бумажная карта Кордона",
+  "zoneraids.worldmap.select_hint": "Нажмите на метку, чтобы переименовать её или сменить цвет.",
+  "zoneraids.worldmap.terrain": "Карта местности и метки",
+  "zoneraids.worldmap.title": "КАРТА МЕСТНОСТИ"
 }

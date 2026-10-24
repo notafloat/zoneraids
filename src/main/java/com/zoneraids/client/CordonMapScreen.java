@@ -13,7 +13,8 @@ import net.minecraft.world.entity.player.Player;
  * PDA map tab: the paper map of the Cordon, as large as the screen allows, with a legend and the
  * assigned exits beside it. The game keeps running behind it, as reading a map in a raid should cost
  * attention. The holder's position, their assigned exits and the round target are marked only while
- * they are on the Cordon. The map item opens this tab too.
+ * they are on the Cordon. The map item opens this sheet; the PDA's map tab opens the terrain map with the
+ * player's markers ({@link WorldMapScreen}), and each has a button to the other.
  */
 public final class CordonMapScreen extends Screen {
     private static final ResourceLocation TEXTURE = new ResourceLocation(ZoneRaids.MODID, "textures/gui/cordon_map.png");
@@ -49,6 +50,10 @@ public final class CordonMapScreen extends Screen {
         left = (width - panelW) / 2;
         top = Math.max(PdaTabs.TAB_H + 1, (height - panelH + PdaTabs.TAB_H) / 2);
         PdaTabs.buttons(left, top, panelW, PdaTabs.Tab.MAP).forEach(this::addRenderableWidget);
+        int x = left + 10 + size + 12;
+        int right = left + panelW - 10;
+        addRenderableWidget(new ZoneButton(x, top + panelH - 24, right - x, 14, Component.translatable("zoneraids.worldmap.terrain"),
+                b -> minecraft.setScreen(new WorldMapScreen())));
     }
 
     @Override
