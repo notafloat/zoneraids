@@ -65,13 +65,13 @@ public final class ShopCatalog {
     private ShopCatalog() {
     }
 
-    /** The {@code [shop] buy} list, plus {@code [survival] extraBuy} in survival mode. */
+    /** The {@code [shop] buy} and {@code detectors} lists, plus {@code [survival] extraBuy} in survival mode. */
     private static List<? extends String> buyLines() {
-        if (!RaidConfig.SURVIVAL.get() || RaidConfig.SURVIVAL_EXTRA_BUY.get().isEmpty()) {
-            return RaidConfig.SHOP_BUY.get();
-        }
         List<String> lines = new ArrayList<>(RaidConfig.SHOP_BUY.get());
-        lines.addAll(RaidConfig.SURVIVAL_EXTRA_BUY.get());
+        lines.addAll(RaidConfig.SHOP_DETECTORS.get());
+        if (RaidConfig.SURVIVAL.get()) {
+            lines.addAll(RaidConfig.SURVIVAL_EXTRA_BUY.get());
+        }
         return lines;
     }
 
