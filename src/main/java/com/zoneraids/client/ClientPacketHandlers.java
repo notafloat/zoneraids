@@ -5,6 +5,7 @@ import com.zoneraids.network.ShopDataPacket;
 import com.zoneraids.network.TerminalDataPacket;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
 
 public final class ClientPacketHandlers {
     private ClientPacketHandlers() {
@@ -37,6 +38,14 @@ public final class ClientPacketHandlers {
 
     public static void openCordonMap() {
         Minecraft.getInstance().setScreen(new CordonMapScreen());
+    }
+
+    public static void addStashMarker(int x, int z) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level != null) {
+            WorldMap.use(mc.level);
+            WorldMap.addMarker(x, z, WorldMap.STASH_COLOR, Component.translatable("zoneraids.stash_drive.marker").getString());
+        }
     }
 
     public static void handleHud(RaidHudPacket packet) {

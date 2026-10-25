@@ -7,6 +7,7 @@ import com.zoneraids.raid.EnemySpawner;
 import com.zoneraids.raid.RaidManager;
 import com.zoneraids.registry.ModRegistry;
 import com.zoneraids.shop.ShopService;
+import com.zoneraids.stash.StashDrives;
 import com.zoneraids.survival.Lairs;
 import com.zoneraids.survival.Places;
 import com.zoneraids.survival.SurvivalMode;
@@ -196,6 +197,7 @@ public final class RaidEvents {
     public static void onDrops(LivingDropsEvent event) {
         EnemySpawner.addDrops(event.getEntity(), event.getDrops());
         Lairs.addDrops(event.getEntity(), event.getDrops());
+        StashDrives.addDrops(event.getEntity(), event.getDrops());
     }
 
     @SubscribeEvent

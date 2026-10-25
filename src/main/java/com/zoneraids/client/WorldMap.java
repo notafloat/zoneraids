@@ -49,6 +49,8 @@ public final class WorldMap {
 
     /** Marker colours, cycled by the colour button. */
     public static final int[] COLORS = {ZoneUi.AMBER, ZoneUi.RED, ZoneUi.GREEN, 0xFF4FA3E0, 0xFFE0E0E0, 0xFFB060E0};
+    /** Index in {@link #COLORS} of the markers flash drives put down. */
+    public static final int STASH_COLOR = 2;
 
     /** A player's marker: a point with a name and one of {@link #COLORS}. */
     public static final class Marker {
@@ -86,7 +88,11 @@ public final class WorldMap {
     }
 
     public static Marker addMarker(int x, int z) {
-        Marker marker = new Marker(x, z, 0, "#" + (markers.size() + 1));
+        return addMarker(x, z, 0, "#" + (markers.size() + 1));
+    }
+
+    public static Marker addMarker(int x, int z, int color, String name) {
+        Marker marker = new Marker(x, z, color, name.length() > MAX_NAME ? name.substring(0, MAX_NAME) : name);
         markers.add(marker);
         dirty = true;
         return marker;
