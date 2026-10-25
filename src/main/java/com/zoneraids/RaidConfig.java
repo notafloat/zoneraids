@@ -62,7 +62,6 @@ public final class RaidConfig {
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> STARTER_KIT;
     public static final ForgeConfigSpec.ConfigValue<String> ROUND_KIT_LOOT_TABLE;
     public static final ForgeConfigSpec.BooleanValue SHOP;
-    public static final ForgeConfigSpec.BooleanValue REMOTE_SHOP;
     public static final ForgeConfigSpec.BooleanValue KEEP_MONEY_AFTER_SESSION;
     public static final ForgeConfigSpec.IntValue MONEY_CAP_AFTER_SESSION;
     public static final ForgeConfigSpec.IntValue SELLBACK_PERCENT;
@@ -254,8 +253,6 @@ public final class RaidConfig {
         SHOP = b.comment("Trader in the hub bunker: sells artifacts for money and buys guns, armor, ammo and medicine.",
                         "Trading is only possible outside raids (in the hub, also between the rounds of a session).")
                 .define("enabled", true);
-        REMOTE_SHOP = b.comment("Allow trading from the raid terminal menu (K) too, not only at the trader counter.")
-                .define("remoteShop", true);
         KEEP_MONEY_AFTER_SESSION = b.comment("Money is not an item: it is never lost in a raid. If true it also survives the end of a session",
                         "(like perks); if false it is wiped together with the inventory and the stash.")
                 .define("keepMoneyAfterSession", true);
@@ -346,8 +343,8 @@ public final class RaidConfig {
 
         b.push("survival");
         SURVIVAL = b.comment("Survival mode: an open world instead of raids. The hub and the Cordon are not built and nobody is sent",
-                        "to a hub; mutants, bandits and soldiers roam near players, a newcomer gets a starter kit once, the trader is",
-                        "in the PDA, and killing enemies earns perk points. Nothing is wiped. Raids still work on maps an admin adds.")
+                        "to a hub; mutants, bandits and soldiers roam near players, a newcomer gets a starter kit once, traders stand",
+                        "in stalker camps, and killing enemies earns perk points. Nothing is wiped. Raids still work on maps an admin adds.")
                 .define("enabled", false);
         SURVIVAL_DIMENSIONS = b.comment("Dimensions where enemies roam in survival mode.")
                 .defineListAllowEmpty(List.of("dimensions"), List.of("minecraft:overworld"), o -> o instanceof String);

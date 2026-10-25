@@ -15,7 +15,7 @@ import java.util.List;
 /**
  * The hub trader: a "sell" tab with the artifacts the trader buys (and how many the player carries),
  * then one tab per category of goods. Same PDA look as the terminal; only fills, text and item icons.
- * A PDA tab, also opened by the trader counter; the terminal key closes it, the wheel turns pages.
+ * Opened only by a trader (the bunker counter or a camp trader), not a PDA tab; the terminal key closes it, the wheel turns pages.
  */
 public final class ShopScreen extends Screen {
     private static final int PANEL_W = PdaTabs.PANEL_W;
@@ -88,7 +88,6 @@ public final class ShopScreen extends Screen {
         int left = left();
         int top = top();
         int by = top + PANEL_H - 25;
-        PdaTabs.buttons(left, top, PdaTabs.Tab.SHOP).forEach(this::addRenderableWidget);
         addRenderableWidget(new ZoneButton(left + PANEL_W - 84, by, 74, 17, Component.translatable("gui.done"), b -> onClose()));
         if (data == null) {
             return;

@@ -278,7 +278,7 @@ public final class RaidEvents {
     public static void onUseTrader(PlayerInteractEvent.EntityInteract event) {
         if (!event.getLevel().isClientSide() && Places.isTrader(event.getTarget())) {
             if (event.getHand() == InteractionHand.MAIN_HAND && event.getEntity() instanceof ServerPlayer player) {
-                ShopService.open(player, true);
+                ShopService.open(player);
             }
             event.setCanceled(true);
             event.setCancellationResult(InteractionResult.SUCCESS);

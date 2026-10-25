@@ -22,7 +22,7 @@ import java.util.List;
 
 /**
  * The PDA: every window of the mod is one of its tabs. Raids, perks and watching read the terminal
- * data from the server; the trader and the stash are opened by the server; the map (the explored terrain
+ * data from the server; the stash is opened by the server (trading is not a tab: only a trader opens it); the map (the explored terrain
  * with the player's markers, {@link WorldMap}), health and status are purely client-side. The inventory
  * tab is Curios' menu ({@link PdaCuriosScreen}: inventory, equipment slots and the worn artifact container
  * in one window), or the vanilla inventory menu without Curios. Every PDA tab shares the panel size and position, with the tab row on top.
@@ -37,7 +37,7 @@ public final class PdaTabs {
     private static final int TAB_GAP = 2;
 
     public enum Tab {
-        RAIDS, PERKS, SHOP, WATCH, STASH, MAP, HEALTH, STATUS, INVENTORY;
+        RAIDS, PERKS, WATCH, STASH, MAP, HEALTH, STATUS, INVENTORY;
 
         final String key = "zoneraids.pda.tab." + name().toLowerCase();
     }
@@ -61,40 +61,46 @@ public final class PdaTabs {
 
     /**
      * Tab buttons above a panel whose top-left corner is {@code left, top} and width {@code panelW};
-     * the screen adds them as widgets. Tabs the player cannot use right now are greyed out.
+     * the screen adds them as widgets. Tabs the player cannot use right now are hidden.
      */
     public static List<ZoneButton> buttons(int left, int top, int panelW, @Nullable Tab current) {
         Font font = Minecraft.getInstance().font;
-        Tab[] tabs = Tab.values();
-        int[] text = new int[tabs.length];
+        TerminalDataPacket data = ClientRaidState.terminal;
+        List<Tab> tabs = new ArrayList<>();
+        for (Tab tab : Tab.values()) {
+            if (tab == current || data == null || shown(tab, data)) {
+                tabs.add(tab);
+            }
+        }
+        int[] text = new int[Tab.values().length];
         int textTotal = 0;
         for (Tab tab : tabs) {
             text[tab.ordinal()] = font.width(Component.translatable(tab.key));
             textTotal += text[tab.ordinal()];
         }
         // Padding shrinks first (down to what the label needs to show whole), then the whole row scales.
-        int room = panelW - 8 - tabs.length * TAB_GAP;
-        int pad = Math.max(MIN_PAD, Math.min(TAB_PAD, (room - textTotal) / (2 * tabs.length)));
-        float scale = Math.min(1.0F, room / (float) (textTotal + 2 * pad * tabs.length));
-        TerminalDataPacket data = ClientRaidState.terminal;
+        int room = panelW - 8 - tabs.size() * TAB_GAP;
+        int pad = Math.max(MIN_PAD, Math.min(TAB_PAD, (room - textTotal) / (2 * tabs.size())));
+        float scale = Math.min(1.0F, room / (float) (textTotal + 2 * pad * tabs.size()));
         List<ZoneButton> list = new ArrayList<>();
         int x = left + 4;
         for (Tab tab : tabs) {
             int w = (int) ((text[tab.ordinal()] + 2 * pad) * scale);
             ZoneButton button = new ZoneButton(x, top - TAB_H, w, TAB_H + 1, Component.translatable(tab.key), b -> open(tab, current));
             button.selected = tab == current;
-            if (data != null && tab != current) {
-                button.active = switch (tab) {
-                    case SHOP -> data.canShop();
-                    case STASH -> data.canStash();
-                    case WATCH -> !data.inRaid() && !data.survival();
-                    default -> true;
-                };
-            }
             list.add(button);
             x += w + TAB_GAP;
         }
         return list;
+    }
+
+    /** False for a tab with nothing to do right now: the stash in a raid (or with remoteStash off), watching in a raid or in survival. */
+    private static boolean shown(Tab tab, TerminalDataPacket data) {
+        return switch (tab) {
+            case STASH -> data.canStash();
+            case WATCH -> !data.inRaid() && !data.survival();
+            default -> true;
+        };
     }
 
     public static List<ZoneButton> buttons(int left, int top, @Nullable Tab current) {
@@ -121,7 +127,6 @@ public final class PdaTabs {
                     requestTerminal(tab);
                 }
             }
-            case SHOP -> send(Action.SHOP);
             case STASH -> send(Action.STASH);
             case MAP -> mc.setScreen(new WorldMapScreen());
             case HEALTH -> mc.setScreen(new HealthScreen());
