@@ -3,8 +3,10 @@ package com.zoneraids;
 import com.zoneraids.network.RaidNetwork;
 import com.zoneraids.registry.ModEntities;
 import com.zoneraids.registry.ModRegistry;
+import com.zoneraids.registry.ModSounds;
 import com.zoneraids.client.ClientSettings;
 import com.zoneraids.vehicle.Vehicles;
+import com.zoneraids.world.gen.ZoneFeatures;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
@@ -22,6 +24,8 @@ public final class ZoneRaids {
         ModEntities.register(modBus);
         modBus.addListener(this::commonSetup);
         Vehicles.register(modBus);
+        ModSounds.register(modBus);
+        ZoneFeatures.register(modBus);
         ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, RaidConfig.SPEC);
         ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, ClientSettings.SPEC, MODID + "-client.toml");
     }

@@ -107,6 +107,15 @@ if [ "$status" = up ]; then
     say "kill @e[type=zoneraids:pseudogiant]" 1
     say "kill @e[type=zoneraids:controller]" 2
     say "say LAIR_CHECK_END" 2
+    # Zone look: the world generation features of the pack data, placed by hand on a strip of grass.
+    say "execute in minecraft:overworld run fill 0 200 40 44 200 46 minecraft:grass_block" 2
+    say "say LOOK_CHECK_START" 1
+    x=4
+    for f in zone_debris zone_debris zone_debris dead_tree dead_tree ground_wear; do
+      say "execute in minecraft:overworld run place feature zoneraids:$f $x 201 43" 1
+      x=$((x + 7))
+    done
+    say "say LOOK_CHECK_END" 2
   fi
   say "spark health --memory" 10
   say "stop" 1
@@ -186,6 +195,12 @@ if [ "$VARIANT" = survival ]; then
     grep -q "Zone Raids: built lair $lair" <<< "$LAIR_LOG" || { echo "Lair $lair was not built"; fail=1; }
   done
   [ "$(grep -c 'has the following entity data' <<< "$LAIR_LOG")" -ge 2 ] || { echo "Pseudogiant or controller did not spawn"; fail=1; }
+  echo "===== Zone look ====="
+  LOOK_LOG="$(sed -n '/LOOK_CHECK_START/,/LOOK_CHECK_END/p' "$REPORT/console.log")"
+  echo "$LOOK_LOG" | cut -c1-300
+  for f in zone_debris dead_tree ground_wear; do
+    grep -q "Placed.*zoneraids:$f" <<< "$LOOK_LOG" || { echo "World generation feature $f was not placed"; fail=1; }
+  done
 fi
 echo "===== Memory ====="
 grep -A12 -iE 'Memory usage|Memory Usage' "$REPORT/console.log" | head -30

@@ -7,7 +7,7 @@ modId="zoneraids_pack"
 version="${pack_version}"
 displayName="Zone Raids Pack Data"
 authors="notafloat"
-description='''Pack glue for the Zone Raids modpack: crate loot tables with TaCZ weapons and First Aid medicine.'''
+description='''Pack glue for the Zone Raids modpack: crate loot tables with TaCZ weapons and First Aid medicine, and the Zone look of the overworld (no flowers, dead trees, Soviet debris).'''
 
 [[dependencies.zoneraids_pack]]
     modId="zoneraids"

@@ -2,5 +2,31 @@
   "pit_bike_engine": {
     "subtitle": "subtitles.zoneraids.pit_bike_engine",
     "sounds": [{ "name": "zoneraids:pit_bike_engine", "attenuation_distance": 32 }]
+  },
+  "ambient.wind": {
+    "sounds": [{ "name": "zoneraids:ambient_wind", "stream": true }]
+  },
+  "ambient.far_howl": {
+    "subtitle": "subtitles.zoneraids.ambient.far_howl",
+    "sounds": [
+      { "name": "minecraft:mob/wolf/howl1", "attenuation_distance": 160 },
+      { "name": "minecraft:mob/wolf/howl2", "attenuation_distance": 160 }
+    ]
+  },
+  "ambient.far_shot": {
+    "subtitle": "subtitles.zoneraids.ambient.far_shot",
+    "sounds": [
+      { "name": "minecraft:fireworks/blast_far1", "attenuation_distance": 180 },
+      { "name": "minecraft:fireworks/largeblast_far1", "pitch": 1.4, "attenuation_distance": 180 }
+    ]
+  },
+  "ambient.far_explosion": {
+    "subtitle": "subtitles.zoneraids.ambient.far_explosion",
+    "sounds": [
+      { "name": "minecraft:random/explode1", "attenuation_distance": 240 },
+      { "name": "minecraft:random/explode2", "attenuation_distance": 240 },
+      { "name": "minecraft:random/explode3", "attenuation_distance": 240 },
+      { "name": "minecraft:random/explode4", "attenuation_distance": 240 }
+    ]
   }
 }
