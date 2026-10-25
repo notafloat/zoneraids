@@ -23,6 +23,8 @@ import com.zoneraids.raid.RaidManager;
 import com.zoneraids.raid.RaidSession;
 import com.zoneraids.shop.ShopCatalog;
 import com.zoneraids.shop.ShopService;
+import com.zoneraids.survival.Airdrops;
+import com.zoneraids.survival.Emissions;
 import com.zoneraids.survival.LairData;
 import com.zoneraids.survival.Lairs;
 import com.zoneraids.survival.PlaceData;
@@ -270,6 +272,31 @@ public final class RaidCommands {
                         .then(Commands.literal("locate").executes(ctx -> locatePlace(ctx, false))
                                 .then(Commands.argument("type", StringArgumentType.word()).suggests(PLACE_TYPES)
                                         .executes(ctx -> locatePlace(ctx, true)))))
+                .then(Commands.literal("emission").executes(ctx -> {
+                    if (!Emissions.enabled()) {
+                        ctx.getSource().sendFailure(Component.literal("Emissions are off ([survival] enabled and emissions)"));
+                        return 0;
+                    }
+                    if (!Emissions.startNow(ctx.getSource().getServer())) {
+                        ctx.getSource().sendFailure(Component.literal("An emission is already under way"));
+                        return 0;
+                    }
+                    ctx.getSource().sendSuccess(() -> Component.literal("Emission warning sent"), true);
+                    return 1;
+                }))
+                .then(Commands.literal("airdrop").executes(ctx -> {
+                    if (!Airdrops.enabled()) {
+                        ctx.getSource().sendFailure(Component.literal("Supply drops are off ([survival] enabled and airdrops)"));
+                        return 0;
+                    }
+                    BlockPos pos = Airdrops.drop(ctx.getSource().getServer().overworld(), ctx.getSource().getPlayer());
+                    if (pos == null) {
+                        ctx.getSource().sendFailure(Component.literal("No player in the overworld or no open ground found"));
+                        return 0;
+                    }
+                    ctx.getSource().sendSuccess(() -> Component.literal("Supply drop at " + pos.toShortString()), true);
+                    return 1;
+                }))
                 .then(Commands.literal("crate").then(Commands.argument("pos", BlockPosArgument.blockPos())
                         .then(Commands.argument("lootTable", ResourceLocationArgument.id()).executes(RaidCommands::setCrate))))
                 .then(Commands.literal("map")

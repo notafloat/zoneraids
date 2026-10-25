@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        { "type": "minecraft:loot_table", "name": "zoneraids:crates/weapons" }
+      ]
+    },
+    {
+      "rolls": 2,
+      "entries": [
+        { "type": "minecraft:loot_table", "name": "zoneraids:crates/military" }
+      ]
+    },
+    {
+      "rolls": { "type": "minecraft:uniform", "min": 1, "max": 2 },
+      "entries": [
+        { "type": "minecraft:loot_table", "name": "zoneraids:crates/medical" }
+      ]
+    }
+  ]
+}

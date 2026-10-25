@@ -5,7 +5,7 @@ import com.zoneraids.ZoneRaids;
 import com.zoneraids.block.HiddenStashBlockEntity;
 import com.zoneraids.data.RaidMap;
 import com.zoneraids.network.RaidNetwork;
-import com.zoneraids.network.StashMarkerPacket;
+import com.zoneraids.network.MapMarkerPacket;
 import com.zoneraids.raid.EnemySpawner;
 import com.zoneraids.raid.RaidManager;
 import com.zoneraids.raid.RaidSession;
@@ -85,7 +85,7 @@ public final class StashDrives {
             }
             stash.setRaid(map != null ? session.id() : null);
         }
-        RaidNetwork.sendTo(player, new StashMarkerPacket(pos.getX(), pos.getZ()));
+        RaidNetwork.sendTo(player, new MapMarkerPacket(pos.getX(), pos.getZ(), MapMarkerPacket.STASH, "zoneraids.stash_drive.marker"));
         int distance = (int) Math.sqrt(horizontalDistanceSqr(player, pos));
         player.sendSystemMessage(Component.translatable("zoneraids.stash_drive.read", pos.getX(), pos.getY(), pos.getZ(), distance)
                 .withStyle(ChatFormatting.GREEN));
@@ -124,7 +124,7 @@ public final class StashDrives {
 
     /** Dry, solid ground open to the sky at x, z; loads (or generates) the chunk. */
     @Nullable
-    private static BlockPos surface(ServerLevel level, int x, int z) {
+    public static BlockPos surface(ServerLevel level, int x, int z) {
         level.getChunk(x >> 4, z >> 4);
         int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
         if (y <= level.getMinBuildHeight() || y >= level.getMaxBuildHeight() - 1) {

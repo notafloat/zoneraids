@@ -19,7 +19,9 @@ public record TerminalActionPacket(Action action, String arg) {
         /** Toggle "ready" for the next round of the player's session. */
         READY,
         /** First Aid healing item from an inventory slot on a body part: {@code "slot part"}. */
-        HEAL
+        HEAL,
+        /** Survival trader contracts: take an offer ({@code "slot:id"}), give up the active one, hand over its artifact. */
+        CONTRACT_TAKE, CONTRACT_ABANDON, CONTRACT_TURN_IN
     }
 
     private static final int MAX_ARG = 64;

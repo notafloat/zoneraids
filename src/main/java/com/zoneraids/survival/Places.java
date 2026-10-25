@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Predicate;
 
 /**
  * Survival places, next to the lairs: a friendly stalker camp with a trader, a hostile military
@@ -80,7 +81,7 @@ public final class Places {
         }
     }
 
-    public record Found(Type type, BlockPos pos) {
+    public record Found(String key, Type type, BlockPos pos) {
     }
 
     private record Planned(String key, Type type, int x, int z) {
@@ -347,6 +348,17 @@ public final class Places {
     /** The nearest site from here (of the given type, if any) that is not cleared yet, or null. */
     @Nullable
     public static Found nearest(ServerLevel level, int x, int z, @Nullable Type type) {
+        return nearest(level, x, z, t -> type == null || t == type);
+    }
+
+    /** The nearest hostile place or ruin from here that is not cleared yet, or null. */
+    @Nullable
+    public static Found nearestHostile(ServerLevel level, int x, int z) {
+        return nearest(level, x, z, t -> !t.friendly);
+    }
+
+    @Nullable
+    private static Found nearest(ServerLevel level, int x, int z, Predicate<Type> wanted) {
         PlaceData data = PlaceData.get(level.getServer());
         Found best = null;
         double bestDistance = Double.MAX_VALUE;
@@ -356,7 +368,7 @@ public final class Places {
         for (int dx = -4; dx <= 4; dx++) {
             for (int dz = -4; dz <= 4; dz++) {
                 Planned site = planned(level, rx + dx, rz + dz);
-                if (site == null || (type != null && site.type() != type)) {
+                if (site == null || !wanted.test(site.type())) {
                     continue;
                 }
                 PlaceData.Entry entry = data.get(site.key());
@@ -366,7 +378,7 @@ public final class Places {
                 double d = Math.pow(site.x() - x, 2) + Math.pow(site.z() - z, 2);
                 if (d < bestDistance) {
                     bestDistance = d;
-                    best = new Found(site.type(), new BlockPos(site.x(), 0, site.z()));
+                    best = new Found(site.key(), site.type(), new BlockPos(site.x(), 0, site.z()));
                 }
             }
         }

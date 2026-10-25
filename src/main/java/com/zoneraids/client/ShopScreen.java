@@ -14,7 +14,7 @@ import java.util.List;
 
 /**
  * The hub trader: a "sell" tab with the artifacts the trader buys (and how many the player carries),
- * then one tab per category of goods. Same PDA look as the terminal; only fills, text and item icons.
+ * in survival mode a "contracts" tab, then one tab per category of goods. Same PDA look as the terminal; only fills, text and item icons.
  * A PDA tab, also opened by the trader counter; the terminal key closes it, the wheel turns pages.
  */
 public final class ShopScreen extends Screen {
@@ -27,6 +27,8 @@ public final class ShopScreen extends Screen {
     private static final int KEY_GRACE = 6;
     /** Tab id of the selling tab; the others are goods categories. */
     private static final String SELL = "";
+    /** Tab id of the contracts tab (survival mode only). */
+    private static final String CONTRACTS = "#contracts";
 
     private String tab = SELL;
     private int page;
@@ -51,6 +53,9 @@ public final class ShopScreen extends Screen {
     private static List<String> tabs(ShopDataPacket data) {
         List<String> tabs = new ArrayList<>();
         tabs.add(SELL);
+        if (!data.contracts().isEmpty()) {
+            tabs.add(CONTRACTS);
+        }
         for (ShopDataPacket.Offer offer : data.offers()) {
             if (!tabs.contains(offer.category())) {
                 tabs.add(offer.category());
@@ -70,7 +75,7 @@ public final class ShopScreen extends Screen {
     }
 
     private int rows(ShopDataPacket data) {
-        return tab.equals(SELL) ? data.sell().size() : offers(data).size();
+        return tab.equals(SELL) ? data.sell().size() : tab.equals(CONTRACTS) ? data.contracts().size() : offers(data).size();
     }
 
     private int pages(ShopDataPacket data) {
@@ -79,6 +84,7 @@ public final class ShopScreen extends Screen {
 
     private static Component tabName(String tab) {
         return tab.equals(SELL) ? Component.translatable("zoneraids.shop.sell_tab")
+                : tab.equals(CONTRACTS) ? Component.translatable("zoneraids.shop.contracts_tab")
                 : Component.translatableWithFallback("zoneraids.shop.cat." + tab, tab);
     }
 
@@ -118,6 +124,27 @@ public final class ShopScreen extends Screen {
                 one.active = all.active = data.canTrade() && entry.owned() > 0;
                 addRenderableWidget(one);
                 addRenderableWidget(all);
+            }
+        } else if (tab.equals(CONTRACTS)) {
+            List<ShopDataPacket.Contract> contracts = data.contracts();
+            boolean busy = contracts.stream().anyMatch(ShopDataPacket.Contract::active);
+            for (int i = start; i < Math.min(contracts.size(), start + ROWS_PER_PAGE); i++) {
+                ShopDataPacket.Contract contract = contracts.get(i);
+                int rowY = top + LIST_Y + (i - start) * ROW_H;
+                if (contract.active()) {
+                    ZoneButton turnIn = new ZoneButton(buttonX - 4, rowY + 3, 34, 14, Component.translatable("zoneraids.shop.contract_turn_in"),
+                            b -> send(Action.CONTRACT_TURN_IN, ""));
+                    turnIn.active = data.canTrade() && contract.canTurnIn();
+                    turnIn.visible = contract.canTurnIn();
+                    addRenderableWidget(turnIn);
+                    addRenderableWidget(new ZoneButton(buttonX + 32, rowY + 3, 32, 14, Component.translatable("zoneraids.shop.contract_abandon"),
+                            b -> send(Action.CONTRACT_ABANDON, "")));
+                } else {
+                    ZoneButton take = new ZoneButton(buttonX - 4, rowY + 3, 68, 14, Component.translatable("zoneraids.shop.contract_take"),
+                            b -> send(Action.CONTRACT_TAKE, contract.slot() + ":" + contract.id()));
+                    take.active = data.canTrade() && !busy;
+                    addRenderableWidget(take);
+                }
             }
         } else {
             List<ShopDataPacket.Offer> offers = offers(data);
@@ -222,6 +249,19 @@ public final class ShopScreen extends Screen {
                 g.drawString(font, Component.translatable("zoneraids.shop.owned", entry.owned()), left + 32, rowY + 12, ZoneUi.DIM);
                 price(g, right - 80, rowY, entry.price(), ZoneUi.AMBER);
             }
+        } else if (tab.equals(CONTRACTS)) {
+            List<ShopDataPacket.Contract> contracts = data.contracts();
+            for (int i = start; i < Math.min(contracts.size(), start + ROWS_PER_PAGE); i++) {
+                ShopDataPacket.Contract contract = contracts.get(i);
+                int rowY = top + LIST_Y + (i - start) * ROW_H;
+                if (row(g, left, rowY, contract.icon(), contract.active() ? ZoneUi.AMBER : ZoneUi.GREEN, mouseX, mouseY)) {
+                    hovered = contract.icon();
+                }
+                g.drawString(font, ZoneUi.clip(font, contract.title().getString(), textW), left + 32, rowY + 2,
+                        contract.active() ? ZoneUi.AMBER : ZoneUi.TEXT);
+                g.drawString(font, ZoneUi.clip(font, contract.detail().getString(), textW), left + 32, rowY + 12, ZoneUi.DIM);
+                price(g, right - 80, rowY, contract.reward(), ZoneUi.AMBER);
+            }
         } else {
             List<ShopDataPacket.Offer> offers = offers(data);
             for (int i = start; i < Math.min(offers.size(), start + ROWS_PER_PAGE); i++) {
@@ -244,6 +284,7 @@ public final class ShopScreen extends Screen {
         }
         Component hint = !data.canTrade() ? Component.translatable("zoneraids.shop.in_raid")
                 : tab.equals(SELL) ? Component.translatable("zoneraids.shop.hint_sell")
+                : tab.equals(CONTRACTS) ? Component.translatable("zoneraids.shop.hint_contracts")
                 : Component.translatable("zoneraids.shop.hint_buy");
         g.drawString(font, ZoneUi.clip(font, hint.getString(), PANEL_W - 190), left + 10, top + PANEL_H - 20,
                 data.canTrade() ? ZoneUi.DIM : ZoneUi.RED);

@@ -239,6 +239,23 @@
   за прилавком и дружественной охраной (рядом не появляются бродячие враги), военная база с гарнизоном (за зачистку
   2 очка перков), разрушенная деревня со слепыми псами и заброшенная база со снорками. Строятся так же, как логова,
   и никогда на месте логова; в тайниках лут из `loot_tables/crates`;
+* **выброс** (`emissions`, `emissionIntervalMinutes`, `emissionWarningSeconds`, `emissionSeconds`, `emissionDamage`,
+  `emissionArtifacts`): примерно раз в час (±25%) КПК предупреждает за полторы минуты (титр, сирена, отсчёт и «в укрытии /
+  под открытым небом» над хотбаром). Потом минуту идёт гроза, и всех, у кого над головой нет сплошного блока (крыша, пещера,
+  бункер; листва не укрывает), бьёт урон, который растёт каждые 10 секунд снаружи, плюс тошнота. Бродячие враги во время
+  выброса не появляются. После выброса вокруг каждого выжившего в 40–160 блоках лежат светящиеся артефакты из
+  `[anomalies] artifactItems`, на карте КПК синие метки «Артефакт». Время следующего выброса переживает перезапуск;
+* **сброс груза** (`airdrops`, `airdropIntervalMinutes`, `airdropMinDistance`, `airdropMaxDistance`, `airdropLifetimeMinutes`,
+  `airdropLootTable`, `airdropGuardKind`, `airdropGuards`): примерно раз в 40 минут военные сбрасывают ящик в 120–320 блоках от
+  случайного игрока. Всем в обычном мире приходит радиоперехват с расстоянием и направлением и красная метка «Груз», над ящиком
+  столб сигнального дыма, видный издалека. Когда кто-то подходит ближе 64 блоков, появляется охрана (3 военных). Лут из
+  `loot_tables/airdrops/supply` (оружейный, два военных и медицинский ящик), пустой ящик исчезает. Через
+  `airdropLifetimeMinutes` дым гаснет, но ящик остаётся;
+* **задания торговца** (`contracts`, `contractRewardMultiplier`): у торговца вкладка «Задания» с тремя предложениями: охота
+  (убить N слепых псов, бандитов, военных и т.п.), зачистить ближайшую военную базу или руины, убить босса ближайшего логова,
+  принести артефакт (платит в 1,6 раза больше, чем торговец даёт за него на «Продать»). Одно задание за раз, у мест и логов
+  на карте КПК появляется метка «Задание». Охота считает убийства, места и логова проверяются сами, артефакт сдаётся кнопкой
+  «Сдать». Деньги приходят сразу, после выполнения список заданий обновляется (и сам по себе раз в 30 минут игрового времени);
 * первая вкладка КПК вместо списка карт объясняет правила, вкладки «Камеры» и «Карта» (Кордона) серые.
 
 Рейды при этом не выключены: если администратор добавит карту командами `/raidadmin`, в неё можно ходить.
@@ -268,7 +285,9 @@
 Секция `[survival]`: режим выживания (см. выше), `enabled`, `dimensions`, `spawnIntervalSeconds`, `spawnChance`, `zoneBiomeMultiplier`,
 `nightMultiplier`, `maxNearPlayer`, `minDistance`, `maxDistance`, `despawnDistance`, `safeRadius`, `spawns`, `starterKit`, `starterLootTable`,
 `killsPerPerkPoint`, `extraBuy`, `lairs`, `lairRegionSize`, `lairChance`, `lairMinSpawnDistance`, `places`, `placeRegionSize`,
-`placeChance`, `placeMinSpawnDistance`.
+`placeChance`, `placeMinSpawnDistance`, `emissions`, `emissionIntervalMinutes`, `emissionWarningSeconds`, `emissionSeconds`,
+`emissionDamage`, `emissionArtifacts`, `airdrops`, `airdropIntervalMinutes`, `airdropMinDistance`, `airdropMaxDistance`,
+`airdropLifetimeMinutes`, `airdropLootTable`, `airdropGuardKind`, `airdropGuards`, `contracts`, `contractRewardMultiplier`.
 Секция `[network]`: `entityUpdateIntervals` (`"id=тики"`), как часто сервер шлёт клиентам позицию сущности. По умолчанию
 игроки, NPC TaCZ и пули TaCZ каждый тик (в ваниле игроки раз в 2, мобы раз в 3 тика), чтобы враг на экране стоял там же,
 где сервер считает попадание. Мутанты и питбайк Zone Raids и так синхронизируются каждый тик. Тикрейт сервера остаётся 20.
