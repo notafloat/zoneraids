@@ -42,6 +42,10 @@ public final class RaidConfig {
     public static final ForgeConfigSpec.DoubleValue NPC_MAX_DAMAGE_PER_HIT;
     public static final ForgeConfigSpec.IntValue ENEMY_DAMAGE_WINDOW;
     public static final ForgeConfigSpec.BooleanValue NPC_HIP_FIRE_ONLY;
+    public static final ForgeConfigSpec.BooleanValue NPC_HEADSHOT_KILLS;
+    public static final ForgeConfigSpec.ConfigValue<List<? extends String>> HEADSHOT_ENTITIES;
+    public static final ForgeConfigSpec.DoubleValue HELMET_SAVES_HEADSHOT;
+    public static final ForgeConfigSpec.IntValue NPC_CORPSE_SECONDS;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> ENEMY_TYPES;
     public static final ForgeConfigSpec.BooleanValue ANOMALIES;
     public static final ForgeConfigSpec.DoubleValue ANOMALY_DAMAGE;
@@ -191,6 +195,16 @@ public final class RaidConfig {
         NPC_HIP_FIRE_ONLY = b.comment("Keep armed NPCs from aiming down sights. Aimed, a TaCZ NPC hits the head almost every shot;",
                         "from the hip its bullets spread like a player's.")
                 .define("npcHipFireOnly", true);
+        NPC_HEADSHOT_KILLS = b.comment("A bullet in the head kills a human NPC (headshotEntities) outright, whatever its health.",
+                        "Lair bosses (Borov) are left out and only take the gun's normal headshot damage.")
+                .define("npcHeadshotKills", true);
+        HEADSHOT_ENTITIES = b.comment("Entity ids of human NPCs: they die to one headshot and their bodies stay on the ground for npcCorpseSeconds.")
+                .defineListAllowEmpty(List.of("headshotEntities"), List.of("tacznpcs:npc"), o -> o instanceof String);
+        HELMET_SAVES_HEADSHOT = b.comment("Chance that a helmet with armor (not a balaclava) stops a headshot from killing: the helmet rings",
+                        "and the hit deals its normal damage. 0 = helmets never save, 1 = a helmeted NPC never dies to one headshot.")
+                .defineInRange("helmetSavesHeadshot", 0.5, 0.0, 1.0);
+        NPC_CORPSE_SECONDS = b.comment("Seconds a dead human NPC lies on the ground before it vanishes (vanilla: 1). Its drops lie around it.")
+                .defineInRange("npcCorpseSeconds", 15, 1, 120);
         ENEMY_TYPES = b.comment("Enemy kinds used by enemy points: kind=entity_id or kind=entity_id{nbt}.",
                         "Kinds whose entity is not installed are skipped. On death an enemy also drops loot from",
                         "zoneraids:enemies/<kind>; armed kinds get gear from zoneraids:enemies/<kind>_gear when that table has items.")
