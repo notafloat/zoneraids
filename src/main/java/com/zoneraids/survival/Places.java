@@ -265,9 +265,15 @@ public final class Places {
         }
     }
 
-    /** A TaCZ NPC like the bandits but with a friendly template, or null without TaCZ NPCs. */
+    /** True if friendly NPCs can be spawned: the {@code bandit} enemy kind is a TaCZ NPC with a template. */
+    static boolean friendlyAvailable() {
+        EnemySpawner.EnemyType bandit = EnemySpawner.types().get("bandit");
+        return bandit != null && bandit.isInstalled() && bandit.nbt().contains("template");
+    }
+
+    /** A TaCZ NPC like the bandits but with a friendly template, or null without TaCZ NPCs. With a {@code key} it belongs to that place. */
     @Nullable
-    private static Mob spawnFriendly(ServerLevel level, String template, BlockPos pos, String key, String name) {
+    static Mob spawnFriendly(ServerLevel level, String template, BlockPos pos, @Nullable String key, String name) {
         EnemySpawner.EnemyType bandit = EnemySpawner.types().get("bandit");
         if (bandit == null || !bandit.isInstalled() || !bandit.nbt().contains("template")) {
             return null;
@@ -284,7 +290,9 @@ public final class Places {
         }
         // Not an enemy: no enemy loot, no damage scaling, no flash drives.
         mob.getPersistentData().remove(EnemySpawner.TAG_KIND);
-        mob.getPersistentData().putString(TAG_PLACE, key);
+        if (key != null) {
+            mob.getPersistentData().putString(TAG_PLACE, key);
+        }
         mob.setPersistenceRequired();
         mob.setCustomName(Component.translatable(name));
         mob.setCustomNameVisible(true);

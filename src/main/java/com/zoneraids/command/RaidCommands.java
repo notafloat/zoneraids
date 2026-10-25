@@ -23,10 +23,13 @@ import com.zoneraids.raid.RaidManager;
 import com.zoneraids.raid.RaidSession;
 import com.zoneraids.shop.ShopCatalog;
 import com.zoneraids.shop.ShopService;
+import com.zoneraids.survival.CampData;
+import com.zoneraids.survival.Camps;
 import com.zoneraids.survival.LairData;
 import com.zoneraids.survival.Lairs;
 import com.zoneraids.survival.PlaceData;
 import com.zoneraids.survival.Places;
+import com.zoneraids.survival.SurvivalMode;
 import com.zoneraids.world.WorldBuilder;
 import com.zoneraids.world.WorldSetup;
 import net.minecraft.ChatFormatting;
@@ -48,6 +51,7 @@ import org.slf4j.Logger;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 public final class RaidCommands {
     private static final Logger LOGGER = LogUtils.getLogger();
@@ -65,7 +69,59 @@ public final class RaidCommands {
     private static final SuggestionProvider<CommandSourceStack> PLACE_TYPES = (ctx, builder) ->
             SharedSuggestionProvider.suggest(Arrays.stream(Places.Type.values()).map(t -> t.name().toLowerCase()), builder);
 
+    private static final SuggestionProvider<CommandSourceStack> CAMP_KINDS = (ctx, builder) ->
+            SharedSuggestionProvider.suggest(Stream.concat(Stream.of(Camps.FRIENDLY),
+                    EnemySpawner.types().keySet().stream()), builder);
+
     private RaidCommands() {
+    }
+
+    /** Sets up a temporary camp where the command runs (the spot is not checked, privacy is ignored). */
+    private static int spawnCamp(CommandContext<CommandSourceStack> ctx, int count) {
+        String kind = StringArgumentType.getString(ctx, "kind");
+        ServerLevel level = ctx.getSource().getLevel();
+        if (!SurvivalMode.enabled() || level != ctx.getSource().getServer().overworld()) {
+            // Camps pack up from the survival tick, so outside survival mode one would stay for good.
+            ctx.getSource().sendFailure(Component.literal("Camps need survival mode ([survival] enabled) and the overworld"));
+            return 0;
+        }
+        BlockPos pos = BlockPos.containing(ctx.getSource().getPosition());
+        CampData.Camp camp = Camps.create(level, CampData.get(ctx.getSource().getServer()), kind, count, count, pos);
+        if (camp == null) {
+            ctx.getSource().sendFailure(Component.literal("Nobody could be spawned for " + kind
+                    + " (stalker needs TaCZ NPCs, other kinds an installed [enemies] type)"));
+            return 0;
+        }
+        ctx.getSource().sendSuccess(() -> Component.literal("Camp #" + camp.id + " (" + kind + ", " + camp.members.size()
+                + ") at " + pos.toShortString()), true);
+        return 1;
+    }
+
+    private static int listCamps(CommandContext<CommandSourceStack> ctx) {
+        CampData data = CampData.get(ctx.getSource().getServer());
+        long now = ctx.getSource().getServer().overworld().getGameTime();
+        if (data.all().isEmpty()) {
+            ctx.getSource().sendSuccess(() -> Component.literal("No camps"), false);
+            return 0;
+        }
+        for (CampData.Camp camp : data.all().values()) {
+            long minutes = Math.max(0, camp.expires - now) / 1200;
+            ctx.getSource().sendSuccess(() -> Component.literal("#" + camp.id + " " + camp.kind + " at " + camp.origin.toShortString()
+                    + ", " + camp.state.name().toLowerCase() + ", " + camp.members.size() + " left, packs up in " + minutes + " min"), false);
+        }
+        return data.all().size();
+    }
+
+    /** Packs up every camp now, near players or not. */
+    private static int clearCamps(CommandContext<CommandSourceStack> ctx) {
+        ServerLevel level = ctx.getSource().getServer().overworld();
+        CampData data = CampData.get(ctx.getSource().getServer());
+        int n = data.all().size();
+        for (CampData.Camp camp : List.copyOf(data.all().values())) {
+            Camps.packUp(level, data, camp);
+        }
+        ctx.getSource().sendSuccess(() -> Component.literal(n + " camp(s) packed up"), true);
+        return n;
     }
 
     /** Builds a lair where the command runs and wakes its boss at once (not tied to a region). */
@@ -260,6 +316,13 @@ public final class RaidCommands {
                                 .executes(ctx -> spawnEnemies(ctx, 1))
                                 .then(Commands.argument("count", IntegerArgumentType.integer(1, 16))
                                         .executes(ctx -> spawnEnemies(ctx, IntegerArgumentType.getInteger(ctx, "count")))))))
+                .then(Commands.literal("camp")
+                        .then(Commands.literal("spawn").then(Commands.argument("kind", StringArgumentType.word()).suggests(CAMP_KINDS)
+                                .executes(ctx -> spawnCamp(ctx, 4))
+                                .then(Commands.argument("count", IntegerArgumentType.integer(1, 6))
+                                        .executes(ctx -> spawnCamp(ctx, IntegerArgumentType.getInteger(ctx, "count"))))))
+                        .then(Commands.literal("list").executes(RaidCommands::listCamps))
+                        .then(Commands.literal("clear").executes(RaidCommands::clearCamps)))
                 .then(Commands.literal("lair")
                         .then(Commands.literal("spawn").then(Commands.argument("type", StringArgumentType.word()).suggests(LAIR_TYPES)
                                 .executes(RaidCommands::spawnLair)))

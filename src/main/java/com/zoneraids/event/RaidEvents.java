@@ -8,6 +8,7 @@ import com.zoneraids.raid.RaidManager;
 import com.zoneraids.registry.ModRegistry;
 import com.zoneraids.shop.ShopService;
 import com.zoneraids.stash.StashDrives;
+import com.zoneraids.survival.Camps;
 import com.zoneraids.survival.Lairs;
 import com.zoneraids.survival.Places;
 import com.zoneraids.survival.SurvivalMode;
@@ -142,13 +143,14 @@ public final class RaidEvents {
             SurvivalMode.onDeath(event.getEntity(), event.getSource().getEntity());
             Lairs.onDeath(event.getEntity(), event.getSource().getEntity());
             Places.onDeath(event.getEntity(), event.getSource().getEntity());
+            Camps.onDeath(event.getEntity(), event.getSource().getEntity());
         }
     }
 
     /** Raid enemies whose raid is over (saved in a chunk, or across a restart) never come back. */
     @SubscribeEvent
     public static void onEntityJoin(EntityJoinLevelEvent event) {
-        if (!event.getLevel().isClientSide() && EnemySpawner.shouldRejectOnLoad(event.getEntity())) {
+        if (!event.getLevel().isClientSide() && (EnemySpawner.shouldRejectOnLoad(event.getEntity()) || Camps.shouldRejectOnLoad(event.getEntity()))) {
             event.setCanceled(true);
         }
     }
@@ -164,6 +166,14 @@ public final class RaidEvents {
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onHurt(LivingHurtEvent event) {
         EnemySpawner.scaleDamageToPlayer(event);
+    }
+
+    /** A camp sitting round its fire gets up when one of them is hurt. */
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public static void onCampHurt(LivingHurtEvent event) {
+        if (event.getAmount() > 0 && !event.getEntity().level().isClientSide()) {
+            Camps.onHurt(event.getEntity(), event.getSource().getEntity());
+        }
     }
 
     /** Lowest priority: only hurt that actually lands counts as being in a fight (see combatLogSeconds). */
@@ -288,6 +298,26 @@ public final class RaidEvents {
     @SubscribeEvent
     public static void onUseTraderAt(PlayerInteractEvent.EntityInteractSpecific event) {
         if (!event.getLevel().isClientSide() && Places.isTrader(event.getTarget())) {
+            event.setCanceled(true);
+            event.setCancellationResult(InteractionResult.SUCCESS);
+        }
+    }
+
+    /** A stalker at a friendly camp says a word (or gives a tip) instead of opening his own NPC menu. */
+    @SubscribeEvent
+    public static void onTalkToCamper(PlayerInteractEvent.EntityInteract event) {
+        if (event.getLevel().isClientSide() || event.isCanceled() || !(event.getEntity() instanceof ServerPlayer player)) {
+            return;
+        }
+        if (event.getHand() == InteractionHand.MAIN_HAND ? Camps.talk(player, event.getTarget()) : Camps.isCamper(event.getTarget())) {
+            event.setCanceled(true);
+            event.setCancellationResult(InteractionResult.SUCCESS);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onTalkToCamperAt(PlayerInteractEvent.EntityInteractSpecific event) {
+        if (!event.getLevel().isClientSide() && Camps.isCamper(event.getTarget())) {
             event.setCanceled(true);
             event.setCancellationResult(InteractionResult.SUCCESS);
         }

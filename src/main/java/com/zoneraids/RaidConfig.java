@@ -85,6 +85,11 @@ public final class RaidConfig {
     public static final ForgeConfigSpec.ConfigValue<String> SURVIVAL_STARTER_LOOT_TABLE;
     public static final ForgeConfigSpec.IntValue SURVIVAL_KILLS_PER_PERK_POINT;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> SURVIVAL_EXTRA_BUY;
+    public static final ForgeConfigSpec.BooleanValue SURVIVAL_CAMPS;
+    public static final ForgeConfigSpec.IntValue SURVIVAL_CAMP_INTERVAL;
+    public static final ForgeConfigSpec.IntValue SURVIVAL_CAMP_LIFETIME;
+    public static final ForgeConfigSpec.IntValue SURVIVAL_CAMP_MAX;
+    public static final ForgeConfigSpec.ConfigValue<List<? extends String>> SURVIVAL_CAMP_KINDS;
     public static final ForgeConfigSpec.BooleanValue SURVIVAL_LAIRS;
     public static final ForgeConfigSpec.IntValue SURVIVAL_LAIR_REGION;
     public static final ForgeConfigSpec.DoubleValue SURVIVAL_LAIR_CHANCE;
@@ -389,6 +394,20 @@ public final class RaidConfig {
                 .defineInRange("killsPerPerkPoint", 10, 0, 1000);
         SURVIVAL_EXTRA_BUY = b.comment("Extra lines for the trader's [shop] buy list in survival mode, same format.")
                 .defineListAllowEmpty(List.of("extraBuy"), List.of("vehicles 15000 1 zoneraids:pit_bike"), o -> o instanceof String);
+        SURVIVAL_CAMPS = b.comment("Temporary camps: now and then a group makes camp out of sight near a player (campfire, tent, bedrolls)",
+                        "and sits round the fire, then packs up after campLifetimeMinutes once nobody is near. Stalker camps are friendly",
+                        "(a trader, a word or a tip, no roaming enemies near them); hostile ones get up when a player comes close.")
+                .define("camps", true);
+        SURVIVAL_CAMP_INTERVAL = b.comment("On average one camp attempt per player every this many minutes.")
+                .defineInRange("campIntervalMinutes", 8, 1, 1440);
+        SURVIVAL_CAMP_LIFETIME = b.comment("A camp stands this many minutes (give or take a quarter), then packs up when nobody is near.")
+                .defineInRange("campLifetimeMinutes", 20, 1, 1440);
+        SURVIVAL_CAMP_MAX = b.comment("At most this many camps at once in the world.")
+                .defineInRange("campMax", 3, 0, 32);
+        SURVIVAL_CAMP_KINDS = b.comment("Who makes camp, as \"kind weight min max\": \"stalker\" is a friendly camp (TaCZ NPCs with the zr_stalker",
+                        "template, one of them a trader from 3 members on), any other kind is an [enemies] type. At most 6 members.")
+                .defineListAllowEmpty(List.of("campKinds"), List.of("stalker 4 3 4", "bandit 4 3 5", "military 2 3 4"),
+                        o -> o instanceof String);
         SURVIVAL_LAIRS = b.comment("Lairs with a boss: a bandit base (gang leader), a ruined collective farm (pseudogiant) and an underground",
                         "laboratory (controller). At most one per region of the overworld, built when a player first comes near.")
                 .define("lairs", true);

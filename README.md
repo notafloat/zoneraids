@@ -239,6 +239,14 @@
   за прилавком и дружественной охраной (рядом не появляются бродячие враги), военная база с гарнизоном (за зачистку
   2 очка перков), разрушенная деревня со слепыми псами и заброшенная база со снорками. Строятся так же, как логова,
   и никогда на месте логова; в тайниках лут из `loot_tables/crates`;
+* временные лагеря (`camps`, `campIntervalMinutes`, `campLifetimeMinutes`, `campMax`, `campKinds`: `"вид вес мин макс"`):
+  иногда в 72–128 блоках от игрока, вне чьего-либо поля зрения, группа встаёт лагерем: костёр, палатка, лежанки, фонарь,
+  все сидят у огня. КПК сообщает направление. Лагерь сталкеров (`stalker`) дружественный: один из них торговец (от трёх
+  человек), остальные по ПКМ перекидываются парой слов или подсказывают, где ближайшее место или логово; в 40 блоках
+  от него не появляются бродячие враги. Бандиты и военные поднимаются, когда игрок подходит ближе 18 блоков или в
+  кого-то из них попали; за последнего убитого очко перка. Через `campLifetimeMinutes` (±25 %) лагерь сворачивается,
+  когда рядом никого нет: блоки убираются (только те, что он сам поставил), люди уходят. Админу:
+  `/raidadmin camp spawn <вид> [число]`, `/raidadmin camp list`, `/raidadmin camp clear`;
 * первая вкладка КПК вместо списка карт объясняет правила, вкладки «Камеры» и «Карта» (Кордона) серые.
 
 Рейды при этом не выключены: если администратор добавит карту командами `/raidadmin`, в неё можно ходить.
@@ -267,7 +275,7 @@
 `containers`, `medicine`; NBT как в таблицах лута, например `tacz:ammo{AmmoId:\"tacz:9mm\"}`).
 Секция `[survival]`: режим выживания (см. выше), `enabled`, `dimensions`, `spawnIntervalSeconds`, `spawnChance`, `zoneBiomeMultiplier`,
 `nightMultiplier`, `maxNearPlayer`, `minDistance`, `maxDistance`, `despawnDistance`, `safeRadius`, `spawns`, `starterKit`, `starterLootTable`,
-`killsPerPerkPoint`, `extraBuy`, `lairs`, `lairRegionSize`, `lairChance`, `lairMinSpawnDistance`, `places`, `placeRegionSize`,
+`killsPerPerkPoint`, `extraBuy`, `camps`, `campIntervalMinutes`, `campLifetimeMinutes`, `campMax`, `campKinds`, `lairs`, `lairRegionSize`, `lairChance`, `lairMinSpawnDistance`, `places`, `placeRegionSize`,
 `placeChance`, `placeMinSpawnDistance`.
 Секция `[network]`: `entityUpdateIntervals` (`"id=тики"`), как часто сервер шлёт клиентам позицию сущности. По умолчанию
 игроки, NPC TaCZ и пули TaCZ каждый тик (в ваниле игроки раз в 2, мобы раз в 3 тика), чтобы враг на экране стоял там же,
