@@ -89,6 +89,10 @@ public final class RaidConfig {
     public static final ForgeConfigSpec.IntValue SURVIVAL_LAIR_REGION;
     public static final ForgeConfigSpec.DoubleValue SURVIVAL_LAIR_CHANCE;
     public static final ForgeConfigSpec.IntValue SURVIVAL_LAIR_MIN_SPAWN_DISTANCE;
+    public static final ForgeConfigSpec.DoubleValue STASH_DRIVE_CHANCE;
+    public static final ForgeConfigSpec.IntValue STASH_MIN_DISTANCE;
+    public static final ForgeConfigSpec.IntValue STASH_MAX_DISTANCE;
+    public static final ForgeConfigSpec.ConfigValue<String> STASH_LOOT_TABLE;
 
     static {
         ForgeConfigSpec.Builder b = new ForgeConfigSpec.Builder();
@@ -390,6 +394,19 @@ public final class RaidConfig {
                 .defineInRange("lairChance", 0.6, 0.0, 1.0);
         SURVIVAL_LAIR_MIN_SPAWN_DISTANCE = b.comment("No lair closer than this many blocks to the world spawn.")
                 .defineInRange("lairMinSpawnDistance", 300, 0, 100000);
+        b.pop();
+
+        b.push("stashes");
+        STASH_DRIVE_CHANCE = b.comment("Chance that a killed human enemy (bandit, soldier: any enemy that is not a mutant) drops a flash drive",
+                        "with a stash's coordinates. A bandit leader always drops one. Using the drive puts a hidden stash in the world",
+                        "and a marker on the PDA map. 0 = no drives.")
+                .defineInRange("driveDropChance", 0.12, 0.0, 1.0);
+        STASH_MIN_DISTANCE = b.comment("The stash is hidden between minDistance and maxDistance blocks from the reader. On a raid map with",
+                        "bounds it is anywhere inside them instead (and gone when the raid ends).")
+                .defineInRange("minDistance", 80, 8, 4096);
+        STASH_MAX_DISTANCE = b.defineInRange("maxDistance", 260, 8, 4096);
+        STASH_LOOT_TABLE = b.comment("Loot table of a hidden stash.")
+                .define("lootTable", "zoneraids:stashes/hidden");
         b.pop();
 
         SPEC = b.build();

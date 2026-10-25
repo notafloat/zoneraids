@@ -133,6 +133,10 @@ public final class RaidSession {
         return zoneStartRadius + (zoneEndRadius - zoneStartRadius) * t;
     }
 
+    public UUID id() {
+        return id;
+    }
+
     public RaidMap map() {
         return map;
     }
