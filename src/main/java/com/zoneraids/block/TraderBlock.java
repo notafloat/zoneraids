@@ -21,7 +21,7 @@ public class TraderBlock extends Block {
     @SuppressWarnings("deprecation")
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
         if (!level.isClientSide && player instanceof ServerPlayer sp) {
-            ShopService.open(sp, true);
+            ShopService.open(sp);
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
     }

@@ -6,6 +6,7 @@ import com.zoneraids.network.RaidNetwork;
 import com.zoneraids.network.ShopDataPacket;
 import com.zoneraids.raid.RaidManager;
 import com.zoneraids.registry.ModRegistry;
+import com.zoneraids.survival.Places;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -20,24 +21,20 @@ import java.util.List;
 
 /**
  * The hub trader: artifacts, valuables and found gear are sold for money, guns, armor, ammo and medicine are bought with it.
- * Trading works only outside raids. Money lives in the player's data ({@link PlayerRaidData#getMoney}),
+ * Trading works only outside raids and only at a trader: the counter in the bunker or a stalker camp trader, never from the PDA. Money lives in the player's data ({@link PlayerRaidData#getMoney}),
  * so nothing is kept in memory and nothing about it can be dropped or looted.
  */
 public final class ShopService {
-    /** Without {@code remoteShop}, deals need a trader counter this close. */
+    /** Deals need a trader counter or a camp trader this close. */
     private static final int TRADER_REACH = 6;
 
     private ShopService() {
     }
 
-    /** @param atTrader opened at the trader counter (otherwise from the terminal menu) */
-    public static void open(ServerPlayer player, boolean atTrader) {
+    /** Opened by the trader counter or a camp trader. */
+    public static void open(ServerPlayer player) {
         if (!RaidConfig.SHOP.get()) {
             player.displayClientMessage(Component.translatable("zoneraids.shop.disabled").withStyle(ChatFormatting.RED), true);
-            return;
-        }
-        if (!atTrader && !RaidConfig.REMOTE_SHOP.get()) {
-            player.displayClientMessage(Component.translatable("zoneraids.shop.go_to_trader").withStyle(ChatFormatting.YELLOW), true);
             return;
         }
         if (!canTrade(player)) {
@@ -139,7 +136,7 @@ public final class ShopService {
             RaidNetwork.sendTo(player, build(player, false));
             return false;
         }
-        if (!RaidConfig.REMOTE_SHOP.get() && !nearTrader(player)) {
+        if (!nearTrader(player)) {
             player.displayClientMessage(Component.translatable("zoneraids.shop.go_to_trader").withStyle(ChatFormatting.YELLOW), true);
             return false;
         }
@@ -153,7 +150,7 @@ public final class ShopService {
                 return true;
             }
         }
-        return false;
+        return !player.level().getEntities(player, player.getBoundingBox().inflate(TRADER_REACH), Places::isTrader).isEmpty();
     }
 
     private static ShopDataPacket build(ServerPlayer player, boolean open) {

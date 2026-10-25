@@ -22,7 +22,7 @@ import java.util.List;
 
 /**
  * The PDA: every window of the mod is one of its tabs. Raids, perks and watching read the terminal
- * data from the server; the trader and the stash are opened by the server; the map (the explored terrain
+ * data from the server; the stash is opened by the server (trading is not a tab: only a trader opens it); the map (the explored terrain
  * with the player's markers, {@link WorldMap}), health and status are purely client-side. The inventory
  * tab is Curios' menu ({@link PdaCuriosScreen}: inventory, equipment slots and the worn artifact container
  * in one window), or the vanilla inventory menu without Curios. Every PDA tab shares the panel size and position, with the tab row on top.
@@ -37,7 +37,7 @@ public final class PdaTabs {
     private static final int TAB_GAP = 2;
 
     public enum Tab {
-        RAIDS, PERKS, SHOP, WATCH, STASH, MAP, HEALTH, STATUS, INVENTORY;
+        RAIDS, PERKS, WATCH, STASH, MAP, HEALTH, STATUS, INVENTORY;
 
         final String key = "zoneraids.pda.tab." + name().toLowerCase();
     }
@@ -85,7 +85,6 @@ public final class PdaTabs {
             button.selected = tab == current;
             if (data != null && tab != current) {
                 button.active = switch (tab) {
-                    case SHOP -> data.canShop();
                     case STASH -> data.canStash();
                     case WATCH -> !data.inRaid() && !data.survival();
                     default -> true;
@@ -121,7 +120,6 @@ public final class PdaTabs {
                     requestTerminal(tab);
                 }
             }
-            case SHOP -> send(Action.SHOP);
             case STASH -> send(Action.STASH);
             case MAP -> mc.setScreen(new WorldMapScreen());
             case HEALTH -> mc.setScreen(new HealthScreen());

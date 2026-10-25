@@ -22,7 +22,6 @@ import com.zoneraids.raid.EnemySpawner;
 import com.zoneraids.raid.RaidManager;
 import com.zoneraids.raid.RaidSession;
 import com.zoneraids.shop.ShopCatalog;
-import com.zoneraids.shop.ShopService;
 import com.zoneraids.survival.LairData;
 import com.zoneraids.survival.Lairs;
 import com.zoneraids.survival.PlaceData;
@@ -161,10 +160,6 @@ public final class RaidCommands {
                 .then(Commands.literal("extracts")
                         .executes(ctx -> withManager(ctx, m -> m.showExtracts(ctx.getSource().getPlayerOrException()))))
                 .then(Commands.literal("stats").executes(RaidCommands::stats))
-                .then(Commands.literal("shop").executes(ctx -> {
-                    ShopService.open(ctx.getSource().getPlayerOrException(), false);
-                    return 1;
-                }))
                 .then(Commands.literal("ready")
                         .executes(ctx -> withManager(ctx, m -> m.toggleReady(ctx.getSource().getPlayerOrException()))))
                 .then(Commands.literal("perks").executes(ctx -> {

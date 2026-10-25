@@ -62,7 +62,6 @@ public final class RaidConfig {
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> STARTER_KIT;
     public static final ForgeConfigSpec.ConfigValue<String> ROUND_KIT_LOOT_TABLE;
     public static final ForgeConfigSpec.BooleanValue SHOP;
-    public static final ForgeConfigSpec.BooleanValue REMOTE_SHOP;
     public static final ForgeConfigSpec.BooleanValue KEEP_MONEY_AFTER_SESSION;
     public static final ForgeConfigSpec.IntValue MONEY_CAP_AFTER_SESSION;
     public static final ForgeConfigSpec.IntValue SELLBACK_PERCENT;
@@ -254,8 +253,6 @@ public final class RaidConfig {
         SHOP = b.comment("Trader in the hub bunker: sells artifacts for money and buys guns, armor, ammo and medicine.",
                         "Trading is only possible outside raids (in the hub, also between the rounds of a session).")
                 .define("enabled", true);
-        REMOTE_SHOP = b.comment("Allow trading from the raid terminal menu (K) too, not only at the trader counter.")
-                .define("remoteShop", true);
         KEEP_MONEY_AFTER_SESSION = b.comment("Money is not an item: it is never lost in a raid. If true it also survives the end of a session",
                         "(like perks); if false it is wiped together with the inventory and the stash.")
                 .define("keepMoneyAfterSession", true);

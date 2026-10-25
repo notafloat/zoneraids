@@ -1502,10 +1502,6 @@ public final class RaidManager {
             case ACCEPT_INVITE -> acceptInvite(player);
             case WATCH -> spectators.watch(player, arg);
             case STOP_WATCH -> spectators.stop(player);
-            case SHOP -> {
-                ShopService.open(player, false);
-                return;
-            }
             case SHOP_BUY -> {
                 ShopService.buy(player, arg);
                 return;
@@ -1594,7 +1590,7 @@ public final class RaidManager {
                 parties.isLeaderOrSolo(id), inviterPlayer == null ? "" : inviterPlayer.getGameProfile().getName(),
                 RaidConfig.REMOTE_STASH.get() && !isInRaid(id), PlayerRaidData.getPerkPoints(player), perks,
                 spectators.entries(player), watching == null ? "" : watching,
-                RaidConfig.SHOP.get() && RaidConfig.REMOTE_SHOP.get() && !isInRaid(id), readyState(player),
+                readyState(player),
                 RaidConfig.SURVIVAL.get());
     }
 

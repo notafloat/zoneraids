@@ -13,7 +13,7 @@ import java.util.List;
 
 /**
  * Raid terminal, the first tab of the PDA: map list with matchmaking state, join/leave, party and
- * stats. Perks, the trader, watching, the stash and the rest are the PDA's other tabs.
+ * stats. Perks, watching, the stash and the rest are the PDA's other tabs.
  * Widgets are rebuilt whenever new data arrives; while open it asks for a refresh every 2 seconds.
  * The terminal key closes it again, the mouse wheel turns map pages.
  */
