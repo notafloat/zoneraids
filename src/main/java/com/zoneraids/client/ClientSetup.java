@@ -7,6 +7,7 @@ import com.zoneraids.client.render.MutantRenderers;
 import com.zoneraids.client.render.PseudogiantModel;
 import com.zoneraids.registry.ModEntities;
 import net.minecraft.client.KeyMapping;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.client.event.RegisterGuiOverlaysEvent;
@@ -59,6 +60,7 @@ public final class ClientSetup {
     public static void onRegisterOverlays(RegisterGuiOverlaysEvent event) {
         event.registerAbove(VanillaGuiOverlay.HOTBAR.id(), "pda_hud", new PdaHudOverlay());
         event.registerAbove(VanillaGuiOverlay.HOTBAR.id(), "raid_hud", new RaidHudOverlay());
+        event.registerAbove(new ResourceLocation(ZoneRaids.MODID, "raid_hud"), "compass", new CompassOverlay());
         event.registerAbove(VanillaGuiOverlay.CROSSHAIR.id(), "interaction", new InteractionMenu());
     }
 

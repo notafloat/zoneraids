@@ -25,6 +25,8 @@ import java.util.List;
 public final class RaidHudOverlay implements IGuiOverlay {
     private static final int MIN_W = 150;
     private static final int LINE_H = 11;
+    /** Left edge of the panel drawn last frame, or -1 when it is hidden; the compass keeps clear of it. */
+    static int panelLeft = -1;
 
     /** A HUD line: text on the left, optional arrow and distance right-aligned. */
     private record Row(Component left, @Nullable Component right, int color) {
@@ -32,6 +34,7 @@ public final class RaidHudOverlay implements IGuiOverlay {
 
     @Override
     public void render(ForgeGui gui, GuiGraphics g, float partialTick, int width, int height) {
+        panelLeft = -1;
         RaidHudPacket hud = ClientRaidState.hud;
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
@@ -91,6 +94,7 @@ public final class RaidHudOverlay implements IGuiOverlay {
         int x0 = width - panelW - 4;
         int y0 = topOffset(player);
         int x1 = x0 + panelW;
+        panelLeft = x0 - 2;
 
         ZoneUi.panel(g, x0, y0, x1, y0 + panelH, ZoneUi.BG_HUD);
         ZoneUi.header(g, font, x0, y0, x1, title, intermission ? ZoneUi.AMBER : ZoneUi.RED, timer, timerColor);
