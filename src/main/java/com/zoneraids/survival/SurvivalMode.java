@@ -81,6 +81,7 @@ public final class SurvivalMode {
         }
         if (ticks % 100 == 0) {
             Lairs.pass(server.overworld());
+            Places.pass(server.overworld());
         }
         if (ticks % (RaidConfig.SURVIVAL_SPAWN_INTERVAL.get() * 20) != 0) {
             return;
@@ -150,7 +151,7 @@ public final class SurvivalMode {
                 continue;
             }
             BlockPos center = pickCenter(level, player, maxDistance);
-            if (center == null || (safe > 0 && horizontalDistanceSqr(center, spawn) < safe * safe)) {
+            if (center == null || (safe > 0 && horizontalDistanceSqr(center, spawn) < safe * safe) || Places.inSafeZone(level, center)) {
                 continue;
             }
             Group group = pickGroup(night, inZone(level, center));

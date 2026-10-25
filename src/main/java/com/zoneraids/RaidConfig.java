@@ -89,6 +89,10 @@ public final class RaidConfig {
     public static final ForgeConfigSpec.IntValue SURVIVAL_LAIR_REGION;
     public static final ForgeConfigSpec.DoubleValue SURVIVAL_LAIR_CHANCE;
     public static final ForgeConfigSpec.IntValue SURVIVAL_LAIR_MIN_SPAWN_DISTANCE;
+    public static final ForgeConfigSpec.BooleanValue SURVIVAL_PLACES;
+    public static final ForgeConfigSpec.IntValue SURVIVAL_PLACE_REGION;
+    public static final ForgeConfigSpec.DoubleValue SURVIVAL_PLACE_CHANCE;
+    public static final ForgeConfigSpec.IntValue SURVIVAL_PLACE_MIN_SPAWN_DISTANCE;
     public static final ForgeConfigSpec.DoubleValue STASH_DRIVE_CHANCE;
     public static final ForgeConfigSpec.IntValue STASH_MIN_DISTANCE;
     public static final ForgeConfigSpec.IntValue STASH_MAX_DISTANCE;
@@ -394,6 +398,16 @@ public final class RaidConfig {
                 .defineInRange("lairChance", 0.6, 0.0, 1.0);
         SURVIVAL_LAIR_MIN_SPAWN_DISTANCE = b.comment("No lair closer than this many blocks to the world spawn.")
                 .defineInRange("lairMinSpawnDistance", 300, 0, 100000);
+        SURVIVAL_PLACES = b.comment("Places without a boss: a stalker camp with a trader and friendly guards (no roaming enemies near it),",
+                        "a military base with a garrison, a ruined village and an abandoned base with mutants. At most one per",
+                        "place region of the overworld, built when a player first comes near, never on a lair.")
+                .define("places", true);
+        SURVIVAL_PLACE_REGION = b.comment("Size of a place region in blocks.")
+                .defineInRange("placeRegionSize", 320, 128, 8192);
+        SURVIVAL_PLACE_CHANCE = b.comment("Chance that a region has a place.")
+                .defineInRange("placeChance", 0.7, 0.0, 1.0);
+        SURVIVAL_PLACE_MIN_SPAWN_DISTANCE = b.comment("No hostile place or ruin closer than this many blocks to the world spawn (stalker camps may be closer).")
+                .defineInRange("placeMinSpawnDistance", 200, 0, 100000);
         b.pop();
 
         b.push("stashes");

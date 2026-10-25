@@ -81,7 +81,8 @@
       "monster"
     ],
     "opposed": [
-      "players"
+      "players",
+      "zr_stalker"
     ],
     "equipment": {
       "table": "zoneraids:enemies/bandit_gear",
@@ -104,7 +105,8 @@
       "monster"
     ],
     "opposed": [
-      "players"
+      "players",
+      "zr_stalker"
     ],
     "equipment": {
       "table": "zoneraids:enemies/military_gear",
@@ -127,7 +129,8 @@
       "monster"
     ],
     "opposed": [
-      "players"
+      "players",
+      "zr_stalker"
     ],
     "equipment": {
       "table": "zoneraids:enemies/bandit_boss_gear",
@@ -137,6 +140,40 @@
     },
     "skin": {
       "id": "zoneraids:entity/borov.png"
+    }
+  },
+  "zr_stalker": {
+    "aligned": [
+      "zr_stalker",
+      "players"
+    ],
+    "opposed": [
+      "zr_bandit",
+      "zr_military",
+      "monster"
+    ],
+    "equipment": {
+      "table": "zoneraids:enemies/stalker_gear",
+      "dropChances": {
+        "mainhand": 0.15,
+        "head": 0.15,
+        "chest": 0.15,
+        "legs": 0.15,
+        "feet": 0.15
+      }
+    },
+    "skin": {
+      "id": "tacznpcs:entity/default.png"
+    }
+  },
+  "zr_trader": {
+    "aligned": [
+      "zr_stalker",
+      "players"
+    ],
+    "opposed": [],
+    "skin": {
+      "id": "tacznpcs:entity/villager1.png"
     }
   }
 }

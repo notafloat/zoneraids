@@ -26,7 +26,7 @@ public final class RaidTerminalScreen extends Screen {
     /** Ticks after opening during which the terminal key does not close the screen (key repeat from opening it). */
     private static final int KEY_GRACE = 6;
     /** Lines of zoneraids.terminal.survival.N shown in survival mode instead of the map list. */
-    private static final int SURVIVAL_LINES = 5;
+    private static final int SURVIVAL_LINES = 6;
 
     private int page;
     private int refreshTicks;

@@ -6,8 +6,10 @@ import com.zoneraids.command.RaidCommands;
 import com.zoneraids.raid.EnemySpawner;
 import com.zoneraids.raid.RaidManager;
 import com.zoneraids.registry.ModRegistry;
+import com.zoneraids.shop.ShopService;
 import com.zoneraids.stash.StashDrives;
 import com.zoneraids.survival.Lairs;
+import com.zoneraids.survival.Places;
 import com.zoneraids.survival.SurvivalMode;
 import com.zoneraids.util.Teleports;
 import com.zoneraids.world.WorldBuilder;
@@ -17,6 +19,8 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.EnderChestBlock;
 import net.minecraft.world.level.block.state.BlockState;
@@ -137,6 +141,7 @@ public final class RaidEvents {
         if (!event.isCanceled() && !event.getEntity().level().isClientSide()) {
             SurvivalMode.onDeath(event.getEntity(), event.getSource().getEntity());
             Lairs.onDeath(event.getEntity(), event.getSource().getEntity());
+            Places.onDeath(event.getEntity(), event.getSource().getEntity());
         }
     }
 
@@ -265,6 +270,26 @@ public final class RaidEvents {
     public static void onWatcherUseEntityAt(PlayerInteractEvent.EntityInteractSpecific event) {
         if (isWatching(event.getEntity())) {
             event.setCanceled(true);
+        }
+    }
+
+    /** The trader of a stalker camp opens the trader screen instead of his own NPC menu (checked on the server only). */
+    @SubscribeEvent
+    public static void onUseTrader(PlayerInteractEvent.EntityInteract event) {
+        if (!event.getLevel().isClientSide() && Places.isTrader(event.getTarget())) {
+            if (event.getHand() == InteractionHand.MAIN_HAND && event.getEntity() instanceof ServerPlayer player) {
+                ShopService.open(player, true);
+            }
+            event.setCanceled(true);
+            event.setCancellationResult(InteractionResult.SUCCESS);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onUseTraderAt(PlayerInteractEvent.EntityInteractSpecific event) {
+        if (!event.getLevel().isClientSide() && Places.isTrader(event.getTarget())) {
+            event.setCanceled(true);
+            event.setCancellationResult(InteractionResult.SUCCESS);
         }
     }
 
