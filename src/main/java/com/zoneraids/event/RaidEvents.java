@@ -2,6 +2,7 @@ package com.zoneraids.event;
 
 import com.zoneraids.RaidConfig;
 import com.zoneraids.ZoneRaids;
+import com.zoneraids.combat.NpcHeadshots;
 import com.zoneraids.command.RaidCommands;
 import com.zoneraids.raid.EnemySpawner;
 import com.zoneraids.raid.RaidManager;
@@ -32,6 +33,7 @@ import net.minecraftforge.event.entity.EntityLeaveLevelEvent;
 import net.minecraftforge.event.entity.EntityTravelToDimensionEvent;
 import net.minecraftforge.event.entity.item.ItemTossEvent;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
+import net.minecraftforge.event.entity.living.LivingDamageEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.LivingDropsEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
@@ -164,6 +166,12 @@ public final class RaidEvents {
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onHurt(LivingHurtEvent event) {
         EnemySpawner.scaleDamageToPlayer(event);
+    }
+
+    /** Low priority: armor and other mods have had their say, a headshot still kills a human NPC. */
+    @SubscribeEvent(priority = EventPriority.LOW)
+    public static void onDamage(LivingDamageEvent event) {
+        NpcHeadshots.onDamage(event);
     }
 
     /** Lowest priority: only hurt that actually lands counts as being in a fight (see combatLogSeconds). */

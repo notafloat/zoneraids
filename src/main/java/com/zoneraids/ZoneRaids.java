@@ -1,5 +1,6 @@
 package com.zoneraids;
 
+import com.zoneraids.combat.NpcHeadshots;
 import com.zoneraids.network.RaidNetwork;
 import com.zoneraids.registry.ModEntities;
 import com.zoneraids.registry.ModRegistry;
@@ -28,5 +29,6 @@ public final class ZoneRaids {
 
     private void commonSetup(FMLCommonSetupEvent event) {
         event.enqueueWork(RaidNetwork::register);
+        event.enqueueWork(NpcHeadshots::register);
     }
 }
