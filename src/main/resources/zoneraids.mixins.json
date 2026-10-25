@@ -6,7 +6,9 @@
   "refmap": "zoneraids.refmap.json",
   "client": [
     "AbstractButtonMixin",
-    "AbstractSliderButtonMixin"
+    "AbstractSliderButtonMixin",
+    "BiomeMixin",
+    "ClientLevelMixin"
   ],
   "injectors": {
     "defaultRequire": 0

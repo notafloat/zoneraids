@@ -1,0 +1,17 @@
+{
+  "type": "forge:remove_features",
+  "biomes": "#minecraft:is_overworld",
+  "features": [
+    "minecraft:flower_default",
+    "minecraft:flower_plains",
+    "minecraft:flower_meadow",
+    "minecraft:flower_warm",
+    "minecraft:flower_swamp",
+    "minecraft:flower_cherry",
+    "minecraft:flower_forest_flowers",
+    "minecraft:flower_flower_forest",
+    "minecraft:forest_flowers",
+    "minecraft:patch_sunflower"
+  ],
+  "steps": "vegetal_decoration"
+}

@@ -1,0 +1,6 @@
+{
+  "type": "forge:add_features",
+  "biomes": "#minecraft:is_overworld",
+  "features": ["zoneraids:dead_tree", "minecraft:patch_dead_bush_2"],
+  "step": "vegetal_decoration"
+}
