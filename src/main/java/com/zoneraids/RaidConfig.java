@@ -93,6 +93,22 @@ public final class RaidConfig {
     public static final ForgeConfigSpec.IntValue SURVIVAL_PLACE_REGION;
     public static final ForgeConfigSpec.DoubleValue SURVIVAL_PLACE_CHANCE;
     public static final ForgeConfigSpec.IntValue SURVIVAL_PLACE_MIN_SPAWN_DISTANCE;
+    public static final ForgeConfigSpec.BooleanValue SURVIVAL_EMISSIONS;
+    public static final ForgeConfigSpec.IntValue SURVIVAL_EMISSION_INTERVAL;
+    public static final ForgeConfigSpec.IntValue SURVIVAL_EMISSION_WARNING;
+    public static final ForgeConfigSpec.IntValue SURVIVAL_EMISSION_SECONDS;
+    public static final ForgeConfigSpec.DoubleValue SURVIVAL_EMISSION_DAMAGE;
+    public static final ForgeConfigSpec.IntValue SURVIVAL_EMISSION_ARTIFACTS;
+    public static final ForgeConfigSpec.BooleanValue SURVIVAL_AIRDROPS;
+    public static final ForgeConfigSpec.IntValue SURVIVAL_AIRDROP_INTERVAL;
+    public static final ForgeConfigSpec.IntValue SURVIVAL_AIRDROP_MIN_DISTANCE;
+    public static final ForgeConfigSpec.IntValue SURVIVAL_AIRDROP_MAX_DISTANCE;
+    public static final ForgeConfigSpec.IntValue SURVIVAL_AIRDROP_LIFETIME;
+    public static final ForgeConfigSpec.ConfigValue<String> SURVIVAL_AIRDROP_LOOT_TABLE;
+    public static final ForgeConfigSpec.ConfigValue<String> SURVIVAL_AIRDROP_GUARD_KIND;
+    public static final ForgeConfigSpec.IntValue SURVIVAL_AIRDROP_GUARDS;
+    public static final ForgeConfigSpec.BooleanValue SURVIVAL_CONTRACTS;
+    public static final ForgeConfigSpec.DoubleValue SURVIVAL_CONTRACT_REWARD_MULTIPLIER;
     public static final ForgeConfigSpec.DoubleValue STASH_DRIVE_CHANCE;
     public static final ForgeConfigSpec.IntValue STASH_MIN_DISTANCE;
     public static final ForgeConfigSpec.IntValue STASH_MAX_DISTANCE;
@@ -408,6 +424,32 @@ public final class RaidConfig {
                 .defineInRange("placeChance", 0.7, 0.0, 1.0);
         SURVIVAL_PLACE_MIN_SPAWN_DISTANCE = b.comment("No hostile place or ruin closer than this many blocks to the world spawn (stalker camps may be closer).")
                 .defineInRange("placeMinSpawnDistance", 200, 0, 100000);
+        SURVIVAL_EMISSIONS = b.comment("Emissions: every emissionIntervalMinutes (give or take a quarter) the PDA warns, and emissionWarningSeconds later",
+                        "everyone under open sky takes damage that grows the longer they stay out, for emissionSeconds. Afterwards",
+                        "emissionArtifacts artifacts from [anomalies] artifactItems appear around every survivor, marked on the PDA map.")
+                .define("emissions", true);
+        SURVIVAL_EMISSION_INTERVAL = b.defineInRange("emissionIntervalMinutes", 60, 5, 1440);
+        SURVIVAL_EMISSION_WARNING = b.defineInRange("emissionWarningSeconds", 90, 10, 600);
+        SURVIVAL_EMISSION_SECONDS = b.defineInRange("emissionSeconds", 60, 10, 600);
+        SURVIVAL_EMISSION_DAMAGE = b.comment("Damage per second under open sky during an emission; grows by this much every 10 seconds outside.")
+                .defineInRange("emissionDamage", 1.0, 0.0, 100.0);
+        SURVIVAL_EMISSION_ARTIFACTS = b.defineInRange("emissionArtifacts", 2, 0, 10);
+        SURVIVAL_AIRDROPS = b.comment("Supply drops: every airdropIntervalMinutes (give or take a quarter) a military crate comes down",
+                        "airdropMinDistance..airdropMaxDistance blocks from a random player, with a smoke column and a PDA map marker for",
+                        "everyone. airdropGuards enemies of airdropGuardKind turn up when someone comes near. Smoke stops after airdropLifetimeMinutes.")
+                .define("airdrops", true);
+        SURVIVAL_AIRDROP_INTERVAL = b.defineInRange("airdropIntervalMinutes", 40, 5, 1440);
+        SURVIVAL_AIRDROP_MIN_DISTANCE = b.defineInRange("airdropMinDistance", 120, 16, 4096);
+        SURVIVAL_AIRDROP_MAX_DISTANCE = b.defineInRange("airdropMaxDistance", 320, 16, 4096);
+        SURVIVAL_AIRDROP_LIFETIME = b.defineInRange("airdropLifetimeMinutes", 30, 1, 1440);
+        SURVIVAL_AIRDROP_LOOT_TABLE = b.define("airdropLootTable", "zoneraids:airdrops/supply");
+        SURVIVAL_AIRDROP_GUARD_KIND = b.define("airdropGuardKind", "military");
+        SURVIVAL_AIRDROP_GUARDS = b.defineInRange("airdropGuards", 3, 0, 16);
+        SURVIVAL_CONTRACTS = b.comment("Trader contracts: a \"Contracts\" tab at the trader with three offers (hunt enemies, clear a place,",
+                        "kill a lair boss, bring an artifact), one active at a time, paid in money.")
+                .define("contracts", true);
+        SURVIVAL_CONTRACT_REWARD_MULTIPLIER = b.comment("Multiplier for contract rewards.")
+                .defineInRange("contractRewardMultiplier", 1.0, 0.0, 100.0);
         b.pop();
 
         b.push("stashes");

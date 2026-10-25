@@ -18,6 +18,7 @@ import com.zoneraids.perk.PerkService;
 import com.zoneraids.registry.ModRegistry;
 import com.zoneraids.shop.ShopCatalog;
 import com.zoneraids.shop.ShopService;
+import com.zoneraids.survival.Contracts;
 import com.zoneraids.util.CuriosCompat;
 import com.zoneraids.util.FirstAidCompat;
 import com.zoneraids.util.Teleports;
@@ -1516,6 +1517,18 @@ public final class RaidManager {
             }
             case SHOP_SELL_ALL -> {
                 ShopService.sell(player, arg, true);
+                return;
+            }
+            case CONTRACT_TAKE -> {
+                Contracts.take(player, arg);
+                return;
+            }
+            case CONTRACT_ABANDON -> {
+                Contracts.abandon(player);
+                return;
+            }
+            case CONTRACT_TURN_IN -> {
+                Contracts.turnIn(player);
                 return;
             }
             case ARTIFACT, ARTIFACT_STORE -> {

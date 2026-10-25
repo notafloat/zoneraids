@@ -6,6 +6,7 @@ import com.zoneraids.network.RaidNetwork;
 import com.zoneraids.network.ShopDataPacket;
 import com.zoneraids.raid.RaidManager;
 import com.zoneraids.registry.ModRegistry;
+import com.zoneraids.survival.Contracts;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -132,8 +133,13 @@ public final class ShopService {
                 && !manager.isInRaid(player.getUUID()) && !manager.isWatching(player.getUUID());
     }
 
+    /** Sends the trader screen fresh data (after a contract changed). */
+    public static void refresh(ServerPlayer player) {
+        RaidNetwork.sendTo(player, build(player, false));
+    }
+
     /** Checks done again on every deal, since the screen may have been opened before a raid started. */
-    private static boolean allowed(ServerPlayer player) {
+    public static boolean allowed(ServerPlayer player) {
         if (!RaidConfig.SHOP.get() || !canTrade(player)) {
             player.displayClientMessage(Component.translatable("zoneraids.shop.in_raid").withStyle(ChatFormatting.RED), true);
             RaidNetwork.sendTo(player, build(player, false));
@@ -180,6 +186,7 @@ public final class ShopService {
                 sell.add(new ShopDataPacket.SellEntry(price.id(), price.price(), owned, icon));
             }
         }
-        return new ShopDataPacket(open, PlayerRaidData.getMoney(player), RaidConfig.SHOP.get() && canTrade(player), offers, sell);
+        return new ShopDataPacket(open, PlayerRaidData.getMoney(player), RaidConfig.SHOP.get() && canTrade(player), offers, sell,
+                Contracts.entries(player));
     }
 }

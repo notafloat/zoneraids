@@ -276,11 +276,21 @@ public final class Lairs {
         }
     }
 
+    public record Open(String key, Type type, BlockPos pos) {
+    }
+
     /** The nearest site from here that is not beaten yet (for admins), or null. */
     @Nullable
     public static BlockPos nearestOpen(ServerLevel level, int x, int z) {
+        Open open = nearestOpenSite(level, x, z);
+        return open == null ? null : open.pos();
+    }
+
+    /** The nearest site from here that is not beaten yet, with its region key, or null. */
+    @Nullable
+    public static Open nearestOpenSite(ServerLevel level, int x, int z) {
         LairData data = LairData.get(level.getServer());
-        BlockPos best = null;
+        Open best = null;
         double bestDistance = Double.MAX_VALUE;
         int size = RaidConfig.SURVIVAL_LAIR_REGION.get();
         int rx = Math.floorDiv(x, size);
@@ -298,7 +308,7 @@ public final class Lairs {
                 double d = Math.pow(site.x() - x, 2) + Math.pow(site.z() - z, 2);
                 if (d < bestDistance) {
                     bestDistance = d;
-                    best = new BlockPos(site.x(), 0, site.z());
+                    best = new Open(site.key(), site.type(), new BlockPos(site.x(), 0, site.z()));
                 }
             }
         }

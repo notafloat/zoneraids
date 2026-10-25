@@ -40,11 +40,12 @@ public final class ClientPacketHandlers {
         Minecraft.getInstance().setScreen(new CordonMapScreen());
     }
 
-    public static void addStashMarker(int x, int z) {
+    public static void addMapMarker(int x, int z, int color, String nameKey) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level != null) {
             WorldMap.use(mc.level);
-            WorldMap.addMarker(x, z, WorldMap.STASH_COLOR, Component.translatable("zoneraids.stash_drive.marker").getString());
+            int index = color >= 0 && color < WorldMap.COLORS.length ? color : WorldMap.STASH_COLOR;
+            WorldMap.addMarker(x, z, index, Component.translatable(nameKey).getString());
         }
     }
 

@@ -42,9 +42,9 @@ public final class RaidNetwork {
         CHANNEL.messageBuilder(StaminaPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
                 .encoder(StaminaPacket::encode).decoder(StaminaPacket::decode)
                 .consumerMainThread(StaminaPacket::handle).add();
-        CHANNEL.messageBuilder(StashMarkerPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
-                .encoder(StashMarkerPacket::encode).decoder(StashMarkerPacket::decode)
-                .consumerMainThread(StashMarkerPacket::handle).add();
+        CHANNEL.messageBuilder(MapMarkerPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(MapMarkerPacket::encode).decoder(MapMarkerPacket::decode)
+                .consumerMainThread(MapMarkerPacket::handle).add();
     }
 
     public static void sendTo(ServerPlayer player, Object message) {

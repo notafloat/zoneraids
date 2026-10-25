@@ -68,6 +68,10 @@ public final class SurvivalMode {
         }
         ticks++;
         if (ticks % 20 == 0) {
+            int seconds = ticks / 20;
+            Emissions.second(server);
+            Airdrops.second(server, seconds);
+            Contracts.second(server, seconds);
             wild.forEach((dimension, ids) -> {
                 ServerLevel level = server.getLevel(dimension);
                 if (level != null) {
@@ -104,6 +108,26 @@ public final class SurvivalMode {
     public static void stop() {
         wild.clear();
         ticks = 0;
+        Emissions.stop();
+    }
+
+    /** Players in the level whom the open world's events concern: alive, not in creative or spectator mode, not in a raid. */
+    public static List<ServerPlayer> players(ServerLevel level) {
+        RaidManager manager = RaidManager.get();
+        List<ServerPlayer> players = new ArrayList<>();
+        for (ServerPlayer player : level.players()) {
+            if (player.isAlive() && !player.isCreative() && !player.isSpectator()
+                    && (manager == null || !manager.isInRaid(player.getUUID()))) {
+                players.add(player);
+            }
+        }
+        return players;
+    }
+
+    /** Makes an enemy spawned elsewhere (supply drop guards) a roaming one: kept in check, removed when nobody is near. */
+    static void adopt(ServerLevel level, Entity entity) {
+        entity.getPersistentData().putBoolean(TAG_WILD, true);
+        wild.computeIfAbsent(level.dimension(), d -> new ArrayList<>()).add(entity.getUUID());
     }
 
     /** Removes roaming enemies nobody is near, then gives every player a chance of a new group nearby. */
@@ -126,7 +150,8 @@ public final class SurvivalMode {
         roaming.forEach(e -> ids.add(e.getUUID()));
         wild.put(level.dimension(), ids);
 
-        if (level.getDifficulty() == Difficulty.PEACEFUL || !RaidConfig.ENEMIES_ENABLED.get()) {
+        // Everyone hides from an emission, the enemies too.
+        if (level.getDifficulty() == Difficulty.PEACEFUL || !RaidConfig.ENEMIES_ENABLED.get() || Emissions.active()) {
             return;
         }
         RaidManager manager = RaidManager.get();
@@ -278,7 +303,11 @@ public final class SurvivalMode {
 
     /** A player killed a roaming enemy: every {@code killsPerPerkPoint} kills give a perk point. */
     public static void onDeath(Entity dead, Entity killer) {
-        if (!enabled() || !(killer instanceof ServerPlayer player) || !dead.getPersistentData().getBoolean(TAG_WILD)) {
+        if (!enabled() || !(killer instanceof ServerPlayer player)) {
+            return;
+        }
+        Contracts.onKill(player, dead);
+        if (!dead.getPersistentData().getBoolean(TAG_WILD)) {
             return;
         }
         int per = RaidConfig.SURVIVAL_KILLS_PER_PERK_POINT.get();
