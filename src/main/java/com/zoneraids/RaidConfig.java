@@ -343,8 +343,8 @@ public final class RaidConfig {
 
         b.push("survival");
         SURVIVAL = b.comment("Survival mode: an open world instead of raids. The hub and the Cordon are not built and nobody is sent",
-                        "to a hub; mutants, bandits and soldiers roam near players, a newcomer gets a starter kit once, the trader is",
-                        "in the PDA, and killing enemies earns perk points. Nothing is wiped. Raids still work on maps an admin adds.")
+                        "to a hub; mutants, bandits and soldiers roam near players, a newcomer gets a starter kit once, traders stand",
+                        "in stalker camps, and killing enemies earns perk points. Nothing is wiped. Raids still work on maps an admin adds.")
                 .define("enabled", false);
         SURVIVAL_DIMENSIONS = b.comment("Dimensions where enemies roam in survival mode.")
                 .defineListAllowEmpty(List.of("dimensions"), List.of("minecraft:overworld"), o -> o instanceof String);
