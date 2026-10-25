@@ -82,6 +82,17 @@ public final class ClientEvents {
         PdaHudOverlay.onOverlayPre(event);
     }
 
+    /** Lowest priority: runs only for overlays nobody cancelled, so the push in it always meets its Post. */
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public static void onOverlayPreLast(RenderGuiOverlayEvent.Pre event) {
+        CompassOverlay.onOverlayPre(event);
+    }
+
+    @SubscribeEvent
+    public static void onOverlayPost(RenderGuiOverlayEvent.Post event) {
+        CompassOverlay.onOverlayPost(event);
+    }
+
     @SubscribeEvent
     public static void onLoggingOut(ClientPlayerNetworkEvent.LoggingOut event) {
         ClientRaidState.reset();

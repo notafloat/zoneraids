@@ -2,11 +2,12 @@ package com.zoneraids.client;
 
 import net.minecraftforge.common.ForgeConfigSpec;
 
-/** Client settings of the Tarkov-style lean and the Arma-style interaction menu, config/zoneraids-client.toml. */
+/** Client settings of the Tarkov-style lean, the Arma-style interaction menu and the HUD compass, config/zoneraids-client.toml. */
 public final class ClientSettings {
     public static final ForgeConfigSpec SPEC;
     public static final ForgeConfigSpec.BooleanValue TOGGLE;
     public static final ForgeConfigSpec.BooleanValue SCROLL_MENU;
+    public static final ForgeConfigSpec.BooleanValue COMPASS;
 
     static {
         ForgeConfigSpec.Builder b = new ForgeConfigSpec.Builder();
@@ -21,6 +22,10 @@ public final class ClientSettings {
                         "false: the wheel switches slots until the list is open; the interaction key opens it.")
                 .define("scrollOpensMenu", true);
         b.pop();
+        b.push("hud");
+        COMPASS = b.comment("true: the compass strip with the azimuth and marker pins at the top of the screen.")
+                .define("compass", true);
+        b.pop();
         SPEC = b.build();
     }
 
@@ -33,6 +38,10 @@ public final class ClientSettings {
 
     static boolean scrollMenu() {
         return get(SCROLL_MENU);
+    }
+
+    static boolean compass() {
+        return get(COMPASS);
     }
 
     private static boolean get(ForgeConfigSpec.BooleanValue value) {
