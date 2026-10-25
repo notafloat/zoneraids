@@ -68,6 +68,7 @@ public final class RaidConfig {
     public static final ForgeConfigSpec.IntValue SELLBACK_PERCENT;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> SHOP_SELL;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> SHOP_BUY;
+    public static final ForgeConfigSpec.ConfigValue<List<? extends String>> SHOP_DETECTORS;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> ENTITY_UPDATE_INTERVALS;
     public static final ForgeConfigSpec.BooleanValue SURVIVAL;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> SURVIVAL_DIMENSIONS;
@@ -289,7 +290,7 @@ public final class RaidConfig {
                         "minecraft:emerald 250",
                         "minecraft:diamond 800"), o -> o instanceof String);
         SHOP_BUY = b.comment("What the trader sells, as \"category price count item_id{nbt}\" (the NBT part is optional).",
-                        "Categories: weapons, armor, ammo, containers, medicine (other names get their own tab). Ids that are not installed are skipped.")
+                        "Categories: weapons, armor, ammo, containers, medicine, detectors (other names get their own tab). Ids that are not installed are skipped.")
                 .defineListAllowEmpty(List.of("buy"), List.of(
                         "weapons 1500 1 tacz:modern_kinetic_gun{GunId:\"tacz:glock_17\",GunFireMode:\"SEMI\",GunCurrentAmmoCount:0,HasBulletInBarrel:0b}",
                         "weapons 1800 1 tacz:modern_kinetic_gun{GunId:\"tacz:m1911\",GunFireMode:\"SEMI\",GunCurrentAmmoCount:0,HasBulletInBarrel:0b}",
@@ -331,6 +332,14 @@ public final class RaidConfig {
                         "medicine 1000 1 fracturepoint:cure",
                         "medicine 1500 1 fracturepoint:propital",
                         "medicine 1500 1 anomalyzone:injection_run_heal"), o -> o instanceof String);
+        SHOP_DETECTORS = b.comment("More lines for the buy list, same format: Anomaly Zone artifact detectors and what charges them.",
+                        "A separate key so worlds made before it get the detectors too. Buryat sees artifacts 80 m away, Elbrus 120 m",
+                        "and also scans anomalies (J switches the mode). Detectors are recharged at a charging station fed with anomalous batteries.")
+                .defineListAllowEmpty(List.of("detectors"), List.of(
+                        "detectors 8000 1 anomalyzone:buryat",
+                        "detectors 20000 1 anomalyzone:elbrus",
+                        "detectors 5000 1 anomalyzone:charging_station",
+                        "detectors 800 1 anomalyzone:anomalous_battery"), o -> o instanceof String);
         b.pop();
 
         b.push("network");
